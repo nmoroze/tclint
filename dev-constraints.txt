@@ -1,0 +1,6 @@
+# Version constraints for dev dependencies. Facilitates installing a subset of
+# these in CI without duplicating this information.
+
+black == 23.11.0
+flake8 == 6.1.0
+pytest == 7.4.0

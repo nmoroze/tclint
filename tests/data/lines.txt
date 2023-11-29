@@ -1,0 +1,2 @@
+data/lines.tcl:1:81: line length is 83, maximum allowed is 80 [line-length]
+data/lines.tcl:2:30: line has trailing whitespace [trailing-whitespace]

@@ -1,0 +1,3 @@
+data/example.tcl:1:1: too many args to puts: got 4, expected no more than 3 [command-args]
+data/example.tcl:2:1: expected indent of 0 spaces, got 2 [indent]
+data/example.tcl:3:5: expected 1 space between words, got 3 [spacing]

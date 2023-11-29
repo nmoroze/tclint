@@ -1,0 +1,8 @@
+data/dirty.tcl:1:14: expected 1 space between words, got 2 [spacing]
+data/dirty.tcl:2:1: expected indent of 4 spaces, got 0 [indent]
+data/dirty.tcl:3:1: expected indent of 8 spaces, got 0 [indent]
+data/dirty.tcl:4:1: expected indent of 4 spaces, got 0 [indent]
+data/dirty.tcl:4:2: expected 1 space between words, got 3 [spacing]
+data/dirty.tcl:6:1: expected indent of 4 spaces, got 0 [indent]
+data/dirty.tcl:7:13: expected 1 space between words, got 3 [spacing]
+data/dirty.tcl:9:13: expected 1 space between words, got 5 [spacing]

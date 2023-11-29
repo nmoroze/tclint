@@ -1,0 +1,20 @@
+# Configuration
+
+`tclint` is configured via a [TOML](https://toml.io/en/) configuration file.
+
+The following fields are supported:
+
+```toml
+# paths to exclude when searching directories. defaults to empty list.
+exclude = ["ignore_me/", "ignore.tcl"]
+# lint violations to ignore. defaults to empty list.
+ignore = ["spacing"]
+
+[style]
+# number of spaces to indent. can also be set to "tab". defaults to 4.
+indent = 2
+# maximum allowed line length. defaults to 80.
+line-length = 100
+# whether to allow values of set blocks to be aligned. defaults to false.
+allow-aligned-sets = true
+```

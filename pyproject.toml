@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tclint"
+dynamic = ["version"]
+description = "A CLI utility for linting and analyzing TCL code."
+license = {text = "MIT License"}
+authors = [
+    {name = "Noah Moroze", email = "me@noahmoroze.com"}
+]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "ply==3.11",
+    "schema==0.7.5",
+    "toml==0.10.2"
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "pytest"
+]
+
+[project.scripts]
+tclint = "tclint.tclint:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools_scm]
+version_file = "src/tclint/_version.py"

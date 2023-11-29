@@ -1,0 +1,6 @@
+# ref: https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#flake8
+
+[flake8]
+max-line-length = 88
+extend-ignore = E203, E704
+extend-exclude = venv, .git
