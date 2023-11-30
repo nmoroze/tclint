@@ -37,6 +37,9 @@ class Visitor:
     def visit_list(self, list):
         pass
 
+    def visit_expression(self, expression):
+        pass
+
 
 class Node:
     """
@@ -302,3 +305,10 @@ class List(Node):
         if recurse:
             self._recurse(visitor)
         visitor.visit_list(self)
+
+
+class Expression(Node):
+    def accept(self, visitor, recurse=False):
+        if recurse:
+            self._recurse(visitor)
+        visitor.visit_expression(self)

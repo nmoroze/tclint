@@ -31,6 +31,7 @@ from tclint.syntax_tree import (
     QuotedWord,
     CompoundBareWord,
     List,
+    Expression,
 )
 from tclint.commands.builtin import CommandArgError, commands
 from tclint.checks import CommandArgViolation
@@ -500,3 +501,6 @@ class Parser:
                 list_node.add(BareWord(contents, pos=pos, end_pos=ts.pos()))
 
         return list_node
+
+    def parse_expression(self, node):
+        return Expression(node.contents, pos=node.pos, end_pos=node.end_pos)
