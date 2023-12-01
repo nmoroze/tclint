@@ -1,4 +1,4 @@
-"""Classes for representing and interacting with TCL syntax trees. """
+"""Classes for representing and interacting with Tcl syntax trees. """
 
 
 class Visitor:

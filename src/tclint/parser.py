@@ -90,7 +90,7 @@ class Parser:
         return tree
 
     def _parse_command_args(self, routine, args):
-        """Since many built-in TCL commands take in TCL scripts or expressions
+        """Since many built-in Tcl commands take in Tcl scripts or expressions
         as arguments, building a complete parse tree requires checking command
         names and possibly parsing their arguments.
 
@@ -99,9 +99,9 @@ class Parser:
         the arguments provided to these commands, this method may report lint
         violations.
 
-        This parsing process is analogous to how the TCL interpreter interprets
+        This parsing process is analogous to how the Tcl interpreter interprets
         scripts, and better handles weird edge cases compared to a traditional
-        parsing technique. For example, this may look like valid TCL:
+        parsing technique. For example, this may look like valid Tcl:
 
         proc foo {a} {
             # output }
@@ -109,7 +109,7 @@ class Parser:
         }
 
         But really, it is invalid since the } in the comment terminates the body
-        of the proc - TCL blindly constructs the body of the proc until it
+        of the proc - Tcl blindly constructs the body of the proc until it
         reaches the first }. tclint handles this correctly.
         """
         if routine not in commands:
@@ -452,7 +452,7 @@ class Parser:
         return script
 
     def parse_list(self, node):
-        """Parse contents of node as TCL list. This is a distinct entry point
+        """Parse contents of node as Tcl list. This is a distinct entry point
         that doesn't get used when generating the main syntax tree, but is used
         in command-specific argument parsing.
         """

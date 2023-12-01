@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tclint"
 dynamic = ["version"]
-description = "A CLI utility for linting and analyzing TCL code."
+description = "A CLI utility for linting and analyzing Tcl code."
 license = {text = "MIT License"}
 authors = [
     {name = "Noah Moroze", email = "me@noahmoroze.com"}

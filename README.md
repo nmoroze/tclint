@@ -1,6 +1,6 @@
 # tclint &nbsp; [![CI](https://github.com/nmoroze/tclint/actions/workflows/ci.yml/badge.svg)](https://github.com/nmoroze/tclint/actions/workflows/ci.yml)
 
-`tclint` is a lint tool for TCL. It analyzes TCL source files and reports stylistic and functional errors that may inhibit readability or correctness.
+`tclint` is a lint tool for Tcl. It analyzes Tcl source files and reports stylistic and functional errors that may inhibit readability or correctness.
 
 ### Features
 
@@ -22,7 +22,7 @@ Or with `pip`:
 pip install tclint
 ```
 
-Run `tclint` on a TCL source file by providing its path as a positional argument:
+Run `tclint` on a Tcl source file by providing its path as a positional argument:
 
 ```sh
 tclint example.tcl

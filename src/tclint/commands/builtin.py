@@ -1,9 +1,9 @@
-"""Parse-time handling of TCL's builtin commands.
+"""Parse-time handling of Tcl's builtin commands.
 
 Note that the following commands are not currently supported. If support for any of
 these would be helpful for your use case, please file an issue.
 
-- Anything related to TCLOO:
+- Anything related to TclOO:
   - https://www.tcl.tk/man/tcl/TclCmd/my.html
   - https://www.tcl.tk/man/tcl/TclCmd/next.html
   - https://www.tcl.tk/man/tcl/TclCmd/class.html
