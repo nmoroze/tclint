@@ -18,3 +18,22 @@ line-length = 100
 # whether to allow values of set blocks to be aligned. defaults to false.
 allow-aligned-sets = true
 ```
+
+## `pyproject.toml`
+
+`tclint` can also be configured by a `pyproject.toml` file, under the `[tool.tclint]` key. For example:
+
+```toml
+[build-system]
+requires = ["setuptools"]
+
+# other tables/keys...
+
+[tool.tclint]
+ignore = ["spacing"]
+
+[tool.tclint.style]
+indent = 2
+```
+
+Configuration in a `pyproject.toml` is lowest priority, and only checked if neither default config path exists. The file will be ignored if it contains TOML syntax errors.
