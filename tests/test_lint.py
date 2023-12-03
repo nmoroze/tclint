@@ -32,3 +32,10 @@ set barx 1"""
 
     violations = lint(script, Config(style_aligned_set=True))
     assert len(violations) == 0
+
+
+def test_accidental_return_expr():
+    script = "return 5 + 2"
+    violations = lint(script, Config())
+    assert len(violations) == 1
+    assert violations[0].id == "command-args"

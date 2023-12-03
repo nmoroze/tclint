@@ -284,6 +284,67 @@ def _proc(args, parser):
     return args[0:2] + [parse_script_arg(args[2], parser)]
 
 
+def _return(args, parser):
+    args = list(args)
+    while len(args) > 0:
+        option = args.pop(0).contents
+
+        try:
+            if option == "-code":
+                val = args.pop(0).contents
+
+                if val is None:
+                    continue
+
+                try:
+                    int(val)
+                except ValueError:
+                    pass
+                else:
+                    continue
+
+                if val in {"ok", "error", "return", "break", "continue"}:
+                    continue
+
+                raise CommandArgError(
+                    f"invalid value for return -code: got {val}, expected one of ok,"
+                    " error, return, break, continue, or an integer"
+                )
+            elif option == "-level":
+                val = args.pop(0).contents
+
+                if val is None:
+                    continue
+
+                try:
+                    if int(val) >= 0:
+                        continue
+                except ValueError:
+                    pass
+
+                raise CommandArgError(
+                    f"invalid value for return -level: got {val}, expected a"
+                    " non-negative integer"
+                )
+            elif option in {"-errorcode", "-errorinfo", "-errorstack", "-options"}:
+                args.pop(0)
+            else:
+                break
+        except IndexError:
+            raise CommandArgError(
+                f"insufficient args to return: expected value after {option}"
+            )
+
+    if len(args) > 0:
+        raise CommandArgError(
+            "too many arguments to return: expected no more than 1 argument after"
+            " explicit options. Provide -options argument if you intend to specify"
+            " additional return options."
+        )
+
+    return None
+
+
 def _switch(args, parser):
     # ref: https://www.tcl.tk/man/tcl/TclCmd/switch.html
     # This one's complicated...
@@ -566,7 +627,7 @@ commands = {
     "regexp": check_count("regexp", 2, None),
     "regsub": check_count("regsub", 3, None),
     "rename": check_count("rename", 2, 2),
-    "return": check_count("return", 0, None),
+    "return": _return,
     # TODO: check subcommands
     "safe": check_count("safe", 1, None),
     "scan": check_count("scan", 2, None),
