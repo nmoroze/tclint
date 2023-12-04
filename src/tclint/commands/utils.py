@@ -147,3 +147,47 @@ def eval(args, parser, command):
     script.end_pos = args[-1].end_pos
 
     return [script]
+
+# def parse_command_file(path):
+#     def _parse_command(command_string):
+#         command_split = command_string.split(' ', 1)
+#         if len(command_split) > 1:
+#             command_string = command_split[1]
+#         else:
+#             command_string = ''
+
+#         return command_split[0]
+
+#     command_strings = []
+#     with open(path, 'r') as f:
+#         contents = f.read()
+
+#     for line in contents.split('\n'):
+#         if line.startswith(' '):
+#             assert len(command_strings) > 0
+#             command_strings[-1].extend(line.lstrip(' ').split(' '))
+#         else:
+#             command_strings.append(line.split(' '))
+
+#     print(command_strings)
+
+#     commands = {}
+#     for command_string in command_strings:
+#         command = command_string.pop(0)
+#         commands[command] = {}
+
+#         while len(command_string) > 0:
+#             arg = command_string.pop(0)
+
+#             if arg.startswith('['):
+#                 arg = arg[1:]
+#                 required = False
+#                 if arg.endswith(']'):
+#                     values = 0
+#                     arg = arg[:-1]
+
+#             if arg.startswith('-'):
+
+
+
+#     return commands

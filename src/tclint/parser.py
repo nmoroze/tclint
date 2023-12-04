@@ -33,8 +33,11 @@ from tclint.syntax_tree import (
     List,
     Expression,
 )
-from tclint.commands.builtin import CommandArgError, commands
+from tclint.commands import get_commands
+from tclint.commands.utils import CommandArgError
 from tclint.checks import CommandArgViolation
+
+commands = get_commands(['builtin', 'openroad'])
 
 
 class _Word:
