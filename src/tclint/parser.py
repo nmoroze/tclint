@@ -34,7 +34,7 @@ from tclint.syntax_tree import (
     Expression,
 )
 from tclint.commands.builtin import CommandArgError, commands
-from tclint.checks import CommandArgViolation
+from tclint.violations import CommandArgViolation
 
 
 class _Word:

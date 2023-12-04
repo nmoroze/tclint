@@ -9,7 +9,8 @@ from typing import List
 
 from tclint.config import get_config, ConfigError, Config
 from tclint.parser import Parser, TclSyntaxError
-from tclint.checks import IndentLevelChecker, SpacingChecker, LineChecker, Violation
+from tclint.checks import IndentLevelChecker, SpacingChecker, LineChecker
+from tclint.violations import Violation
 
 try:
     from tclint._version import __version__
