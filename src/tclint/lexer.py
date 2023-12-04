@@ -177,7 +177,7 @@ class Lexer:
 
     def pos(self):
         if self.current is None:
-            return None
+            return (self.lexer.lineno, self.colno)
         return self.current.value[1]
 
     def next(self):

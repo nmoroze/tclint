@@ -295,6 +295,9 @@ def test_line_numbers():
     assert if_body.children[0].col == 9
     assert tree.children[3].line == 6
 
+    # col 5 b/c of extra whitespace in multiline string
+    assert tree.end_pos == (7, 5)
+
 
 def test_syntax_error():
     script = 'puts "hello'

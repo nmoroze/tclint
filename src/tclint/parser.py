@@ -183,6 +183,8 @@ class Parser:
 
         self._debug_indent -= 1
 
+        script.end_pos = ts.pos()
+
         return script
 
     def parse_comment(self, ts):
