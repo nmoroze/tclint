@@ -11,6 +11,7 @@ from tclint.config import get_config, ConfigError, Config
 from tclint.parser import Parser, TclSyntaxError
 from tclint.checks import IndentLevelChecker, SpacingChecker, LineChecker
 from tclint.violations import Violation
+from tclint.comments import CommentVisitor
 
 try:
     from tclint._version import __version__
@@ -84,6 +85,21 @@ def resolve_sources(
     return sources
 
 
+def filter_violations(violations, global_ignore, line_ignore):
+    filtered_violations = []
+
+    for violation in violations:
+        if violation.id in global_ignore:
+            continue
+        line = violation.pos[0]
+        if line in line_ignore and violation.id in line_ignore[line]:
+            continue
+
+        filtered_violations.append(violation)
+
+    return filtered_violations
+
+
 def lint(script: str, config: Config, debug=False) -> List[Violation]:
     parser = Parser(debug=debug)
 
@@ -96,6 +112,10 @@ def lint(script: str, config: Config, debug=False) -> List[Violation]:
 
     for checker in (IndentLevelChecker(), SpacingChecker(), LineChecker()):
         violations += checker.check(script, tree, config)
+
+    v = CommentVisitor()
+    ignore_lines = v.run(tree)
+    violations = filter_violations(violations, config.ignore, ignore_lines)
 
     return violations
 
@@ -145,8 +165,6 @@ def main():
             print(f"{path}: syntax error: {e}")
             retcode |= EXIT_SYNTAX_ERROR
             continue
-
-        violations = [v for v in violations if v.id not in config.ignore]
 
         for violation in sorted(violations):
             print(f"{path}:{violation}")

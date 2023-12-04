@@ -19,6 +19,39 @@ line-length = 100
 allow-aligned-sets = true
 ```
 
+## Ignore violations with inline comments
+
+Lint violations can be ignored in-line by adding comments with special keywords. All of the supported keywords may be followed by a comma-separated list of rules. If no rules are specified, the effect will apply to all rules.
+
+The following lists supported keywords. These keywords were inspired by [ESLint][eslint-comments].
+
+- `tclint-disable <rules>`
+  - Specified violations will be ignored until they are re-enabled by a `tclint-enable` comment (or end-of-file is reached).
+- `tclint-disable-line <rules>`
+  - Specified violations will be ignored for the line on which this comment appears.
+- `tclint-disable-next-line <rules>`
+  - Specified violations will be ignored for the line following the one on which this comment appears.
+- `tclint-enable <rules>`
+  - Any specified violations which have previously been disabled by `tclint-disable` will be re-enabled.
+
+### Example
+
+```tcl
+# tclint-disable spacing
+puts  "illegal"
+# tclint-enable spacing
+
+# tclint-disable-next-line indent, spacing
+  puts  "also illegal"
+
+puts too many arguments ! ;# tclint-disable-line command-args
+
+# tclint-disable
+ puts  "illegal"
+# tclint-enable
+```
+
+
 ## `pyproject.toml`
 
 `tclint` can also be configured by a `pyproject.toml` file, under the `[tool.tclint]` key. For example:
@@ -37,3 +70,5 @@ indent = 2
 ```
 
 Configuration in a `pyproject.toml` is lowest priority, and only checked if neither default config path exists. The file will be ignored if it contains TOML syntax errors.
+
+[eslint-comments]: https://eslint.org/docs/latest/use/configure/rules#using-configuration-comments-1
