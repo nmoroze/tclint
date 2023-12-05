@@ -24,4 +24,4 @@ def test_example_config():
 
 def test_invalid_rule():
     with pytest.raises(ConfigError):
-        config = Config.from_dict({"ignore": ["asdf"]})
+        Config.from_dict({"ignore": ["asdf"]})
