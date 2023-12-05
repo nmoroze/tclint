@@ -89,7 +89,7 @@ def filter_violations(violations, config_ignore, inline_ignore, path):
             global_ignore.append(entry)
         else:
             ignore_path = entry["path"].resolve()
-            if path.is_relative_to(ignore_path):
+            if utils.is_relative_to(path, ignore_path):
                 global_ignore.extend(entry["rules"])
 
     filtered_violations = []
