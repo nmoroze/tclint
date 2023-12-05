@@ -8,7 +8,11 @@ The following fields are supported:
 # paths to exclude when searching directories. defaults to empty list.
 exclude = ["ignore_me/", "ignore.tcl"]
 # lint violations to ignore. defaults to empty list.
-ignore = ["spacing"]
+# can also supply an inline table with a path and a list of violations to ignore under that path.
+ignore = [
+    "spacing",
+    { path = "files_with_bad_indent/", rules = ["indent"] }
+]
 
 [style]
 # number of spaces to indent. can also be set to "tab". defaults to 4.

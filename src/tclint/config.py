@@ -46,7 +46,7 @@ class Config:
             # configurations with directories like .git/ excluded
             Optional("exclude"): [Use(pathlib.Path)],
             # TODO: validate that it's a correct ID
-            Optional("ignore"): [str],
+            Optional("ignore"): [Or(str, {"path": Use(pathlib.Path), "rules": [str]})],
             Optional("style"): {
                 Optional("indent"): Or(
                     lambda v: v == "tab", int, error="indent must be integer or 'tab'"

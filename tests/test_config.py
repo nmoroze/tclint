@@ -10,7 +10,10 @@ def test_example_config():
     config = get_config(config_path)
 
     assert config.exclude == list(map(pathlib.Path, ["ignore_me/", "ignore.tcl"]))
-    assert config.ignore == ["spacing"]
+    assert config.ignore == [
+        "spacing",
+        {"path": pathlib.Path("files_with_bad_indent/"), "rules": ["indent"]},
+    ]
 
     assert config.style_indent == 2
     assert config.style_line_length == 100

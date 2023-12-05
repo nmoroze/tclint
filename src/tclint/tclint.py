@@ -12,6 +12,7 @@ from tclint.parser import Parser, TclSyntaxError
 from tclint.checks import IndentLevelChecker, SpacingChecker, LineChecker
 from tclint.violations import Violation
 from tclint.comments import CommentVisitor
+from tclint import utils
 
 try:
     from tclint._version import __version__
@@ -48,14 +49,9 @@ def resolve_sources(
     def is_excluded(path):
         resolved_path = path.resolve()
         for exclude_path in exclude:
-            # if relative_to returns successfully, that means the current path
-            # is under an excluded path, and should be ignored
-            # TODO: if we drop Python 3.8 support, we can use is_relative_to()
-            try:
-                resolved_path.relative_to(exclude_path)
+            # if the current path is under an excluded path it should be ignored
+            if utils.is_relative_to(resolved_path, exclude_path):
                 return True
-            except ValueError:
-                pass
 
         return False
 
@@ -85,14 +81,24 @@ def resolve_sources(
     return sources
 
 
-def filter_violations(violations, global_ignore, line_ignore):
+def filter_violations(violations, config_ignore, inline_ignore, path):
+    global_ignore = []
+    path = path.resolve()
+    for entry in config_ignore:
+        if isinstance(entry, str):
+            global_ignore.append(entry)
+        else:
+            ignore_path = entry["path"].resolve()
+            if path.is_relative_to(ignore_path):
+                global_ignore.extend(entry["rules"])
+
     filtered_violations = []
 
     for violation in violations:
         if violation.id in global_ignore:
             continue
         line = violation.pos[0]
-        if line in line_ignore and violation.id in line_ignore[line]:
+        if line in inline_ignore and violation.id in inline_ignore[line]:
             continue
 
         filtered_violations.append(violation)
@@ -100,7 +106,9 @@ def filter_violations(violations, global_ignore, line_ignore):
     return filtered_violations
 
 
-def lint(script: str, config: Config, debug=False) -> List[Violation]:
+def lint(
+    script: str, config: Config, path: pathlib.Path, debug=False
+) -> List[Violation]:
     parser = Parser(debug=debug)
 
     violations = []
@@ -115,7 +123,7 @@ def lint(script: str, config: Config, debug=False) -> List[Violation]:
 
     v = CommentVisitor()
     ignore_lines = v.run(tree)
-    violations = filter_violations(violations, config.ignore, ignore_lines)
+    violations = filter_violations(violations, config.ignore, ignore_lines, path)
 
     return violations
 
@@ -160,7 +168,7 @@ def main():
             script = f.read()
 
         try:
-            violations = lint(script, config, debug=args.debug)
+            violations = lint(script, config, path, debug=args.debug)
         except TclSyntaxError as e:
             print(f"{path}: syntax error: {e}")
             retcode |= EXIT_SYNTAX_ERROR
