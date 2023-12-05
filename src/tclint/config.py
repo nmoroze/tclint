@@ -1,7 +1,12 @@
 import pathlib
 from typing import Union
 
-import toml
+try:
+    import tomllib
+except ModuleNotFoundError:
+    # tomli backfills on Python < 3.11
+    import tomli as tomllib
+
 from schema import Schema, Optional, Or, Use, SchemaError
 
 
@@ -76,10 +81,10 @@ class Config:
         if not path.exists():
             raise FileNotFoundError
 
-        with open(path, "r") as f:
+        with open(path, "rb") as f:
             try:
-                data = toml.load(f)
-            except toml.decoder.TomlDecodeError as e:
+                data = tomllib.load(f)
+            except tomllib.TOMLDecodeError as e:
                 raise ConfigError(f"{path}: {e}")
 
         try:
@@ -95,7 +100,7 @@ class Config:
             raise FileNotFoundError
 
         with open("pyproject.toml", "r") as f:
-            data = toml.load(f)
+            data = tomllib.load(f)
 
         tclint_config = data.get("tool", {})["tclint"]
 
