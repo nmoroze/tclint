@@ -122,7 +122,7 @@ def lint(
         violations += checker.check(script, tree, config)
 
     v = CommentVisitor()
-    ignore_lines = v.run(tree)
+    ignore_lines = v.run(tree, path)
     violations = filter_violations(violations, config.ignore, ignore_lines, path)
 
     return violations

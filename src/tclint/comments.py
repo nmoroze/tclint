@@ -15,7 +15,8 @@ class CommentVisitor(Visitor):
             # rule -> line
         }
 
-    def run(self, tree):
+    def run(self, tree, path):
+        self._path = path
         tree.accept(self, recurse=True)
 
         # resolve remaining disabled regions
@@ -46,6 +47,12 @@ class CommentVisitor(Visitor):
         if not rules:
             # default if no rules specified is all violation types
             rules = violation_types
+        else:
+            for rule in rules:
+                if rule not in violation_types:
+                    self._warning(
+                        f"unknown rule '{rule}' provided to '{command}'", comment.pos
+                    )
 
         if command == "tclint-disable":
             for rule in rules:
@@ -68,3 +75,13 @@ class CommentVisitor(Visitor):
                         self.ignore_lines[line].add(rule)
 
                     del self._disable_regions[rule]
+        else:
+            self._warning(
+                f"comment starts with '{command}', which looks like a tclint keyword."
+                " Is this a typo?",
+                comment.pos,
+            )
+
+    def _warning(self, message, pos):
+        # TODO: formal warning mechanism
+        print(f"Warning: {self._path}:{pos[0]}:{pos[1]}: {message}")
