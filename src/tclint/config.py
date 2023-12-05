@@ -7,7 +7,9 @@ except ModuleNotFoundError:
     # tomli backfills on Python < 3.11
     import tomli as tomllib
 
-from schema import Schema, Optional, Or, Use, SchemaError
+from schema import Schema, Optional, Or, Use, SchemaError, And
+
+from tclint.violations import violation_types
 
 
 class Config:
@@ -45,8 +47,25 @@ class Config:
             # note: it's ok if paths don't exist - allows for generic
             # configurations with directories like .git/ excluded
             Optional("exclude"): [Use(pathlib.Path)],
-            # TODO: validate that it's a correct ID
-            Optional("ignore"): [Or(str, {"path": Use(pathlib.Path), "rules": [str]})],
+            Optional("ignore"): [
+                Or(
+                    And(
+                        str,
+                        lambda s: s in violation_types,
+                        error="invalid rule ID provided for 'ignore'",
+                    ),
+                    {
+                        "path": Use(pathlib.Path),
+                        "rules": [
+                            And(
+                                str,
+                                lambda s: s in violation_types,
+                                error="invalid rule ID provided for 'ignore'",
+                            )
+                        ],
+                    },
+                )
+            ],
             Optional("style"): {
                 Optional("indent"): Or(
                     lambda v: v == "tab", int, error="indent must be integer or 'tab'"

@@ -1,6 +1,8 @@
 import pathlib
 
-from tclint.config import get_config
+import pytest
+
+from tclint.config import get_config, Config, ConfigError
 
 MY_DIR = pathlib.Path(__file__).parent.resolve()
 
@@ -18,3 +20,8 @@ def test_example_config():
     assert config.style_indent == 2
     assert config.style_line_length == 100
     assert config.style_aligned_set is True
+
+
+def test_invalid_rule():
+    with pytest.raises(ConfigError):
+        config = Config.from_dict({"ignore": ["asdf"]})
