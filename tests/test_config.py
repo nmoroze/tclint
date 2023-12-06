@@ -26,6 +26,7 @@ def test_invalid_rule():
     with pytest.raises(ConfigError):
         Config.from_dict({"ignore": ["asdf"]})
 
+
 def test_pyproject():
     config = Config.from_pyproject(MY_DIR / "data")
     assert config.style_indent == 2
