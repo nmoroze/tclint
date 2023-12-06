@@ -1,5 +1,6 @@
 import pathlib
-from typing import Union
+from typing import Union, List
+from dataclasses import dataclass
 
 try:
     import tomllib
@@ -12,7 +13,14 @@ from schema import Schema, Optional, Or, Use, SchemaError, And
 from tclint.violations import violation_types
 
 
+@dataclass
 class Config:
+    ignore: List[pathlib.Path]
+    exclude: List[Union[dict, str]]
+    style_indent: Union[str, int]
+    style_line_length: int
+    style_aligned_set: bool
+
     def __init__(
         self,
         ignore=None,
