@@ -1,0 +1,12 @@
+# test pyproject.toml read feature
+
+[build-system]
+requires = ["setuptools"]
+
+# other tables/keys...
+
+[tool.tclint]
+ignore = ["spacing"]
+
+[tool.tclint.style]
+indent = 2

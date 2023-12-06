@@ -120,13 +120,18 @@ class Config:
             raise ConfigError(f"{path}: {e}")
 
     @classmethod
-    def from_pyproject(cls):
-        path = pathlib.Path("pyproject.toml")
+    def from_pyproject(cls, directory=None):
+        if directory is None:
+            directory = pathlib.Path(".")
+        else:
+            directory = pathlib.Path(directory)
+
+        path = directory / "pyproject.toml"
 
         if not path.exists():
             raise FileNotFoundError
 
-        with open("pyproject.toml", "r") as f:
+        with open(path, "rb") as f:
             data = tomllib.load(f)
 
         tclint_config = data.get("tool", {})["tclint"]
