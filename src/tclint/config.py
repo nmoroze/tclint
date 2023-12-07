@@ -1,7 +1,7 @@
 import argparse
 import pathlib
 from typing import Union, List
-from dataclasses import dataclass
+import dataclasses
 
 try:
     import tomllib
@@ -45,6 +45,8 @@ def _str2list(s):
 
 
 validators = {
+    # note: it's ok if paths don't exist - allows for generic
+    # configurations with directories like .git/ excluded
     "exclude": And(Use(_str2list), [Use(pathlib.Path)]),
     "ignore": And(
         Use(_str2list),
@@ -76,10 +78,32 @@ validators = {
 }
 
 
+@dataclasses.dataclass
+class Config:
+    # These type annotations are loose, we have validators for more specific
+    # runtime checks
+
+    exclude: List[any] = dataclasses.field(default_factory=list)
+    ignore: List[any] = dataclasses.field(default_factory=list)
+    style_indent: Union[str, int] = dataclasses.field(default=4)
+    style_line_length: int = dataclasses.field(default=80)
+    style_allow_aligned_sets: bool = dataclasses.field(default=False)
+
+    def apply_args(self, args):
+        args_dict = vars(args)
+        for field in dataclasses.fields(self):
+            if field.name in args_dict and args_dict[field.name] is not None:
+                setattr(self, field.name, args_dict[field.name])
+
+        if args.extend_exclude is not None:
+            self.exclude.extend(args.extend_exclude)
+
+        if args.extend_ignore is not None:
+            self.ignore.extend(args.extend_ignore)
+
+
 def _validate_config(config):
     schema = Schema({
-        # note: it's ok if paths don't exist - allows for generic
-        # configurations with directories like .git/ excluded
         Optional("exclude"): validators["exclude"],
         Optional("ignore"): validators["ignore"],
         Optional("style"): {
@@ -94,59 +118,6 @@ def _validate_config(config):
     except SchemaError as e:
         error_s = str(e).replace("\n", " ")
         raise ConfigError(error_s)
-
-
-@dataclass
-class Config:
-    ignore: List[pathlib.Path]
-    exclude: List[Union[dict, str]]
-    style_indent: Union[str, int]
-    style_line_length: int
-    style_allow_aligned_sets: bool
-
-    def __init__(
-        self,
-        ignore=None,
-        exclude=None,
-        style_indent=None,
-        style_line_length=None,
-        style_allow_aligned_sets=None,
-    ):
-        self.ignore = []
-        if ignore is not None:
-            self.ignore = ignore
-
-        self.exclude = []
-        if exclude is not None:
-            self.exclude = exclude
-
-        self.style_indent = 4
-        if style_indent is not None:
-            self.style_indent = style_indent
-
-        self.style_line_length = 80
-        if style_line_length is not None:
-            self.style_line_length = style_line_length
-
-        self.style_allow_aligned_sets = False
-        if style_allow_aligned_sets is not None:
-            self.style_allow_aligned_sets = style_allow_aligned_sets
-
-    def apply_args(self, args):
-        if args.ignore is not None:
-            self.ignore = args.ignore
-        if args.extend_ignore is not None:
-            self.ignore.extend(args.extend_ignore)
-        if args.exclude is not None:
-            self.exclude = args.exclude
-        if args.extend_exclude is not None:
-            self.exclude.extend(args.extend_exclude)
-        if args.style_indent is not None:
-            self.style_indent = args.style_indent
-        if args.style_line_length is not None:
-            self.style_line_length = args.style_line_length
-        if args.style_allow_aligned_sets is not None:
-            self.style_allow_aligned_sets = args.style_allow_aligned_sets
 
 
 class RunConfig:
