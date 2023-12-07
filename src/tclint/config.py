@@ -1,3 +1,4 @@
+import argparse
 import pathlib
 from typing import Union, List
 from dataclasses import dataclass
@@ -28,12 +29,26 @@ def _flatten(d, prefix=None):
     return flat
 
 
-def _validate_config(config):
-    schema = Schema({
-        # note: it's ok if paths don't exist - allows for generic
-        # configurations with directories like .git/ excluded
-        Optional("exclude"): [Use(pathlib.Path)],
-        Optional("ignore"): [
+# Constraint: all non-boolean validators need to be able to normalize a value
+# from a string in order to normalize CLI args. This means one could put e.g. a
+# string rep of a list into a .toml config file, but we shouldn't document this,
+# since it won't be considered stable behavior.
+
+
+def _str2list(s):
+    """Parse comma-separated string to list."""
+    if isinstance(s, str):
+        if s == "":
+            return []
+        return [v.strip() for v in s.split(",")]
+    return s
+
+
+validators = {
+    "exclude": And(Use(_str2list), [Use(pathlib.Path)]),
+    "ignore": And(
+        Use(_str2list),
+        [
             Or(
                 And(
                     str,
@@ -52,14 +67,25 @@ def _validate_config(config):
                 },
             )
         ],
+    ),
+    "style_indent": Or(
+        lambda v: v == "tab", Use(int), error="indent must be integer or 'tab'"
+    ),
+    "style_line_length": Use(int, error="line-length must be integer"),
+    "style_allow_aligned_sets": Use(bool, error="allow-aligned-sets must be a bool"),
+}
+
+
+def _validate_config(config):
+    schema = Schema({
+        # note: it's ok if paths don't exist - allows for generic
+        # configurations with directories like .git/ excluded
+        Optional("exclude"): validators["exclude"],
+        Optional("ignore"): validators["ignore"],
         Optional("style"): {
-            Optional("indent"): Or(
-                lambda v: v == "tab", int, error="indent must be integer or 'tab'"
-            ),
-            Optional("line-length"): Use(int, error="line-length must be integer"),
-            Optional("allow-aligned-sets"): Use(
-                bool, error="allow-aligned-sets must be a bool"
-            ),
+            Optional("indent"): validators["style_indent"],
+            Optional("line-length"): validators["style_line_length"],
+            Optional("allow-aligned-sets"): validators["style_allow_aligned_sets"],
         },
     })
 
@@ -265,24 +291,26 @@ def get_config(args) -> RunConfig:
 
 
 def add_switches(parser):
-    def str2list(s, cast=lambda x: x):
-        """Parse comma-separated string to list."""
-        return [cast(v.strip()) for v in s.split(",")]
+    def validator(key):
+        def func(s):
+            try:
+                return Schema(validators[key]).validate(s)
+            except SchemaError as e:
+                error_s = str(e).replace("\n", " ")
+                raise argparse.ArgumentTypeError(error_s)
+
+        return func
 
     config_group = parser.add_argument_group("Override configuration")
 
-    config_group.add_argument("--ignore", type=str2list)
-    config_group.add_argument("--extend-ignore", type=str2list)
+    config_group.add_argument("--ignore", type=validator("ignore"))
+    config_group.add_argument("--extend-ignore", type=validator("ignore"))
+    config_group.add_argument("--exclude", type=validator("exclude"))
+    config_group.add_argument("--extend-exclude", type=validator("exclude"))
+    config_group.add_argument("--style-indent", type=validator("style_indent"))
     config_group.add_argument(
-        "--exclude", type=lambda s: str2list(s, cast=pathlib.Path)
+        "--style-line-length", type=validator("style_line_length")
     )
-    config_group.add_argument(
-        "--extend-exclude", type=lambda s: str2list(s, cast=pathlib.Path)
-    )
-    config_group.add_argument(
-        "--style-indent", type=lambda s: s if s == "tab" else int(s)
-    )
-    config_group.add_argument("--style-line-length", type=int)
 
     aligned_sets_parser = config_group.add_mutually_exclusive_group(required=False)
     aligned_sets_parser.add_argument(
