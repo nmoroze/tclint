@@ -14,3 +14,16 @@ indent = 2
 line-length = 100
 # whether to allow values of set blocks to be aligned. defaults to false.
 allow-aligned-sets = true
+
+[[fileset]]
+paths = ["other_file_group1/"]
+ignore = ["command-args"]
+
+[fileset.style]
+indent = 3
+
+[[fileset]]
+paths = ["other_file_group2/"]
+
+[fileset.style]
+allow-aligned-sets = false

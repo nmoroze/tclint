@@ -169,7 +169,7 @@ def main():
             script = f.read()
 
         try:
-            violations = lint(script, config, path, debug=args.debug)
+            violations = lint(script, config.get_for_path(path), path, debug=args.debug)
         except TclSyntaxError as e:
             print(f"{path}: syntax error: {e}")
             retcode |= EXIT_SYNTAX_ERROR
