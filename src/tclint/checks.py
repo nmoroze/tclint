@@ -164,7 +164,7 @@ class SpacingChecker(Visitor):
         ]
 
     def check(self, _, tree, config):
-        self.aligned_set = config.style_aligned_set
+        self.aligned_set = config.style_allow_aligned_sets
 
         tree.accept(self, recurse=True)
 

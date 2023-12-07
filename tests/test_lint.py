@@ -28,11 +28,11 @@ def test_aligned_sets():
 set foo  0
 set barx 1"""
 
-    violations = lint(script, Config(style_aligned_set=False), Path())
+    violations = lint(script, Config(style_allow_aligned_sets=False), Path())
     assert len(violations) == 1
     assert violations[0].id == "spacing"
 
-    violations = lint(script, Config(style_aligned_set=True), Path())
+    violations = lint(script, Config(style_allow_aligned_sets=True), Path())
     assert len(violations) == 0
 
 
