@@ -141,12 +141,28 @@ class Config:
         except ConfigError as e:
             raise ConfigError(f"pyproject.toml: {e}")
 
+    def apply_args(self, args):
+        if args.ignore is not None:
+            self.ignore = args.ignore
+        if args.extend_ignore is not None:
+            self.ignore.extend(args.extend_ignore)
+        if args.exclude is not None:
+            self.exclude = args.exclude
+        if args.extend_exclude is not None:
+            self.exclude.extend(args.extend_exclude)
+        if args.style_indent is not None:
+            self.style_indent = args.style_indent
+        if args.style_line_length is not None:
+            self.style_line_length = args.style_line_length
+        if args.style_aligned_sets is not None:
+            self.style_aligned_set = args.style_aligned_sets
+
 
 class ConfigError(Exception):
     pass
 
 
-def get_config(config_path=None) -> Config:
+def _get_base_config(config_path) -> Config:
     DEFAULT_CONFIGS = ("tclint.toml", ".tclint")
 
     # user-supplied
@@ -170,3 +186,39 @@ def get_config(config_path=None) -> Config:
         pass
 
     return Config()
+
+
+def get_config(args) -> Config:
+    config = _get_base_config(args.config)
+    config.apply_args(args)
+
+    return config
+
+
+def add_switches(parser):
+    def str2list(s, cast=lambda x: x):
+        """Parse comma-separated string to list."""
+        return [cast(v.strip()) for v in s.split(",")]
+
+    config_group = parser.add_argument_group("Override configuration")
+
+    config_group.add_argument("--ignore", type=str2list)
+    config_group.add_argument("--extend-ignore", type=str2list)
+    config_group.add_argument(
+        "--exclude", type=lambda s: str2list(s, cast=pathlib.Path)
+    )
+    config_group.add_argument(
+        "--extend-exclude", type=lambda s: str2list(s, cast=pathlib.Path)
+    )
+    config_group.add_argument(
+        "--style-indent", type=lambda s: s if s == "tab" else int(s)
+    )
+    config_group.add_argument("--style-line-length", type=int)
+
+    aligned_sets_parser = config_group.add_mutually_exclusive_group(required=False)
+    aligned_sets_parser.add_argument(
+        "--style-aligned-sets", dest="style_aligned_sets", action="store_true"
+    )
+    aligned_sets_parser.add_argument(
+        "--style-no-aligned-sets", dest="style_aligned_sets", action="store_false"
+    )
