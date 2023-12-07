@@ -2,14 +2,14 @@ import pathlib
 
 import pytest
 
-from tclint.config import get_config, Config, ConfigError
+from tclint.config import _get_base_config, Config, ConfigError
 
 MY_DIR = pathlib.Path(__file__).parent.resolve()
 
 
 def test_example_config():
     config_path = MY_DIR / "data" / "tclint.toml"
-    config = get_config(config_path)
+    config = _get_base_config(config_path)
 
     assert config.exclude == list(map(pathlib.Path, ["ignore_me/", "ignore.tcl"]))
     assert config.ignore == [
