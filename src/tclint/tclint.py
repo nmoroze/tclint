@@ -7,7 +7,7 @@ import pathlib
 import sys
 from typing import List
 
-from tclint.config import get_config, ConfigError, Config, add_switches
+from tclint.config import get_config, setup_config_cli_args, Config, ConfigError
 from tclint.parser import Parser, TclSyntaxError
 from tclint.checks import IndentLevelChecker, SpacingChecker, LineChecker
 from tclint.violations import Violation
@@ -147,14 +147,16 @@ def main():
     parser.add_argument(
         "-c", "--config", help="path to config file", type=pathlib.Path, default=None
     )
-    add_switches(parser)
+    setup_config_cli_args(parser)
     args = parser.parse_args()
 
     try:
-        config = get_config(args)
+        config = get_config(args.config)
     except ConfigError as e:
         print(f"Invalid config file: {e}")
         return EXIT_INPUT_ERROR
+
+    config.apply_cli_args(args)
 
     try:
         sources = resolve_sources(args.source, exclude=config.exclude)
