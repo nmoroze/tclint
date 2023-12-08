@@ -103,21 +103,29 @@ class Config:
 
 
 def _validate_config(config):
-    schema = Schema({
-        Optional("exclude"): validators["exclude"],
+    base_config = {
         Optional("ignore"): validators["ignore"],
         Optional("style"): {
             Optional("indent"): validators["style_indent"],
             Optional("line-length"): validators["style_line_length"],
             Optional("allow-aligned-sets"): validators["style_allow_aligned_sets"],
         },
+    }
+
+    schema = Schema({
+        Optional("exclude"): validators["exclude"],
+        **base_config,
+        Optional("fileset"): Schema([{"paths": [Use(pathlib.Path)], **base_config}]),
     })
 
     try:
         return schema.validate(config)
     except SchemaError as e:
-        error_s = str(e).replace("\n", " ")
-        raise ConfigError(error_s)
+        if e.errors[-1] is not None:
+            error = e.errors[-1]
+        else:
+            error = e.autos[-1]
+        raise ConfigError(error)
 
 
 class RunConfig:
@@ -127,13 +135,15 @@ class RunConfig:
         else:
             self._global_config = Config()
 
-        self._fileset_configs = {}
+        self._fileset_configs = [
+            # ([pathlib.Path...], Config])
+        ]
         if fileset_configs is not None:
             self._fileset_configs = fileset_configs
 
     def get_for_path(self, path) -> Config:
         path = path.resolve()
-        for fileset_paths, config in self._fileset_configs.items():
+        for fileset_paths, config in self._fileset_configs:
             for fileset_path in fileset_paths:
                 if utils.is_relative_to(path, fileset_path):
                     return config
@@ -146,40 +156,33 @@ class RunConfig:
 
     @classmethod
     def from_dict(cls, config_dict: dict):
-        global_config_dict = config_dict.copy()
+        config_dict = _validate_config(config_dict)
         try:
-            global_config_dict.pop("fileset")
+            fileset_config_dicts = config_dict.pop("fileset")
         except KeyError:
-            pass
-        global_config_dict = _validate_config(global_config_dict)
-        global_config_dict = _flatten(global_config_dict)
-        global_config = Config(**global_config_dict)
+            fileset_config_dicts = []
 
-        fileset_configs = {}
-        if "fileset" in config_dict:
-            for config in config_dict["fileset"]:
-                try:
-                    paths = config["paths"]
-                except KeyError:
-                    raise ConfigError("'fileset' table requires 'paths' entry")
+        config_dict = _flatten(config_dict)
+        global_config = Config(**config_dict)
 
-                paths = tuple([pathlib.Path(path).resolve() for path in paths])
-                fileset_config_d = config.copy()
-                fileset_config_d.pop("paths")
-                fileset_config_d = _validate_config(fileset_config_d)
-                fileset_config_d = _flatten(fileset_config_d)
+        fileset_configs = []
+        for fileset_config in fileset_config_dicts:
+            paths = fileset_config.pop("paths")
 
-                # pull in default values from global config
-                full_fileset_config = global_config_dict.copy()
-                full_fileset_config.update(fileset_config_d)
+            paths = tuple([path.resolve() for path in paths])
+            fileset_config = _flatten(fileset_config)
 
-                fileset_configs[paths] = Config(**full_fileset_config)
+            # pull in default values from global config
+            full_fileset_config = config_dict.copy()
+            full_fileset_config.update(fileset_config)
+
+            fileset_configs.append((paths, Config(**full_fileset_config)))
 
         return cls(global_config, fileset_configs)
 
     def apply_args(self, args):
         self._global_config.apply_args(args)
-        for fileset_config in self._fileset_configs.values():
+        for _, fileset_config in self._fileset_configs:
             fileset_config.apply_args(args)
 
     @classmethod
