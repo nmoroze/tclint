@@ -2,14 +2,14 @@ import pathlib
 
 import pytest
 
-from tclint.config import _get_base_config, RunConfig, ConfigError
+from tclint.config import get_config, RunConfig, ConfigError
 
 MY_DIR = pathlib.Path(__file__).parent.resolve()
 
 
 def test_example_config():
     config_path = MY_DIR / "data" / "tclint.toml"
-    config = _get_base_config(config_path)
+    config = get_config(config_path)
 
     global_ = config.get_for_path(pathlib.Path())
 
