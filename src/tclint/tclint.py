@@ -145,7 +145,12 @@ def main():
     parser.add_argument("source", nargs="+", help="files to lint", type=pathlib.Path)
     parser.add_argument("--debug", action="store_true", help="display debug output")
     parser.add_argument(
-        "-c", "--config", help="path to config file", type=pathlib.Path, default=None
+        "-c",
+        "--config",
+        help="path to config file",
+        type=pathlib.Path,
+        default=None,
+        metavar="<path>",
     )
     setup_config_cli_args(parser)
     args = parser.parse_args()

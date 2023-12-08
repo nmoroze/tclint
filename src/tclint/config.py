@@ -44,7 +44,7 @@ class Config:
             self.ignore.extend(args.extend_ignore)
 
 
-# Validators using `schema` library that both check and normalize config inputs.
+# Validators using `schema` library that check and normalize config inputs.
 # Used for checking both config files as well as config-related CLI args.
 
 # Using these for CLI args adds a constraint that all non-boolean validators
@@ -129,7 +129,10 @@ def _validate_config(config):
 
 
 def setup_config_cli_args(parser):
-    """This method defines config-related CLI arguments."""
+    """This method defines config-related CLI arguments.
+
+    The destvars of these switches should match the fields of Config.
+    """
 
     def validator(key):
         def func(s):
@@ -141,15 +144,27 @@ def setup_config_cli_args(parser):
 
         return func
 
-    config_group = parser.add_argument_group("Override configuration")
+    config_group = parser.add_argument_group("configuration arguments")
 
-    config_group.add_argument("--ignore", type=validator("ignore"))
-    config_group.add_argument("--extend-ignore", type=validator("ignore"))
-    config_group.add_argument("--exclude", type=validator("exclude"))
-    config_group.add_argument("--extend-exclude", type=validator("exclude"))
-    config_group.add_argument("--style-indent", type=validator("style_indent"))
     config_group.add_argument(
-        "--style-line-length", type=validator("style_line_length")
+        "--ignore", type=validator("ignore"), metavar='"rule1, rule2, ..."'
+    )
+    config_group.add_argument(
+        "--extend-ignore", type=validator("ignore"), metavar='"rule1, rule2, ..."'
+    )
+    config_group.add_argument(
+        "--exclude", type=validator("exclude"), metavar='"path1, path2, ..."'
+    )
+    config_group.add_argument(
+        "--extend-exclude", type=validator("exclude"), metavar='"path1, path2, ..."'
+    )
+    config_group.add_argument(
+        "--style-indent", type=validator("style_indent"), metavar="<indent>"
+    )
+    config_group.add_argument(
+        "--style-line-length",
+        type=validator("style_line_length"),
+        metavar="<line_length>",
     )
 
     aligned_sets_parser = config_group.add_mutually_exclusive_group(required=False)
