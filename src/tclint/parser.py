@@ -33,7 +33,7 @@ from tclint.syntax_tree import (
     List,
     Expression,
 )
-from tclint.commands.builtin import CommandArgError, commands
+from tclint.commands import CommandArgError, get_commands
 from tclint.violations import CommandArgViolation
 
 
@@ -69,13 +69,19 @@ class _Word:
 
 
 class Parser:
-    def __init__(self, debug=False, cmd_sub=False, debug_indent=0):
+    def __init__(
+        self, debug=False, cmd_sub=False, debug_indent=0, command_plugins=None
+    ):
         """cmd_sub = True indicates that the script will be terminated by ]"""
         self._debug = debug
         self._debug_indent = debug_indent
         self._cmd_sub = cmd_sub
         # TODO: better way to handle this?
         self.violations = []
+
+        if command_plugins is None:
+            command_plugins = []
+        self._commands = get_commands(command_plugins)
 
     def debug(self, *msg):
         if self._debug:
@@ -112,10 +118,10 @@ class Parser:
         of the proc - Tcl blindly constructs the body of the proc until it
         reaches the first }. tclint handles this correctly.
         """
-        if routine not in commands:
+        if routine not in self._commands:
             return args
 
-        func = commands[routine]
+        func = self._commands[routine]
         if func is None:
             return args
 

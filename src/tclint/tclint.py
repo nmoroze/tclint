@@ -109,7 +109,7 @@ def filter_violations(violations, config_ignore, inline_ignore, path):
 def lint(
     script: str, config: Config, path: pathlib.Path, debug=False
 ) -> List[Violation]:
-    parser = Parser(debug=debug)
+    parser = Parser(debug=debug, command_plugins=config.command_plugins)
 
     violations = []
     tree = parser.parse(script)

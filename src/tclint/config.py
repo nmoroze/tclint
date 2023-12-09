@@ -12,6 +12,7 @@ except ModuleNotFoundError:
 from schema import Schema, Optional, Or, Use, SchemaError, And
 
 from tclint.violations import violation_types
+from tclint.commands import validate_command_plugins
 from tclint import utils
 
 
@@ -26,6 +27,7 @@ class Config:
 
     exclude: List[any] = dataclasses.field(default_factory=list)
     ignore: List[any] = dataclasses.field(default_factory=list)
+    command_plugins: List[str] = dataclasses.field(default_factory=list)
     style_indent: Union[str, int] = dataclasses.field(default=4)
     style_line_length: int = dataclasses.field(default=80)
     style_allow_aligned_sets: bool = dataclasses.field(default=False)
@@ -89,6 +91,7 @@ _VALIDATORS = {
             )
         ],
     ),
+    "command_plugins": Use(validate_command_plugins),
     "style_indent": Or(
         lambda v: v == "tab", Use(int), error="indent must be integer or 'tab'"
     ),
@@ -104,6 +107,7 @@ def _validate_config(config):
 
     base_config = {
         Optional("ignore"): _VALIDATORS["ignore"],
+        Optional("command-plugins"): _VALIDATORS["command_plugins"],
         Optional("style"): {
             Optional("indent"): _VALIDATORS["style_indent"],
             Optional("line-length"): _VALIDATORS["style_line_length"],
