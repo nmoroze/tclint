@@ -1,10 +1,12 @@
 import re
 
+from tclint.commands import get_commands
 from tclint.violations import (
     IndentViolation,
     SpacingViolation,
     TrailingWhiteSpaceViolation,
     LineLengthViolation,
+    RedefinedBuiltinViolation,
 )
 from tclint.syntax_tree import Visitor, Script, List
 
@@ -273,3 +275,33 @@ class LineChecker:
                 )
 
         return violations
+
+
+class RedefinedBuiltinChecker(Visitor):
+    """Ensures names of built-in commands aren't reused by proc definitions.
+
+    Reports 'redefined-builtin' violations.
+    """
+
+    def check(self, _, tree, config):
+        self._violations = []
+
+        builtin_commands = get_commands(config.command_plugins)
+        self._commands = builtin_commands.keys()
+
+        tree.accept(self, recurse=True)
+
+        return self._violations
+
+    def visit_command(self, command):
+        if command.routine != "proc":
+            return
+
+        name = command.args[0].contents
+
+        if name in self._commands:
+            self._violations.append(
+                RedefinedBuiltinViolation(
+                    f"redefinition of built-in command '{name}'", command.pos
+                )
+            )

@@ -36,3 +36,4 @@ LineLengthViolation = Violation.create("line-length")
 TrailingWhiteSpaceViolation = Violation.create("trailing-whitespace")
 # used by parser. TODO: should this be separated per command?
 CommandArgViolation = Violation.create("command-args")
+RedefinedBuiltinViolation = Violation.create("redefined-builtin")

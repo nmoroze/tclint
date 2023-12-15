@@ -9,7 +9,12 @@ from typing import List
 
 from tclint.config import get_config, setup_config_cli_args, Config, ConfigError
 from tclint.parser import Parser, TclSyntaxError
-from tclint.checks import IndentLevelChecker, SpacingChecker, LineChecker
+from tclint.checks import (
+    IndentLevelChecker,
+    SpacingChecker,
+    LineChecker,
+    RedefinedBuiltinChecker,
+)
 from tclint.violations import Violation
 from tclint.comments import CommentVisitor
 from tclint import utils
@@ -118,7 +123,12 @@ def lint(
     if debug:
         print(tree.pretty())
 
-    for checker in (IndentLevelChecker(), SpacingChecker(), LineChecker()):
+    for checker in (
+        IndentLevelChecker(),
+        SpacingChecker(),
+        LineChecker(),
+        RedefinedBuiltinChecker(),
+    ):
         violations += checker.check(script, tree, config)
 
     v = CommentVisitor()

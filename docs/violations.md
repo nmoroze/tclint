@@ -7,6 +7,7 @@ This page lists all lint violations that may be reported by `tclint`.
 - [`line-length`](#line-length)
 - [`trailing-whitespace`](#trailing-whitespace)
 - [`command-args`](#command-args)
+- [`redefined-builtin`](#redefined-builtin)
 
 ## `indent`
 
@@ -60,3 +61,12 @@ Commands must be called with appropriate arguments. The exact reason for this vi
 ### Rationale
 
 Incorrect use of commands can result in runtime errors, and ambiguous script arguments limit `tclint`'s ability to fully check code that may be executed at runtime.
+
+## `redefined-builtin`
+
+`proc` definitions may not use the name of built-in commands.
+
+### Rationale
+
+Redefining built-in commands can lead to confusion and result in `tclint`
+reporting false positive `command-args` violations.
