@@ -15,7 +15,7 @@ from tclint.checks import (
     LineChecker,
     RedefinedBuiltinChecker,
 )
-from tclint.violations import Violation
+from tclint.violations import Violation, Rule
 from tclint.comments import CommentVisitor
 from tclint import utils
 
@@ -90,7 +90,7 @@ def filter_violations(violations, config_ignore, inline_ignore, path):
     global_ignore = []
     path = path.resolve()
     for entry in config_ignore:
-        if isinstance(entry, str):
+        if isinstance(entry, Rule):
             global_ignore.append(entry)
         else:
             ignore_path = entry["path"].resolve()
