@@ -308,3 +308,12 @@ class RedefinedBuiltinChecker(Visitor):
                     command.pos,
                 )
             )
+
+
+def get_checkers():
+    return (
+        IndentLevelChecker(),
+        SpacingChecker(),
+        LineChecker(),
+        RedefinedBuiltinChecker(),
+    )
