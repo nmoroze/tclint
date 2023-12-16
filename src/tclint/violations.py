@@ -28,6 +28,7 @@ violation_types = [
     "line-length",
     "trailing-whitespace",
     "command-args",
+    "redefined-builtin",
 ]
 
 IndentViolation = Violation.create("indent")
