@@ -144,6 +144,7 @@ def setup_config_cli_args(parser):
 
     The destvars of these switches should match the fields of Config.
     """
+    config_group = parser.add_argument_group("configuration arguments")
 
     def validator(key):
         def func(s):
@@ -155,7 +156,11 @@ def setup_config_cli_args(parser):
 
         return func
 
-    config_group = parser.add_argument_group("configuration arguments")
+    def add_bool(dest, yes_flag, no_flag):
+        mutex_group = config_group.add_mutually_exclusive_group(required=False)
+        mutex_group.add_argument(yes_flag, dest=dest, action="store_true")
+        mutex_group.add_argument(no_flag, dest=dest, action="store_false")
+        parser.set_defaults(**{dest: None})
 
     config_group.add_argument(
         "--ignore", type=validator("ignore"), metavar='"rule1, rule2, ..."'
@@ -183,14 +188,11 @@ def setup_config_cli_args(parser):
         metavar="<max_blank_lines>",
     )
 
-    aligned_sets_parser = config_group.add_mutually_exclusive_group(required=False)
-    aligned_sets_parser.add_argument(
-        "--style-aligned-sets", dest="style_allow_aligned_sets", action="store_true"
+    add_bool(
+        "style_allow_aligned_sets",
+        "--style-aligned-sets",
+        "--style-no-aligned-sets",
     )
-    aligned_sets_parser.add_argument(
-        "--style-no-aligned-sets", dest="style_allow_aligned_sets", action="store_false"
-    )
-    parser.set_defaults(style_allow_aligned_sets=None)
 
 
 def _flatten(d, prefix=None):
