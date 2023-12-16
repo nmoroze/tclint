@@ -21,6 +21,9 @@ class IndentLevelChecker(Visitor):
         self.expected_levels = {}
 
     def check(self, input, tree, config):
+        self._is_namespace_eval = False
+        self._indent_namespace_eval = config.style_indent_namespace_eval
+
         # first have visitor calculate expected indent on each line
         tree.accept(self, recurse=False)
 
@@ -83,10 +86,14 @@ class IndentLevelChecker(Visitor):
         self._visit_script(list)
 
     def _visit_script(self, script):
-        self.level += 1
+        should_indent = not self._is_namespace_eval or self._indent_namespace_eval
+
+        if should_indent:
+            self.level += 1
         for child in script.children:
             child.accept(self)
-        self.level -= 1
+        if should_indent:
+            self.level -= 1
 
         # check indentation of closing token of script
         if script.end_pos:
@@ -102,6 +109,13 @@ class IndentLevelChecker(Visitor):
             # TODO: do we want to return here? do we still wanna check continuation?
             return
 
+        prev_namespace_eval = self._is_namespace_eval
+        self._is_namespace_eval = (
+            command.routine == "namespace"
+            and len(command.args) > 0
+            and command.args[0].contents == "eval"
+        )
+
         self.expected_levels[command.line] = self.level
 
         for child in command.children:
@@ -115,6 +129,8 @@ class IndentLevelChecker(Visitor):
 
             if not isinstance(child, (Script, List)):
                 self.level -= 1
+
+        self._is_namespace_eval = prev_namespace_eval
 
     def visit_comment(self, comment):
         self._set_level(comment)

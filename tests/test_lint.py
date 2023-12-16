@@ -60,3 +60,21 @@ def test_redefined_builtin():
     violations = lint(script, Config(), Path())
     assert len(violations) == 1
     assert violations[0].id == Rule("redefined-builtin")
+
+
+def test_no_indent_namespace_eval():
+    script = """
+namespace eval my_namespace {
+puts "okay no indent here"
+ puts "indent errors still caught though"
+if {1} {
+puts "including in blocks"
+}
+}
+"""
+    violations = lint(script, Config(style_indent_namespace_eval=False), Path())
+    assert len(violations) == 2
+    assert violations[0].id == Rule.INDENT
+    assert violations[0].pos[0] == 4
+    assert violations[1].id == Rule.INDENT
+    assert violations[1].pos[0] == 6

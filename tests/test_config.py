@@ -23,6 +23,7 @@ def test_example_config():
     assert global_.style_indent == 2
     assert global_.style_line_length == 100
     assert global_.style_allow_aligned_sets is True
+    assert global_.style_indent_namespace_eval is False
 
     group1 = config.get_for_path(pathlib.Path("other_file_group1/file.tcl"))
     assert group1.style_indent == 3

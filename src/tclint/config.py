@@ -32,6 +32,7 @@ class Config:
     style_line_length: int = dataclasses.field(default=80)
     style_allow_aligned_sets: bool = dataclasses.field(default=False)
     style_max_blank_lines: int = dataclasses.field(default=2)
+    style_indent_namespace_eval: bool = dataclasses.field(default=True)
 
     def apply_cli_args(self, args):
         args_dict = vars(args)
@@ -103,6 +104,9 @@ _VALIDATORS = {
         lambda i: i >= 1,
         error="max-blank-lines must be an integer with value at least 1",
     ),
+    "style_indent_namespace_eval": Use(
+        bool, error="indent-namespace-eval must be a bool"
+    ),
 }
 
 
@@ -119,6 +123,9 @@ def _validate_config(config):
             Optional("line-length"): _VALIDATORS["style_line_length"],
             Optional("allow-aligned-sets"): _VALIDATORS["style_allow_aligned_sets"],
             Optional("max-blank-lines"): _VALIDATORS["style_max_blank_lines"],
+            Optional("indent-namespace-eval"): _VALIDATORS[
+                "style_indent_namespace_eval"
+            ],
         },
     }
 
@@ -192,6 +199,11 @@ def setup_config_cli_args(parser):
         "style_allow_aligned_sets",
         "--style-aligned-sets",
         "--style-no-aligned-sets",
+    )
+    add_bool(
+        "style_indent_namespace_eval",
+        "--style-indent-namespace-eval",
+        "--style-no-indent-namespace-eval",
     )
 
 

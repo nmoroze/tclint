@@ -23,6 +23,8 @@ line-length = 100
 max-blank-lines = 1
 # whether to allow values of set blocks to be aligned. defaults to false.
 allow-aligned-sets = true
+# whether to require indenting of "namespace eval" blocks. defaults to true.
+indent-namespace-eval = false
 ```
 
 ## Filesets

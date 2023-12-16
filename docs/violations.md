@@ -14,6 +14,8 @@ This page lists all lint violations that may be reported by `tclint`.
 
 Source files must be indented consistently. `tclint` requires an additional level of indentation within script arguments (e.g. the body of an `if` or `while` command), as well as for continuations of command arguments.
 
+The one configurable exception is the `namespace eval` command. If `style.indent-namespace-eval` is false, then the body of this command doesn't need an extra level of indentation. The default is true.
+
 The indentation style can be configured using `style.indent`. The default is 4 spaces. Tabs and spaces may never be mixed.
 
 ### Rationale
