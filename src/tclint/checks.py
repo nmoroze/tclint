@@ -310,10 +310,114 @@ class RedefinedBuiltinChecker(Visitor):
             )
 
 
+class BlankLineChecker(Visitor):
+    """Ensures that there aren't too many blank lines between commands/comments.
+
+    Reports 'blank-lines' violations.
+    """
+
+    def check(self, _, tree, config):
+        self._violations = []
+        self._non_blank_ranges = []
+        self._parent_is_block = False
+        self._max_blank_lines = config.style_max_blank_lines
+        tree.accept(self)
+        return self._violations
+
+    def visit_script(self, script):
+        self._handle_block(script)
+
+    def visit_comment(self, comment):
+        self._handle_item(comment)
+
+    def visit_command(self, command):
+        self._handle_item(command)
+
+    def visit_command_sub(self, command_sub):
+        self._handle_item(command_sub)
+
+    def visit_quoted_word(self, word):
+        self._handle_item(word)
+
+    def visit_compound_bare_word(self, word):
+        self._handle_item(word)
+
+    def visit_compound_var_sub(self, var_sub):
+        self._handle_item(var_sub)
+
+    def visit_arg_expansion(self, arg_expansion):
+        self._handle_item(arg_expansion)
+
+    def visit_list(self, list):
+        self._handle_block(list)
+
+    def _handle_block(self, block):
+        # every time we visit a script/list, we record the extents of all
+        # items within the first level of the block, and then check that
+        # the gaps between them don't exceed max_blank_lines.
+
+        # recording the full extent of an item  ensures that we don't flag
+        # blank lines within e.g. a quoted multi-line string. we can then
+        # recursively perform this check within any nested script arguments to
+        # ensure we do check things like if statement bodies.
+
+        # need to handle this case for switch commands, where we have a Script
+        # node directly under a List node (which is a block)
+        if self._parent_is_block:
+            self._non_blank_ranges.append((block.pos[0], block.end_pos[0]))
+
+        # we need to save and restore _non_blank_ranges to facilitate the recursion.
+        prev_ranges = self._non_blank_ranges
+
+        self._non_blank_ranges = [
+            # (start_line, end_line)
+        ]
+
+        for child in block.children:
+            self._parent_is_block = True
+            child.accept(self)
+
+        last_non_blank_line = block.pos[0]
+        for start_line, end_line in self._non_blank_ranges:
+            blank_lines = (start_line - last_non_blank_line) - 1
+
+            if blank_lines > self._max_blank_lines:
+                self._violations.append(
+                    Violation(
+                        Rule.BLANK_LINES,
+                        f"found {blank_lines} blank lines,"
+                        f" expected no more than {self._max_blank_lines}",
+                        (last_non_blank_line + 1, 1),
+                    )
+                )
+            last_non_blank_line = end_line
+
+        blank_lines = (block.end_pos[0] - last_non_blank_line) - 1
+        if blank_lines > self._max_blank_lines:
+            self._violations.append(
+                Violation(
+                    Rule.BLANK_LINES,
+                    f"found {blank_lines} blank lines,"
+                    f" expected no more than {self._max_blank_lines}",
+                    (last_non_blank_line + 1, 1),
+                )
+            )
+
+        self._non_blank_ranges = prev_ranges
+
+    def _handle_item(self, item):
+        if self._parent_is_block:
+            self._non_blank_ranges.append((item.pos[0], item.end_pos[0]))
+        for child in item.children:
+            self._parent_is_block = False
+            child.accept(self)
+
+
 def get_checkers():
     return (
         IndentLevelChecker(),
         SpacingChecker(),
         LineChecker(),
         RedefinedBuiltinChecker(),
+        BlankLineChecker(),
     )

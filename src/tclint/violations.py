@@ -16,6 +16,7 @@ class Rule(Enum):
     TRAILING_WHITESPACE = "trailing-whitespace"
     COMMAND_ARGS = "command-args"
     REDEFINED_BUILTIN = "redefined-builtin"
+    BLANK_LINES = "blank-lines"
 
     def __str__(self):
         return self.value

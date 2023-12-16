@@ -31,6 +31,7 @@ class Config:
     style_indent: Union[str, int] = dataclasses.field(default=4)
     style_line_length: int = dataclasses.field(default=80)
     style_allow_aligned_sets: bool = dataclasses.field(default=False)
+    style_max_blank_lines: int = dataclasses.field(default=2)
 
     def apply_cli_args(self, args):
         args_dict = vars(args)
@@ -95,6 +96,13 @@ _VALIDATORS = {
     ),
     "style_line_length": Use(int, error="line-length must be integer"),
     "style_allow_aligned_sets": Use(bool, error="allow-aligned-sets must be a bool"),
+    "style_max_blank_lines": And(
+        Use(int),
+        # we could technically support i >= 0, but I think 0 would be a weird
+        # setting and this lets us ignore pluralizing the violation message :)
+        lambda i: i >= 1,
+        error="max-blank-lines must be an integer with value at least 1",
+    ),
 }
 
 
@@ -110,6 +118,7 @@ def _validate_config(config):
             Optional("indent"): _VALIDATORS["style_indent"],
             Optional("line-length"): _VALIDATORS["style_line_length"],
             Optional("allow-aligned-sets"): _VALIDATORS["style_allow_aligned_sets"],
+            Optional("max-blank-lines"): _VALIDATORS["style_max_blank_lines"],
         },
     }
 
@@ -167,6 +176,11 @@ def setup_config_cli_args(parser):
         "--style-line-length",
         type=validator("style_line_length"),
         metavar="<line_length>",
+    )
+    config_group.add_argument(
+        "--style-max-blank-lines",
+        type=validator("style_max_blank_lines"),
+        metavar="<max_blank_lines>",
     )
 
     aligned_sets_parser = config_group.add_mutually_exclusive_group(required=False)

@@ -19,6 +19,8 @@ ignore = [
 indent = 2
 # maximum allowed line length. defaults to 80.
 line-length = 100
+# maximum allowed number of consecutive blank lines. defaults to 2.
+max-blank-lines = 1
 # whether to allow values of set blocks to be aligned. defaults to false.
 allow-aligned-sets = true
 ```
@@ -58,6 +60,7 @@ configuration arguments:
   --extend-exclude "path1, path2, ..."
   --style-indent <indent>
   --style-line-length <line_length>
+  --style-max-blank-lines <max_blank_lines>
   --style-aligned-sets
   --style-no-aligned-sets
 ```

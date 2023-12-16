@@ -6,6 +6,7 @@ This page lists all lint violations that may be reported by `tclint`.
 - [`spacing`](#spacing)
 - [`line-length`](#line-length)
 - [`trailing-whitespace`](#trailing-whitespace)
+- [`blank-lines`](#blank-lines)
 - [`command-args`](#command-args)
 - [`redefined-builtin`](#redefined-builtin)
 
@@ -49,6 +50,14 @@ Lines must not include trailing whitespace.
 ### Rationale
 
 Trailing whitespace is rarely semantically meaningful and often pollutes version control diffs.
+
+## `blank-lines`
+
+Scripts may not contain too many consecutive blank lines. This number can be configured by `style.max_blank_lines`.
+
+### Rationale
+
+Blank lines can be used to visually organize code and enhance readability. However, an excessive number unecessarily increases file length and may result in inconsistent visual organization, decreasing readability.
 
 ## `command-args`
 
