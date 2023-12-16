@@ -11,7 +11,7 @@ except ModuleNotFoundError:
 
 from schema import Schema, Optional, Or, Use, SchemaError, And
 
-from tclint.violations import violation_types
+from tclint.violations import Rule
 from tclint.commands import validate_command_plugins
 from tclint import utils
 
@@ -73,17 +73,15 @@ _VALIDATORS = {
         Use(_str2list),
         [
             Or(
-                And(
-                    str,
-                    lambda s: s in violation_types,
+                Use(
+                    Rule,
                     error="invalid rule ID provided for 'ignore'",
                 ),
                 {
                     "path": Use(pathlib.Path),
                     "rules": [
-                        And(
-                            str,
-                            lambda s: s in violation_types,
+                        Use(
+                            Rule,
                             error="invalid rule ID provided for 'ignore'",
                         )
                     ],

@@ -34,7 +34,7 @@ from tclint.syntax_tree import (
     Expression,
 )
 from tclint.commands import CommandArgError, get_commands
-from tclint.violations import CommandArgViolation
+from tclint.violations import Rule, Violation
 
 
 class _Word:
@@ -235,7 +235,7 @@ class Parser:
         try:
             parsed_args = self._parse_command_args(routine.contents, args)
         except CommandArgError as e:
-            self.violations.append(CommandArgViolation(str(e), pos))
+            self.violations.append(Violation(Rule.COMMAND_ARGS, str(e), pos))
             parsed_args = args
 
         return Command(routine, *parsed_args, pos=pos, end_pos=ts.pos())

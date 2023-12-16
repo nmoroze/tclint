@@ -1,13 +1,8 @@
 import re
 
 from tclint.commands import get_commands
-from tclint.violations import (
-    IndentViolation,
-    SpacingViolation,
-    TrailingWhiteSpaceViolation,
-    LineLengthViolation,
-    RedefinedBuiltinViolation,
-)
+from tclint.violations import Rule, Violation
+
 from tclint.syntax_tree import Visitor, Script, List
 
 
@@ -71,7 +66,8 @@ class IndentLevelChecker(Visitor):
 
                 pos = (lineno, 1)
                 violations.append(
-                    IndentViolation(
+                    Violation(
+                        Rule.INDENT,
                         f"expected indent of {expected_str}, got {actual_str}",
                         pos,
                     )
@@ -202,7 +198,8 @@ class SpacingChecker(Visitor):
             spacing = word.pos[1] - last_word.end_pos[1]
             if spacing != 1:
                 self.violations.append(
-                    SpacingViolation(
+                    Violation(
+                        Rule.SPACING,
                         f"expected 1 space between words, got {spacing}",
                         last_word.end_pos,
                     )
@@ -226,7 +223,8 @@ class SpacingChecker(Visitor):
                 spacing = cmd.args[1].pos[1] - cmd.args[0].end_pos[1]
                 if spacing != 1:
                     violations.append(
-                        SpacingViolation(
+                        Violation(
+                            Rule.SPACING,
                             "expected 1 space between value and name or fully aligned"
                             " block",
                             cmd.args[1].pos,
@@ -261,7 +259,8 @@ class LineChecker:
             if len(line) > config.style_line_length:
                 pos = (lineno, config.style_line_length + 1)
                 violations.append(
-                    LineLengthViolation(
+                    Violation(
+                        Rule.LINE_LENGTH,
                         f"line length is {len(line)}, maximum allowed is"
                         f" {config.style_line_length}",
                         pos,
@@ -271,7 +270,9 @@ class LineChecker:
             if line.endswith((" ", "\t")):
                 pos = (lineno, len(line))
                 violations.append(
-                    TrailingWhiteSpaceViolation("line has trailing whitespace", pos)
+                    Violation(
+                        Rule.TRAILING_WHITESPACE, "line has trailing whitespace", pos
+                    )
                 )
 
         return violations
@@ -301,7 +302,9 @@ class RedefinedBuiltinChecker(Visitor):
 
         if name in self._commands:
             self._violations.append(
-                RedefinedBuiltinViolation(
-                    f"redefinition of built-in command '{name}'", command.pos
+                Violation(
+                    Rule.REDEFINED_BUILTIN,
+                    f"redefinition of built-in command '{name}'",
+                    command.pos,
                 )
             )

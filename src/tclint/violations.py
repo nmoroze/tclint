@@ -1,8 +1,31 @@
+from enum import Enum
 from typing import Tuple
 
 
+class Rule(Enum):
+    """This enum serves a few purposes:
+
+    1) define symbols for rule IDs to be used in code
+    2) map these symbols to names in the UI
+    3) collect all rule IDs/provide validation for IDs
+    """
+
+    INDENT = "indent"
+    SPACING = "spacing"
+    LINE_LENGTH = "line-length"
+    TRAILING_WHITESPACE = "trailing-whitespace"
+    COMMAND_ARGS = "command-args"
+    REDEFINED_BUILTIN = "redefined-builtin"
+
+    def __str__(self):
+        return self.value
+
+
+ALL_RULES = [rule for rule in Rule]
+
+
 class Violation:
-    def __init__(self, id: str, message: str, pos: Tuple[int, int]):
+    def __init__(self, id: Rule, message: str, pos: Tuple[int, int]):
         self.id = id
         self.message = message
         self.pos = pos
@@ -20,21 +43,3 @@ class Violation:
             return cls(id, message, pos)
 
         return func
-
-
-violation_types = [
-    "indent",
-    "spacing",
-    "line-length",
-    "trailing-whitespace",
-    "command-args",
-    "redefined-builtin",
-]
-
-IndentViolation = Violation.create("indent")
-SpacingViolation = Violation.create("spacing")
-LineLengthViolation = Violation.create("line-length")
-TrailingWhiteSpaceViolation = Violation.create("trailing-whitespace")
-# used by parser. TODO: should this be separated per command?
-CommandArgViolation = Violation.create("command-args")
-RedefinedBuiltinViolation = Violation.create("redefined-builtin")

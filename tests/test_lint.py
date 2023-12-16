@@ -2,6 +2,7 @@ from pathlib import Path
 
 from tclint.tclint import lint
 from tclint.config import Config
+from tclint.violations import Rule
 
 
 def test_cmd_args_in_sub():
@@ -10,7 +11,7 @@ def test_cmd_args_in_sub():
     violations = lint(script, Config(), Path())
 
     assert len(violations) == 1
-    assert violations[0].id == "command-args"
+    assert violations[0].id == Rule("command-args")
 
 
 def test_no_false_positive_arg_expansion():
@@ -30,7 +31,7 @@ set barx 1"""
 
     violations = lint(script, Config(style_allow_aligned_sets=False), Path())
     assert len(violations) == 1
-    assert violations[0].id == "spacing"
+    assert violations[0].id == Rule("spacing")
 
     violations = lint(script, Config(style_allow_aligned_sets=True), Path())
     assert len(violations) == 0
@@ -40,7 +41,7 @@ def test_accidental_return_expr():
     script = "return 5 + 2"
     violations = lint(script, Config(), Path())
     assert len(violations) == 1
-    assert violations[0].id == "command-args"
+    assert violations[0].id == Rule("command-args")
 
 
 def test_ignore_path():
@@ -49,7 +50,7 @@ def test_ignore_path():
     violations = lint(script, Config(), fake_path)
     assert len(violations) == 1
 
-    config = Config(ignore=[{"path": fake_path, "rules": ["spacing"]}])
+    config = Config(ignore=[{"path": fake_path, "rules": [Rule("spacing")]}])
     violations = lint(script, config, fake_path)
     assert len(violations) == 0
 
@@ -58,4 +59,4 @@ def test_redefined_builtin():
     script = "proc puts {} {}"
     violations = lint(script, Config(), Path())
     assert len(violations) == 1
-    assert violations[0].id == "redefined-builtin"
+    assert violations[0].id == Rule("redefined-builtin")

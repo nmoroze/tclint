@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from tclint.syntax_tree import Visitor
-from tclint.violations import violation_types
+from tclint.violations import ALL_RULES, Rule
 
 
 class CommentVisitor(Visitor):
@@ -37,19 +37,22 @@ class CommentVisitor(Visitor):
 
         command = split[0]
 
-        rules = []
+        rule_strs = []
         if len(split) > 1:
             rest = split[-1]
-            rules = rest.split("--", 1)[0]
-            rules = rules.replace(" ", "")
-            rules = rules.split(",")
+            rule_strs = rest.split("--", 1)[0]
+            rule_strs = rule_strs.replace(" ", "")
+            rule_strs = rule_strs.split(",")
 
-        if not rules:
+        rules = []
+        if not rule_strs:
             # default if no rules specified is all violation types
-            rules = violation_types
+            rules = ALL_RULES
         else:
-            for rule in rules:
-                if rule not in violation_types:
+            for rule in rule_strs:
+                try:
+                    rules.append(Rule(rule))
+                except ValueError:
                     self._warning(
                         f"unknown rule '{rule}' provided to '{command}'", comment.pos
                     )
