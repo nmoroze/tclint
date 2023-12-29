@@ -64,13 +64,24 @@ def _after_idle(args, parser):
 
 
 def _apply(args, parser):
-    # TODO: implement
     # ref: https://www.tcl.tk/man/tcl/TclCmd/apply.html
+    if len(args) < 1:
+        raise CommandArgError(
+            f"not enough args to apply: got {len(args)}, expected at least 1"
+        )
 
-    raise CommandArgError(
-        "argument parsing for 'apply' not implemented, body will not be checked for"
-        " violations"
-    )
+    func_list = parser.parse_list(args[0])
+    list_len = len(func_list.children)
+    if list_len < 2 or list_len > 3:
+        raise CommandArgError(
+            f"Invalid first argument to apply: got list of {list_len} elements,"
+            " expected 2 or 3"
+        )
+
+    body = parse_script_arg(func_list.children[1], parser)
+    func_list.children[1] = body
+
+    return [func_list] + args[1:]
 
 
 def _catch(args, parser):
