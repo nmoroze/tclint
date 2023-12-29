@@ -79,25 +79,39 @@ class IndentLevelChecker(Visitor):
         return violations
 
     def visit_script(self, script):
-        self._visit_script(script)
+        should_indent = not self._is_namespace_eval or self._indent_namespace_eval
+        self._visit_block(script, should_indent=should_indent)
 
     def visit_list(self, list):
-        # List works like Script for indent checking purposes
-        self._visit_script(list)
+        # lists work a bit like scripts. However, they only add a level of
+        # indentation when there's a newline between the end and start of an
+        # item in the list (or between the start of the list and the first
+        # element). This seems to be a good standard for enforcing conventional
+        # formatting in a couple different contexts, e.g. switch and apply. See
+        # tests/data/indent_lists.tcl for test cases that exercise this logic.
 
-    def _visit_script(self, script):
-        should_indent = not self._is_namespace_eval or self._indent_namespace_eval
+        should_indent = False
 
+        prev_line = list.line
+        for child in list.children:
+            if prev_line is not None and prev_line != child.line:
+                should_indent = True
+                break
+            prev_line = child.end_pos[0]
+
+        self._visit_block(list, should_indent=should_indent)
+
+    def _visit_block(self, block, should_indent=True):
         if should_indent:
             self.level += 1
-        for child in script.children:
+        for child in block.children:
             child.accept(self)
         if should_indent:
             self.level -= 1
 
         # check indentation of closing token of script
-        if script.end_pos:
-            end_line, _ = script.end_pos
+        if block.end_pos:
+            end_line, _ = block.end_pos
             if end_line not in self.expected_levels:
                 self.expected_levels[end_line] = self.level
 

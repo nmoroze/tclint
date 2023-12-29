@@ -1,0 +1,4 @@
+data/indent_lists.tcl:10:1: expected indent of 4 spaces, got 8 [indent]
+data/indent_lists.tcl:32:1: expected indent of 4 spaces, got 0 [indent]
+data/indent_lists.tcl:33:1: expected indent of 8 spaces, got 4 [indent]
+data/indent_lists.tcl:34:1: expected indent of 4 spaces, got 0 [indent]
