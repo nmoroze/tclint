@@ -22,7 +22,8 @@ dependencies = [
 dev = [
     "black",
     "flake8",
-    "pytest"
+    "pytest",
+    "pytest-timeout"
 ]
 
 [project.scripts]
@@ -30,6 +31,7 @@ tclint = "tclint.tclint:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+timeout = 10
 
 [tool.setuptools_scm]
 version_file = "src/tclint/_version.py"
