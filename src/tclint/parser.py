@@ -286,14 +286,11 @@ class Parser:
                 word.add_tok(ts.current)
                 ts.next()
 
-        if ts.type() == TOK_EOF:
-            raise TclSyntaxError(
-                f"reached EOF without finding match for quote at {pos}"
-            )
-
         res = word.resolve(ts.pos())
 
-        ts.assert_(TOK_QUOTE)
+        ts.expect(
+            TOK_QUOTE, message=f"reached EOF without finding match for quote at {pos}"
+        )
 
         self._debug_indent -= 1
 
