@@ -416,11 +416,27 @@ def _switch(args, parser):
 
 def _time(args, parser):
     # ref: https://www.tcl.tk/man/tcl/TclCmd/time.html
-    # TODO: implement
-    raise CommandArgError(
-        "argument parsing for 'time' not implemented, any script arguments will not be"
-        " checked for violations"
-    )
+    if len(args) < 1:
+        raise CommandArgError(
+            f"not enough args to time: got {len(args)}, expected at least 1"
+        )
+
+    if len(args) > 2:
+        raise CommandArgError(
+            f"too many args to time: got {len(args)}, expected no more than 2"
+        )
+
+    if len(args) == 2:
+        time = args[1].contents
+        if time is not None:
+            try:
+                int(time)
+            except ValueError:
+                raise CommandArgError(
+                    "invalid argument to time: expected integer for last argument"
+                )
+
+    return [parse_script_arg(args[0], parser)] + args[1:]
 
 
 def _timerate(args, parser):
