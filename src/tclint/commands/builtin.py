@@ -441,11 +441,51 @@ def _time(args, parser):
 
 def _timerate(args, parser):
     # ref: https://www.tcl.tk/man/tcl/TclCmd/timerate.html
-    # TODO: implement
-    raise CommandArgError(
-        "argument parsing for 'timerate' not implemented, any script arguments will not"
-        " be checked for violations"
-    )
+    # timerate doesn't seem to be implemented in tclsh 8.6 for me - why?
+
+    args = list(args)
+    new_args = []
+
+    while True:
+        try:
+            arg = args.pop(0)
+        except IndexError:
+            raise CommandArgError("invalid arguments to timerate: expected script body")
+
+        if arg.contents in {"-direct", "-calibrate"}:
+            new_args.append(arg)
+        elif arg.contents in {"-overhead"}:
+            new_args.append(arg)
+            try:
+                val = args.pop(0)
+                if val.contents is not None:
+                    float(val.contents)
+            except (ValueError, IndexError, TypeError):
+                raise CommandArgError(
+                    "invalid argument to timerate: -overhead must be followed by a"
+                    " double"
+                )
+            new_args.append(val)
+        else:
+            break
+
+    new_args.append(parse_script_arg(arg, parser))
+
+    if len(args) > 2:
+        raise CommandArgError(
+            "too many arguments to timerate: expected no more than 2 arguments"
+            " following script body"
+        )
+
+    try:
+        [int(arg.contents) for arg in args]
+    except ValueError:
+        raise CommandArgError(
+            "invalid argument to timerate: expected one or two integers following"
+            " script body"
+        )
+
+    return new_args + args
 
 
 def _try(args, parser):
