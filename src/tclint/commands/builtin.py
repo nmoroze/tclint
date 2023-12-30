@@ -162,12 +162,7 @@ def _dict_with(args, parser):
             f"not enough args to 'dict with': got {len(args)}, expected at least 2"
         )
 
-    # TODO: implement
-
-    raise CommandArgError(
-        "argument parsing for 'dict with' not implemented, body will not be checked for"
-        " violations"
-    )
+    return args[0:-1] + [parse_script_arg(args[-1], parser)]
 
 
 def _eval(args, parser):
