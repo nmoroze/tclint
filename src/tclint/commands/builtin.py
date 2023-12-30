@@ -105,12 +105,21 @@ def _dict_filter(args, parser):
             f"not enough args to 'dict filter': got {len(args)}, expected at least 2"
         )
 
-    if args[1].contents == "script":
-        # TODO: implement
+    if args[1].contents not in {"key", "script", "value"}:
         raise CommandArgError(
-            "argument parsing for 'dict filter' not implemented, body will not be"
-            " checked for violations"
+            "invalid argument to 'dict filter': expected filter type to be one of key,"
+            " script, or value"
         )
+
+    if args[1].contents == "script":
+        kv_pair = parser.parse_list(args[2])
+        list_len = len(kv_pair.children)
+        if len(kv_pair.children) != 2:
+            raise CommandArgError(
+                "invalid argument to 'dict filter': expected list of 2 elements in"
+                f" second-to-last argument, got {list_len}"
+            )
+        return args[0:2] + [kv_pair, parse_script_arg(args[3], parser)]
 
     return None
 
