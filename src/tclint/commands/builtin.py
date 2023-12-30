@@ -39,6 +39,28 @@ from tclint.commands.utils import (
 )
 
 
+def _check_code(arg):
+    """Check 'code' argument used by return and try."""
+
+    val = arg.contents
+    if val is None:
+        return
+
+    try:
+        int(val)
+    except ValueError:
+        pass
+    else:
+        return
+
+    if val in {"ok", "error", "return", "break", "continue"}:
+        return
+
+    raise CommandArgError(
+        f"got {val}, expected one of ok, error, return, break, continue, or an integer"
+    )
+
+
 def _after(args, parser):
     # ref: https://www.tcl.tk/man/tcl/TclCmd/after.html
 
@@ -306,25 +328,11 @@ def _return(args, parser):
 
         try:
             if option == "-code":
-                val = args.pop(0).contents
-
-                if val is None:
-                    continue
-
+                arg = args.pop(0)
                 try:
-                    int(val)
-                except ValueError:
-                    pass
-                else:
-                    continue
-
-                if val in {"ok", "error", "return", "break", "continue"}:
-                    continue
-
-                raise CommandArgError(
-                    f"invalid value for return -code: got {val}, expected one of ok,"
-                    " error, return, break, continue, or an integer"
-                )
+                    _check_code(arg)
+                except CommandArgError as e:
+                    raise CommandArgError(f"invalid value for return -code: {e}")
             elif option == "-level":
                 val = args.pop(0).contents
 
@@ -490,11 +498,56 @@ def _timerate(args, parser):
 
 def _try(args, parser):
     # ref: https://www.tcl.tk/man/tcl/TclCmd/try.html
-    # TODO: implement
-    raise CommandArgError(
-        "argument parsing for 'try' not implemented, any script arguments will not be"
-        " checked for violations"
-    )
+    args = list(args)
+    new_args = []
+
+    while True:
+        try:
+            arg = args.pop(0)
+        except IndexError:
+            raise CommandArgError("invalid arguments to try: missing script body")
+        new_args.append(parse_script_arg(arg, parser))
+
+        try:
+            arg = args.pop(0)
+        except IndexError:
+            break
+
+        new_args.append(arg)
+
+        if arg.contents == "on":
+            try:
+                code = args.pop(0)
+                try:
+                    _check_code(code)
+                except CommandArgError as e:
+                    raise CommandArgError(
+                        f"invalid code argument to 'on' handler in try: {e}"
+                    )
+                new_args.append(code)
+                new_args.append(args.pop(0))
+            except IndexError:
+                raise CommandArgError(
+                    "invalid arguments to try: expected 3 arguments after 'on' handler"
+                )
+        elif arg.contents == "trap":
+            try:
+                new_args.append(args.pop(0))
+                new_args.append(args.pop(0))
+            except IndexError:
+                raise CommandArgError(
+                    "invalid arguments to try: expected 3 arguments after 'trap'"
+                    " handler"
+                )
+        elif arg.contents == "finally":
+            continue
+        else:
+            raise CommandArgError(
+                "invalid handler argument to try: expected one of 'on', 'trap', or"
+                " 'finally'"
+            )
+
+    return new_args
 
 
 def _while(args, parser):
