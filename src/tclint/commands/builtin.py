@@ -146,12 +146,12 @@ def _dict_update(args, parser):
             f"not enough args to 'dict update': got {len(args)}, expected at least 4"
         )
 
-    # TODO: implement
+    if len(args) % 2 != 0:
+        raise CommandArgError(
+            "invalid # of args to 'dict update': expected an even number"
+        )
 
-    raise CommandArgError(
-        "argument parsing for 'dict update' not implemented, body will not be checked"
-        " for violations"
-    )
+    return args[0:-1] + [parse_script_arg(args[-1], parser)]
 
 
 def _dict_with(args, parser):
