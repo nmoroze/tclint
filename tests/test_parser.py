@@ -448,3 +448,15 @@ def test_recursive_parse_in_cmd_sub():
             )
         )
     )
+
+
+def test_parse_list():
+    val = "alpha beta gamma"
+    node = BracedWord(val, pos=(1, 1), end_pos=(1, 1 + len(val)))
+    parser = Parser(debug=True)
+    list_node = parser.parse_list(node)
+    assert list_node.children == [
+        BareWord("alpha"),
+        BareWord("beta"),
+        BareWord("gamma"),
+    ]

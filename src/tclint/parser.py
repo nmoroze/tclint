@@ -497,13 +497,19 @@ class Parser:
                     ts.next()
                 word = BareWord(contents, pos=bare_word_pos, end_pos=ts.pos())
 
-                ts.assert_(TOK_QUOTE)
+                ts.expect(
+                    TOK_QUOTE,
+                    message=(
+                        "reached EOF without finding match for quote at"
+                        f" {quote_word_pos}"
+                    ),
+                )
 
                 list_node.add(QuotedWord(word, pos=quote_word_pos, end_pos=ts.pos()))
             else:
                 pos = ts.pos()
                 contents = ""
-                while ts.type() not in DELIMITERS:
+                while ts.type() not in {*DELIMITERS, TOK_EOF}:
                     contents += ts.value()
                     ts.next()
                 list_node.add(BareWord(contents, pos=pos, end_pos=ts.pos()))
