@@ -1,3 +1,5 @@
+import re
+
 from tclint.lexer import (
     Lexer,
     TclSyntaxError,
@@ -18,6 +20,7 @@ from tclint.lexer import (
     TOK_VAR_CHARS,
     TOK_NAMESPACE_SEP,
     TOK_EOF,
+    TOK_CHAR,
 )
 from tclint.syntax_tree import (
     Script,
@@ -32,6 +35,7 @@ from tclint.syntax_tree import (
     CompoundBareWord,
     List,
     Expression,
+    UnaryOp,
 )
 from tclint.commands import CommandArgError, get_commands
 from tclint.violations import Rule, Violation
@@ -514,4 +518,186 @@ class Parser:
         return list_node
 
     def parse_expression(self, node):
-        return Expression(node.contents, pos=node.pos, end_pos=node.end_pos)
+        if node.contents is None:
+            return None
+
+        # TODO: we need to figure out where contents start
+        ts = Lexer(pos=(node.line, node.col + 1))
+        ts.input(node.contents)
+
+        expr = self._parse_expression(ts)
+
+        # hack to make sure positions match the containing node, preserves spacing check
+        expr.line = node.pos[0]
+        expr.col = node.pos[1]
+        expr.end_pos = node.end_pos
+
+        return expr
+
+    def _parse_expression(self, ts):
+        # parse first part of expression:
+        # - VarSub
+        # - QuoteString
+        # - BraceString
+        # - CommandSub
+        # - Literal (integer, float, boolean)
+        # - Function
+        # - "(" Expression ")"
+        # - UnaryOp
+
+        # either BinaryOp, TernaryOp, or EOF
+        # If BinaryOp or TernaryOp, parse additional Expression(s)
+
+        # return Expression(node.contents, pos=node.pos, end_pos=node.end_pos)
+
+        while ts.type() == TOK_WS:
+            ts.next()
+
+        expr = Expression(pos=ts.pos())
+
+        op1 = self._parse_operand(ts)
+        expr.add(op1)
+
+        if ts.type() != TOK_EOF:
+            operator = self._parse_operator(ts)
+            expr.add(operator)
+
+            op2 = self._parse_expression(ts)
+            expr.add(op2)
+
+            ts.expect(TOK_EOF, message=f"expected end of expression at {ts.pos()}")
+
+        # TODO: handle ternary ops
+        # if ts.value() == "?":
+        #     ts.next()
+        #     op2 = self._parse_expression(ts)
+        #     if ts.value() != ""
+
+        # TODO: handle functions
+        # if _is_function(operand):
+        #     return Function
+
+        expr.end_pos = ts.pos()
+        return expr
+
+    def _parse_operand(self, ts):
+        while ts.type() == TOK_WS:
+            ts.next()
+
+        if ts.type() == TOK_DOLLAR:
+            return self.parse_var_sub(ts)
+        if ts.type() == TOK_QUOTE:
+            return self.parse_quoted_word(ts)
+        if ts.type() == TOK_LBRACE:
+            return self.parse_braced_word(ts)
+        if ts.type() == TOK_LBRACKET:
+            return self.parse_command_sub(ts)
+        if ts.type() == TOK_LPAREN:
+            paren_pos = ts.pos()
+            ts.next()
+            expr = self._parse_expression(ts)
+            ts.expect(
+                TOK_RPAREN,
+                message=f"reached EOF without finding match for paren at {paren_pos}",
+            )
+            return expr
+        if ts.value() in {"-", "+", "~", "!"}:
+            operator = ts.value()
+            operator_pos = ts.pos()
+            ts.next()
+            op = UnaryOp(pos=operator_pos)
+            op.add(BareWord(operator, pos=operator_pos, end_pos=ts.pos())),
+            op.add(self._parse_operand(ts))
+            op.end_pos = ts.pos()
+            return op
+
+        # if none of these, collect tokens that may comprise an operand
+        operand = ""
+        operand_pos = ts.pos()
+        while ts.type() in {TOK_VAR_CHARS, TOK_CHAR}:
+            operand += ts.value()
+            ts.next()
+
+        if not (
+            _is_int_literal(operand)
+            or _is_float_literal(operand)
+            or _is_bool_literal(operand)
+        ):
+            raise TclSyntaxError(f"Invalid bareword in expression: {operand}")
+
+        node = BareWord(operand, pos=operand_pos, end_pos=ts.pos())
+
+        while ts.type() == TOK_WS:
+            ts.next()
+
+        return node
+
+    def _parse_operator(self, ts):
+        pos = ts.pos()
+
+        # hacky logic to handle parsing legal operators
+
+        if ts.value() in {"*", "&", "|"}:
+            # one or two of these characters are legal operators
+            operator = ts.value()
+            ts.next()
+            if ts.value() == operator:
+                operator += ts.value()
+                ts.next()
+        elif ts.value() in {"<", ">"}:
+            operator = ts.value()
+            ts.next()
+            if ts.value() in {operator, "="}:
+                operator += ts.value()
+                ts.next()
+        elif ts.value() in {"*", "/", "%", "+", "-", "^", "eq", "ne", "in", "ni"}:
+            operator = ts.value()
+            ts.next()
+        else:
+            raise TclSyntaxError(f"expression has invalid operator: {ts.value()}")
+
+        return BareWord(operator, pos=pos, end_pos=ts.pos())
+
+
+def _is_int_literal(operand):
+    binary_digits = ["0", "1"]
+    octal_digits = binary_digits + ["2", "3", "4", "5", "6", "7"]
+    decimal_digits = octal_digits + ["8", "9"]
+    hex_digits = decimal_digits + [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+    ]
+
+    # prefixes
+    if operand.startswith("0b"):
+        return all([digit in binary_digits for digit in operand[2:]])
+    if operand.startswith("0o"):
+        return all([digit in octal_digits for digit in operand[2:]])
+    if operand.startswith("0x"):
+        return all([digit in hex_digits for digit in operand[2:]])
+    if operand.startswith("0"):
+        # fun fact: apparently a lone 0 prefix is interpreted as octal
+        return all([digit in octal_digits for digit in operand[1:]])
+
+    return all([digit in decimal_digits for digit in operand])
+
+
+def _is_float_literal(operand):
+    if operand.lower() in {"nan", "inf"}:
+        return True
+
+    return re.fullmatch(r"\d+\.?\d*([Ee][+-]?\d+)?", operand) is not None
+
+
+def _is_bool_literal(operand):
+    return operand in {"false", "no", "off", "true", "yes", "on"}

@@ -312,3 +312,10 @@ class Expression(Node):
         if recurse:
             self._recurse(visitor)
         visitor.visit_expression(self)
+
+
+class UnaryOp(Node):
+    def accept(self, visitor, recurse=False):
+        if recurse:
+            self._recurse(visitor)
+        visitor.visit_expression(self)
