@@ -41,6 +41,23 @@ from tclint.commands import CommandArgError, get_commands
 from tclint.violations import Rule, Violation
 
 
+def _strip_ws(parse_func):
+    """Decorator used by expression parser for stripping whitespace around a node."""
+
+    def func(parser, ts):
+        while ts.type() == TOK_WS:
+            ts.next()
+
+        node = parse_func(parser, ts)
+
+        while ts.type() == TOK_WS:
+            ts.next()
+
+        return node
+
+    return func
+
+
 class _Word:
     """Helper class for constructing Word nodes out of multiple segments."""
 
@@ -534,6 +551,7 @@ class Parser:
 
         return expr
 
+    @_strip_ws
     def _parse_expression(self, ts):
         # parse first part of expression:
         # - VarSub
@@ -550,28 +568,44 @@ class Parser:
 
         # return Expression(node.contents, pos=node.pos, end_pos=node.end_pos)
 
-        while ts.type() == TOK_WS:
-            ts.next()
-
         expr = Expression(pos=ts.pos())
 
         op1 = self._parse_operand(ts)
         expr.add(op1)
 
-        if ts.type() != TOK_EOF:
-            operator = self._parse_operator(ts)
-            expr.add(operator)
+        # last condition is hack to break out of expression in case we're in ternary op
+        if ts.type() not in (TOK_EOF, TOK_RPAREN) and ts.value() != ":":
+            if ts.value() == "?":
+                # ternary op
+                # weird hack to record operator
+                n = BareWord("?", pos=ts.pos())
+                ts.next()
+                n.end_pos = ts.pos()
+                expr.add(n)
 
-            op2 = self._parse_expression(ts)
-            expr.add(op2)
+                op2 = self._parse_expression(ts)
+                expr.add(op2)
+                if ts.value() != ":":
+                    raise TclSyntaxError("expected ':' to continue ternary expression")
 
-            ts.expect(TOK_EOF, message=f"expected end of expression at {ts.pos()}")
+                # weird hack again
+                n = BareWord(":", pos=ts.pos())
+                ts.next()
+                n.end_pos = ts.pos()
+                expr.add(n)
 
-        # TODO: handle ternary ops
-        # if ts.value() == "?":
-        #     ts.next()
-        #     op2 = self._parse_expression(ts)
-        #     if ts.value() != ""
+                op3 = self._parse_expression(ts)
+                expr.add(op3)
+            else:
+                # binary op
+                operator = self._parse_operator(ts)
+                expr.add(operator)
+
+                op2 = self._parse_expression(ts)
+                expr.add(op2)
+
+            if ts.type() != TOK_RPAREN and ts.value() != ":":
+                ts.expect(TOK_EOF, message=f"expected end of expression at {ts.pos()}")
 
         # TODO: handle functions
         # if _is_function(operand):
@@ -580,10 +614,8 @@ class Parser:
         expr.end_pos = ts.pos()
         return expr
 
+    @_strip_ws
     def _parse_operand(self, ts):
-        while ts.type() == TOK_WS:
-            ts.next()
-
         if ts.type() == TOK_DOLLAR:
             return self.parse_var_sub(ts)
         if ts.type() == TOK_QUOTE:
@@ -626,9 +658,6 @@ class Parser:
             raise TclSyntaxError(f"Invalid bareword in expression: {operand}")
 
         node = BareWord(operand, pos=operand_pos, end_pos=ts.pos())
-
-        while ts.type() == TOK_WS:
-            ts.next()
 
         return node
 
