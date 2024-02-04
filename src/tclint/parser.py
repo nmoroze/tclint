@@ -574,7 +574,7 @@ class Parser:
         expr.add(op1)
 
         # last condition is hack to break out of expression in case we're in ternary op
-        if ts.type() not in (TOK_EOF, TOK_RPAREN) and ts.value() != ":":
+        if ts.type() not in {TOK_EOF, TOK_RPAREN} and ts.value() not in {":", ","}:
             if ts.value() == "?":
                 # ternary op
                 # weird hack to record operator
@@ -604,12 +604,8 @@ class Parser:
                 op2 = self._parse_expression(ts)
                 expr.add(op2)
 
-            if ts.type() != TOK_RPAREN and ts.value() != ":":
+            if ts.type() != TOK_RPAREN and ts.value() not in {":", ","}:
                 ts.expect(TOK_EOF, message=f"expected end of expression at {ts.pos()}")
-
-        # TODO: handle functions
-        # if _is_function(operand):
-        #     return Function
 
         expr.end_pos = ts.pos()
         return expr
@@ -646,18 +642,24 @@ class Parser:
         # if none of these, collect tokens that may comprise an operand
         operand = ""
         operand_pos = ts.pos()
-        while ts.type() in {TOK_VAR_CHARS, TOK_CHAR}:
+        while ts.type() in {TOK_VAR_CHARS, TOK_CHAR} and ts.value() != ",":
             operand += ts.value()
             ts.next()
+
+        is_func = _is_function(operand)
 
         if not (
             _is_int_literal(operand)
             or _is_float_literal(operand)
             or _is_bool_literal(operand)
+            or is_func
         ):
             raise TclSyntaxError(f"Invalid bareword in expression: {operand}")
 
         node = BareWord(operand, pos=operand_pos, end_pos=ts.pos())
+
+        if is_func:
+            node = self._parse_function(ts, node)
 
         return node
 
@@ -686,6 +688,44 @@ class Parser:
             raise TclSyntaxError(f"expression has invalid operator: {ts.value()}")
 
         return BareWord(operator, pos=pos, end_pos=ts.pos())
+
+    def _parse_function(self, ts, name_node):
+        print("parse_function")
+        func_node = Expression(pos=name_node.pos)
+
+        func_node.add(name_node)
+
+        while ts.type() == TOK_WS:
+            ts.next()
+
+        ts.expect(
+            TOK_LPAREN,
+            message=f"expected open paren after function name at {name_node.pos}",
+        )
+
+        delims = {TOK_RPAREN, TOK_EOF}
+
+        if ts.type() not in delims:
+            arg = self._parse_expression(ts)
+            func_node.add(arg)
+
+        while ts.type() not in delims:
+            if ts.value() != ",":
+                raise TclSyntaxError("expected comma between function arguments")
+            comma = BareWord(",", pos=ts.pos())
+            ts.next()
+            comma.end_pos = ts.pos()
+            func_node.add(comma)
+
+            arg = self._parse_expression(ts)
+            func_node.add(arg)
+
+        ts.expect(
+            TOK_RPAREN,
+            message=f"expected close paren after function arguments at {name_node.pos}",
+        )
+
+        return func_node
 
 
 def _is_int_literal(operand):
@@ -730,3 +770,45 @@ def _is_float_literal(operand):
 
 def _is_bool_literal(operand):
     return operand in {"false", "no", "off", "true", "yes", "on"}
+
+
+# map of function names to # arguments accepted
+# None indicates 1 or more arguments
+# TODO: use these values in an actual separate check. they might want to live elsewhere
+_FUNCTIONS = {
+    "abs": 1,
+    "acos": 1,
+    "asin": 1,
+    "atan": 1,
+    "atan2": 2,
+    "bool": 1,
+    "ceil": 1,
+    "cos": 1,
+    "cosh": 1,
+    "double": 1,
+    "entier": 1,
+    "exp": 1,
+    "floor": 1,
+    "fmod": 2,
+    "hyopt": 2,
+    "int": 1,
+    "isqrt": 1,
+    "log": 1,
+    "log10": 1,
+    "max": None,
+    "min": None,
+    "pow": 2,
+    "rand": 0,
+    "round": 1,
+    "sin": 1,
+    "sinh": 1,
+    "sqrt": 1,
+    "srand": 1,
+    "tan": 1,
+    "tanh": 1,
+    "wide": 1,
+}
+
+
+def _is_function(operand):
+    return operand in _FUNCTIONS.keys()
