@@ -15,6 +15,8 @@ from tclint.parser import (
     BracedWord,
     VarSub,
     List,
+    Expression,
+    Function,
     TclSyntaxError,
 )
 
@@ -460,3 +462,111 @@ def test_parse_list():
         BareWord("beta"),
         BareWord("gamma"),
     ]
+
+
+def test_expr_simple():
+    """A single word without substitution should parse properly as an expression
+    even without braces."""
+    script = 'expr "5"'
+    tree = parse(script)
+    assert tree == Script(Command(BareWord("expr"), Expression(BareWord("5"))))
+
+
+def test_expr_sub_brace():
+    script = "expr {int($foo)}"
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("expr"),
+            Expression(Function(BareWord("int"), Expression(VarSub("foo")))),
+        )
+    )
+
+
+def test_expr_sub_no_brace():
+    """Since this isn't wrapped in {...}, should silently parse as normal Tcl.
+
+    (flagging the fact it's not being parsed as an expr would get handled by a
+    separate lint check)
+    """
+    script = "expr int($foo)"
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("expr"),
+            CompoundBareWord(BareWord("int("), VarSub("foo"), BareWord(")")),
+        )
+    )
+
+
+def test_expr_finite_check():
+    """From bottom of https://wiki.tcl-lang.org/page/Inf."""
+    script = "expr {[string is double -strict $x] && $x == $x && $x + 1 != $x}"
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("expr"),
+            Expression(
+                CommandSub(
+                    Command(
+                        BareWord("string"),
+                        BareWord("is"),
+                        BareWord("double"),
+                        BareWord("-strict"),
+                        VarSub("x"),
+                    )
+                ),
+                BareWord("&&"),
+                Expression(
+                    VarSub("x"),
+                    BareWord("=="),
+                    Expression(
+                        VarSub("x"),
+                        BareWord("&&"),
+                        Expression(
+                            VarSub("x"),
+                            BareWord("+"),
+                            Expression(
+                                BareWord("1"), BareWord("!="), Expression(VarSub("x"))
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+    )
+
+
+def test_expr_newline():
+    """Mostly meant to test backslash newline, also sneaks in ternary, different
+    word types, and indexed varsub."""
+    script = r"""expr {"conditional" ? $::env(FOO) : \
+        {foo}}"""
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("expr"),
+            Expression(
+                QuotedWord(BareWord("conditional")),
+                BareWord("?"),
+                Expression(VarSub("::env", BareWord("FOO"))),
+                BareWord(":"),
+                Expression(BracedWord("foo")),
+            ),
+        )
+    )
+
+
+def test_expr_no_spaces_binop():
+    script = "expr {1-1}; expr {1eq1};"
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("expr"),
+            Expression(BareWord("1"), BareWord("-"), Expression(BareWord("1"))),
+        ),
+        Command(
+            BareWord("expr"),
+            Expression(BareWord("1"), BareWord("eq"), Expression(BareWord("1"))),
+        ),
+    )

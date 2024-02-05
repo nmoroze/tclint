@@ -538,7 +538,10 @@ class Parser:
 
     def parse_expression(self, node):
         if node.contents is None:
-            return None
+            raise CommandArgError(
+                "expected braced word or word without substitutions in argument"
+                " interpreted as expr"
+            )
 
         # TODO: we need to figure out where contents start
         ts = Lexer(pos=(node.line, node.col + 1))
