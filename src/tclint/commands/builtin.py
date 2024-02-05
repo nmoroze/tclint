@@ -192,7 +192,16 @@ def _eval(args, parser):
 
 
 def _expr(args, parser):
-    # TODO: implement. requires implementing expression parsing first.
+    if len(args) == 0:
+        raise CommandArgError("not enough args to 'expr': got 0, expected at least 1")
+
+    if len(args) == 1 and args[0].contents is not None:
+        # this method will handle the `node.contents is None` case fine, but
+        # will throw an error. We'll instead pass thru silently, since that error
+        # will be caught by a separate lint check.
+        return [parser.parse_expression(args[0])]
+
+    # TODO: handle multiple args
     return None
 
 
