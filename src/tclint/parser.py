@@ -36,6 +36,7 @@ from tclint.syntax_tree import (
     List,
     Expression,
     UnaryOp,
+    Function,
 )
 from tclint.commands import CommandArgError, get_commands
 from tclint.violations import Rule, Violation
@@ -690,10 +691,9 @@ class Parser:
         return BareWord(operator, pos=pos, end_pos=ts.pos())
 
     def _parse_function(self, ts, name_node):
-        print("parse_function")
-        func_node = Expression(pos=name_node.pos)
+        func = Function(pos=name_node.pos)
 
-        func_node.add(name_node)
+        func.add(name_node)
 
         while ts.type() == TOK_WS:
             ts.next()
@@ -707,25 +707,28 @@ class Parser:
 
         if ts.type() not in delims:
             arg = self._parse_expression(ts)
-            func_node.add(arg)
+            func.add(arg)
 
         while ts.type() not in delims:
             if ts.value() != ",":
                 raise TclSyntaxError("expected comma between function arguments")
+
+            # adding comma may seem a little weird since it's non-functional,
+            # but this lets us store comma position for style checks
             comma = BareWord(",", pos=ts.pos())
             ts.next()
             comma.end_pos = ts.pos()
-            func_node.add(comma)
+            func.add(comma)
 
             arg = self._parse_expression(ts)
-            func_node.add(arg)
+            func.add(arg)
 
         ts.expect(
             TOK_RPAREN,
             message=f"expected close paren after function arguments at {name_node.pos}",
         )
 
-        return func_node
+        return func
 
 
 def _is_int_literal(operand):

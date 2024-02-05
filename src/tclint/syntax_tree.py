@@ -40,6 +40,9 @@ class Visitor:
     def visit_expression(self, expression):
         pass
 
+    def visit_function(self, function):
+        pass
+
 
 class Node:
     """
@@ -319,3 +322,10 @@ class UnaryOp(Node):
         if recurse:
             self._recurse(visitor)
         visitor.visit_expression(self)
+
+
+class Function(Node):
+    def accept(self, visitor, recurse=False):
+        if recurse:
+            self._recurse(visitor)
+        visitor.visit_function(self)
