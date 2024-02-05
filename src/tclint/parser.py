@@ -682,6 +682,13 @@ class Parser:
             if ts.value() in {operator, "="}:
                 operator += ts.value()
                 ts.next()
+        elif ts.value() in {"=", "!"}:
+            operator = ts.value()
+            ts.next()
+            if ts.value() != "=":
+                raise TclSyntaxError(f"expression has invalid operator: {operator}")
+            operator += ts.value()
+            ts.next()
         elif ts.value() in {"*", "/", "%", "+", "-", "^", "eq", "ne", "in", "ni"}:
             operator = ts.value()
             ts.next()
