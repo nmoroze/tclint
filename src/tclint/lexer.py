@@ -16,7 +16,8 @@ TOK_DOLLAR = "DOLLAR"
 TOK_LPAREN = "LPAREN"
 TOK_RPAREN = "RPAREN"
 TOK_HASH = "HASH"
-TOK_VAR_CHARS = "VAR_CHARS"
+TOK_ALPHA_CHARS = "ALPHA_CHARS"
+TOK_NUM_CHARS = "NUM_CHARS"
 TOK_NAMESPACE_SEP = "NAMESPACE_SEP"
 TOK_CHAR = "CHAR"
 TOK_EOF = None
@@ -44,7 +45,8 @@ class Lexer:
         TOK_LPAREN,
         TOK_RPAREN,
         TOK_HASH,
-        TOK_VAR_CHARS,
+        TOK_ALPHA_CHARS,
+        TOK_NUM_CHARS,
         TOK_NAMESPACE_SEP,
         TOK_CHAR,
     )
@@ -128,9 +130,16 @@ class Lexer:
         r"\#"
         return self._tok(t)
 
-    # Valid chars in variable names
-    def t_VAR_CHARS(self, t):
-        r"[A-Za-z0-9_]+"
+    # Valid non-numeric chars in variable names
+    def t_ALPHA_CHARS(self, t):
+        r"[A-Za-z_]+"
+        return self._tok(t)
+
+    # Valid numeric chars in variable names
+    # This is split up from the above to facilitate expression parsing, since
+    # e.g. 1eq1 can't be a single token.
+    def t_NUM_CHARS(self, t):
+        r"[0-9]+"
         return self._tok(t)
 
     def t_NAMESPACE_SEP(self, t):
