@@ -683,7 +683,9 @@ class Parser:
             or _is_bool_literal(operand)
             or is_func
         ):
-            raise TclSyntaxError(f"Invalid bareword in expression: {operand}")
+            raise TclSyntaxError(
+                f"Invalid bareword in expression: {operand} at {operand_pos}"
+            )
 
         node = BareWord(operand, pos=operand_pos, end_pos=ts.pos())
 
@@ -714,14 +716,18 @@ class Parser:
             operator = ts.value()
             ts.next()
             if ts.value() != "=":
-                raise TclSyntaxError(f"expression has invalid operator: {operator}")
+                raise TclSyntaxError(
+                    f"expression has invalid operator: {operator} at {pos}"
+                )
             operator += ts.value()
             ts.next()
         elif ts.value() in {"*", "/", "%", "+", "-", "^", "eq", "ne", "in", "ni"}:
             operator = ts.value()
             ts.next()
         else:
-            raise TclSyntaxError(f"expression has invalid operator: {ts.value()}")
+            raise TclSyntaxError(
+                f"expression has invalid operator: {ts.value()} at {pos}"
+            )
 
         return BareWord(operator, pos=pos, end_pos=ts.pos())
 
