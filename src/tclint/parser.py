@@ -1,3 +1,4 @@
+import string
 import re
 
 from tclint.lexer import (
@@ -17,10 +18,10 @@ from tclint.lexer import (
     TOK_LPAREN,
     TOK_RPAREN,
     TOK_HASH,
-    TOK_VAR_CHARS,
+    TOK_ALPHA_CHARS,
+    TOK_NUM_CHARS,
     TOK_NAMESPACE_SEP,
     TOK_EOF,
-    TOK_CHAR,
 )
 from tclint.syntax_tree import (
     Script,
@@ -415,7 +416,7 @@ class Parser:
 
             return VarSub(var, pos=pos, end_pos=ts.pos())
 
-        while ts.type() in {TOK_VAR_CHARS, TOK_NAMESPACE_SEP}:
+        while ts.type() in {TOK_ALPHA_CHARS, TOK_NUM_CHARS, TOK_NAMESPACE_SEP}:
             var += ts.value()
             ts.next()
 
@@ -640,12 +641,36 @@ class Parser:
             op.end_pos = ts.pos()
             return op
 
-        # if none of these, collect tokens that may comprise an operand
+        # If none of these, collect tokens that may comprise an operand
         operand = ""
         operand_pos = ts.pos()
-        while ts.type() in {TOK_VAR_CHARS, TOK_CHAR} and ts.value() != ",":
+
+        # First, we want to check for numeric operands (either ints or numeric
+        # floats) by consuming tokens as long as they comprise the prefix of a
+        # numeric operand
+        while ts.type() != TOK_EOF and (
+            _is_int_prefix(operand + ts.value())
+            or _is_float_prefix(operand + ts.value())
+        ):
             operand += ts.value()
             ts.next()
+
+        # Next, we check if we've consumed an entire numeric literal. If so, we
+        # move on. If not, we keep consuming tokens that may correspond to a
+        # valid bareword (pretty much just alphanumeric chars).
+        if not (_is_int_literal(operand) or _is_float_literal(operand)):
+            while ts.type() in {TOK_ALPHA_CHARS, TOK_NUM_CHARS}:
+                operand += ts.value()
+                ts.next()
+
+        # The above method is a little hacky. Note that it doesn't parse things
+        # exactly the same as Tcl. E.g. if a script includes `expr {1foo}`,
+        # tclint will report an invalid operator "foo", whereas tclsh will
+        # report an invalid bareword "1foo". Despite reporting them differently
+        # both tools should still catch the same syntax errors, since there are
+        # no legal barewords that begin with a numeric literal prefix, and tclsh
+        # will stop parsing numeric operands if they're actually followed by a
+        # legal operator (e.g. `expr {1eq1}` will be handled properly).
 
         is_func = _is_function(operand)
 
@@ -738,44 +763,60 @@ class Parser:
         return func
 
 
-def _is_int_literal(operand):
-    binary_digits = ["0", "1"]
-    octal_digits = binary_digits + ["2", "3", "4", "5", "6", "7"]
-    decimal_digits = octal_digits + ["8", "9"]
-    hex_digits = decimal_digits + [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E",
-        "F",
-        "a",
-        "b",
-        "c",
-        "d",
-        "e",
-        "f",
-    ]
+def _all(_list, non_empty=False):
+    """Like all(), but if non_empty is True, list must also have at least 1 element."""
+    if non_empty and len(_list) == 0:
+        return False
+    return all(_list)
 
+
+def _is_int(operand, full=False):
+    """Returns whether operand is a valid Tcl integer literal.
+
+    If full is False, will also return True if operand is the prefix of an
+    integer literal.  An empty string is not a valid full literal, but is a
+    valid prefix.
+    """
     # prefixes
     if operand.startswith("0b"):
-        return all([digit in binary_digits for digit in operand[2:]])
+        return _all([digit in "01" for digit in operand[2:]], non_empty=full)
     if operand.startswith("0o"):
-        return all([digit in octal_digits for digit in operand[2:]])
+        return _all(
+            [digit in string.octdigits for digit in operand[2:]], non_empty=full
+        )
     if operand.startswith("0x"):
-        return all([digit in hex_digits for digit in operand[2:]])
+        return _all(
+            [digit in string.hexdigits for digit in operand[2:]], non_empty=full
+        )
     if operand.startswith("0"):
         # fun fact: apparently a lone 0 prefix is interpreted as octal
-        return all([digit in octal_digits for digit in operand[1:]])
+        return _all(
+            [digit in string.octdigits for digit in operand[1:]], non_empty=full
+        )
 
-    return all([digit in decimal_digits for digit in operand])
+    return _all([digit in string.digits for digit in operand], non_empty=full)
+
+
+def _is_int_literal(operand):
+    return _is_int(operand, full=True)
+
+
+def _is_int_prefix(operand):
+    return _is_int(operand, full=False)
 
 
 def _is_float_literal(operand):
     if operand.lower() in {"nan", "inf"}:
         return True
 
-    return re.fullmatch(r"\d+\.?\d*([Ee][+-]?\d+)?", operand) is not None
+    return (
+        operand != "" and re.fullmatch(r"\d*\.?\d*([Ee][+-]?\d+)?", operand) is not None
+    )
+
+
+def _is_float_prefix(operand):
+    """Returns whether operand is the prefix of a valid numeric float literal."""
+    return re.fullmatch(r"\d*\.?\d*([Ee][+-]?)?\d*", operand) is not None
 
 
 def _is_bool_literal(operand):
