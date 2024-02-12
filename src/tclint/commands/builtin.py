@@ -221,8 +221,7 @@ def _for(args, parser):
 
     return [
         parse_script_arg(args[0], parser),
-        # TODO: parse expr
-        args[1],
+        parser.parse_expression(args[1]),
         parse_script_arg(args[2], parser),
         parse_script_arg(args[3], parser),
     ]
@@ -245,8 +244,7 @@ def _if(args, parser):
 
     new_args = []
 
-    # TODO: parse first arg as expr
-    new_args.append(args[0])
+    new_args.append(parser.parse_expression(args[0]))
 
     while len(new_args) < len(args):
         arg = args[len(new_args)]
@@ -256,8 +254,7 @@ def _if(args, parser):
             continue
         if arg.contents == "elseif":
             new_args.append(arg)
-            # TODO: parse as expr
-            new_args.append(args[len(new_args)])
+            new_args.append(parser.parse_expression(args[len(new_args)]))
             continue
 
         arg = parse_script_arg(arg, parser)
@@ -564,8 +561,7 @@ def _while(args, parser):
         raise CommandArgError(f"wrong # of args to while: got {len(args)}, expected 2")
 
     return [
-        # TODO: parse as expr
-        args[0],
+        parser.parse_expression(args[0]),
         parse_script_arg(args[1], parser),
     ]
 
