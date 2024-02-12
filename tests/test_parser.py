@@ -226,7 +226,7 @@ def test_multiline_braces():
     assert tree == Script(
         Command(
             BareWord("if"),
-            BracedWord("1"),
+            Expression(BareWord("1")),
             Script(
                 Command(
                     BareWord("cmd"),
@@ -248,22 +248,59 @@ def test_clean_tcl():
         Command(
             BareWord("for"),
             Script(Command(BareWord("set"), BareWord("i"), BareWord("1"))),
-            BracedWord("$i < 100"),
+            Expression(
+                VarSub("i"),
+                BareWord("<"),
+                Expression(BareWord("100")),
+            ),
             Script(Command(BareWord("incr"), BareWord("i"))),
             Script(
                 Command(
                     BareWord("if"),
-                    BracedWord("[expr $i % 15] == 0"),
+                    Expression(
+                        CommandSub(
+                            Command(
+                                BareWord("expr"),
+                                VarSub("i"),
+                                BareWord("%"),
+                                BareWord("15"),
+                            )
+                        ),
+                        BareWord("=="),
+                        Expression(BareWord("0")),
+                    ),
                     Script(
                         Command(BareWord("puts"), QuotedWord(BareWord("FizzBuzz"))),
                     ),
                     BareWord("elseif"),
-                    BracedWord("[expr $i % 3] == 0"),
+                    Expression(
+                        CommandSub(
+                            Command(
+                                BareWord("expr"),
+                                VarSub("i"),
+                                BareWord("%"),
+                                BareWord("3"),
+                            )
+                        ),
+                        BareWord("=="),
+                        Expression(BareWord("0")),
+                    ),
                     Script(
                         Command(BareWord("puts"), QuotedWord(BareWord("Fizz"))),
                     ),
                     BareWord("elseif"),
-                    BareWord("[expr $i % 5] == 0"),
+                    Expression(
+                        CommandSub(
+                            Command(
+                                BareWord("expr"),
+                                VarSub("i"),
+                                BareWord("%"),
+                                BareWord("5"),
+                            )
+                        ),
+                        BareWord("=="),
+                        Expression(BareWord("0")),
+                    ),
                     Script(
                         Command(BareWord("puts"), QuotedWord(BareWord("Buzz"))),
                     ),
