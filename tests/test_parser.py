@@ -570,3 +570,27 @@ def test_expr_no_spaces_binop():
             Expression(BareWord("1"), BareWord("eq"), Expression(BareWord("1"))),
         ),
     )
+
+
+def test_newline_in_expr():
+    script = """expr {$foo eq "foo" &&
+        $bar eq "bar"}"""
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("expr"),
+            Expression(
+                VarSub("foo"),
+                BareWord("eq"),
+                Expression(
+                    QuotedWord(BareWord("foo")),
+                    BareWord("&&"),
+                    Expression(
+                        VarSub("bar"),
+                        BareWord("eq"),
+                        Expression(QuotedWord(BareWord("bar"))),
+                    ),
+                ),
+            ),
+        )
+    )

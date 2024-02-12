@@ -47,12 +47,12 @@ def _strip_ws(parse_func):
     """Decorator used by expression parser for stripping whitespace around a node."""
 
     def func(parser, ts):
-        while ts.type() in {TOK_WS, TOK_BACKSLASH_NEWLINE}:
+        while ts.type() in {TOK_WS, TOK_BACKSLASH_NEWLINE, TOK_NEWLINE}:
             ts.next()
 
         node = parse_func(parser, ts)
 
-        while ts.type() in {TOK_WS, TOK_BACKSLASH_NEWLINE}:
+        while ts.type() in {TOK_WS, TOK_BACKSLASH_NEWLINE, TOK_NEWLINE}:
             ts.next()
 
         return node
