@@ -92,13 +92,11 @@ class _Word:
 
 
 class Parser:
-    def __init__(
-        self, debug=False, cmd_sub=False, debug_indent=0, command_plugins=None
-    ):
-        """cmd_sub = True indicates that the script will be terminated by ]"""
+    def __init__(self, debug=False, command_plugins=None):
         self._debug = debug
-        self._debug_indent = debug_indent
-        self._cmd_sub = cmd_sub
+        self._debug_indent = 0
+        # self._cmd_sub = True indicates that the script will be terminated by ]"""
+        self._cmd_sub = False
         # TODO: better way to handle this?
         self.violations = []
 
@@ -114,7 +112,7 @@ class Parser:
     def parse(self, script, pos=None):
         lexer = Lexer(pos=pos)
         lexer.input(script)
-        tree = self.parse_script(lexer)
+        tree = self._parse_script(lexer)
 
         return tree
 
@@ -168,7 +166,25 @@ class Parser:
 
         return new_args
 
-    def parse_script(self, ts):
+    def parse_script(self, node):
+        if node.contents is None:
+            raise CommandArgError(
+                "expected braced word or word without substitutions in argument"
+                " interpreted as script"
+            )
+
+        cmd_sub = self._cmd_sub
+        self._cmd_sub = False
+        script = self.parse(node.contents, pos=node.contents_pos)
+        self._cmd_sub = cmd_sub
+
+        script.line = node.line
+        script.col = node.col
+        script.end_pos = node.end_pos
+
+        return script
+
+    def _parse_script(self, ts):
         self.debug(f"parse_script({ts.current})")
         self._debug_indent += 1
         pos = ts.pos()
@@ -367,6 +383,7 @@ class Parser:
         delimiters = [TOK_WS, TOK_BACKSLASH_NEWLINE, TOK_NEWLINE, TOK_SEMI, TOK_EOF]
 
         # In command sub mode, words are ended by ]
+        # TODO: consider pushing this down via argument to remove it as a member
         if self._cmd_sub:
             delimiters.append(TOK_RBRACKET)
 
@@ -466,7 +483,7 @@ class Parser:
 
         saved_cmd_sub = self._cmd_sub
         self._cmd_sub = True
-        script = self.parse_script(ts)
+        script = self._parse_script(ts)
         self._cmd_sub = saved_cmd_sub
 
         ts.assert_(TOK_RBRACKET)

@@ -32,7 +32,6 @@ these would be helpful for your use case, please file an issue.
 
 from tclint.commands.utils import (
     CommandArgError,
-    parse_script_arg,
     check_count,
     subcommands,
     eval,
@@ -100,7 +99,7 @@ def _apply(args, parser):
             " expected 2 or 3"
         )
 
-    body = parse_script_arg(func_list.children[1], parser)
+    body = parser.parse_script(func_list.children[1])
     func_list.children[1] = body
 
     return [func_list] + args[1:]
@@ -116,7 +115,7 @@ def _catch(args, parser):
             f"too many args to catch: got {len(args)}, expected no more than 3"
         )
 
-    return [parse_script_arg(args[0], parser)] + args[1:]
+    return [parser.parse_script(args[0])] + args[1:]
 
 
 def _dict_filter(args, parser):
@@ -141,7 +140,7 @@ def _dict_filter(args, parser):
                 "invalid argument to 'dict filter': expected list of 2 elements in"
                 f" second-to-last argument, got {list_len}"
             )
-        return args[0:2] + [kv_pair, parse_script_arg(args[3], parser)]
+        return args[0:2] + [kv_pair, parser.parse_script(args[3])]
 
     return None
 
@@ -155,7 +154,7 @@ def _dict_map_for(cmd):
 
         # TODO: might be worth checking that arg[0] is a pair?
 
-        return args[0:2] + [parse_script_arg(args[2], parser)]
+        return args[0:2] + [parser.parse_script(args[2])]
 
     return check
 
@@ -173,7 +172,7 @@ def _dict_update(args, parser):
             "invalid # of args to 'dict update': expected an even number"
         )
 
-    return args[0:-1] + [parse_script_arg(args[-1], parser)]
+    return args[0:-1] + [parser.parse_script(args[-1])]
 
 
 def _dict_with(args, parser):
@@ -184,7 +183,7 @@ def _dict_with(args, parser):
             f"not enough args to 'dict with': got {len(args)}, expected at least 2"
         )
 
-    return args[0:-1] + [parse_script_arg(args[-1], parser)]
+    return args[0:-1] + [parser.parse_script(args[-1])]
 
 
 def _eval(args, parser):
@@ -220,10 +219,10 @@ def _for(args, parser):
         raise CommandArgError(f"wrong # of args to for: got {len(args)}, expected 4")
 
     return [
-        parse_script_arg(args[0], parser),
+        parser.parse_script(args[0]),
         parser.parse_expression(args[1]),
-        parse_script_arg(args[2], parser),
-        parse_script_arg(args[3], parser),
+        parser.parse_script(args[2]),
+        parser.parse_script(args[3]),
     ]
 
 
@@ -235,7 +234,7 @@ def _foreach(args, parser):
         )
 
     # last argument is script body
-    return args[0:-1] + [parse_script_arg(args[-1], parser)]
+    return args[0:-1] + [parser.parse_script(args[-1])]
 
 
 def _if(args, parser):
@@ -257,7 +256,7 @@ def _if(args, parser):
             new_args.append(parser.parse_expression(args[len(new_args)]))
             continue
 
-        arg = parse_script_arg(arg, parser)
+        arg = parser.parse_script(arg)
         new_args.append(arg)
 
     return new_args
@@ -278,7 +277,7 @@ def _lmap(args, parser):
             f"not enough args to lmap: got {len(args)}, expected at least 3"
         )
 
-    return args[:-1] + [parse_script_arg(args[-1], parser)]
+    return args[:-1] + [parser.parse_script(args[-1])]
 
 
 def _namespace_code(args, parser):
@@ -286,7 +285,7 @@ def _namespace_code(args, parser):
     # TODO: seems like a possible pattern is to execute things in these scripts
     # with additional args provided, so command-args checks within this might
     # actually be false positive. will keep as-is for now though.
-    return [parse_script_arg(args[0], parser)]
+    return [parser.parse_script(args[0])]
 
 
 def _namespace_eval(args, parser):
@@ -324,7 +323,7 @@ def _proc(args, parser):
     if len(args) != 3:
         raise CommandArgError(f"wrong # of args to proc: got {len(args)}, expected 3")
 
-    return args[0:2] + [parse_script_arg(args[2], parser)]
+    return args[0:2] + [parser.parse_script(args[2])]
 
 
 def _return(args, parser):
@@ -418,7 +417,7 @@ def _switch(args, parser):
         if i % 2 == 0:
             parsed_patterns_and_commands.append(node)
         else:
-            parsed_patterns_and_commands.append(parse_script_arg(node, parser))
+            parsed_patterns_and_commands.append(parser.parse_script(node))
 
     if last_arg_is_list:
         pattern_and_commands_list.children = parsed_patterns_and_commands
@@ -450,7 +449,7 @@ def _time(args, parser):
                     "invalid argument to time: expected integer for last argument"
                 )
 
-    return [parse_script_arg(args[0], parser)] + args[1:]
+    return [parser.parse_script(args[0])] + args[1:]
 
 
 def _timerate(args, parser):
@@ -483,7 +482,7 @@ def _timerate(args, parser):
         else:
             break
 
-    new_args.append(parse_script_arg(arg, parser))
+    new_args.append(parser.parse_script(arg))
 
     if len(args) > 2:
         raise CommandArgError(
@@ -512,7 +511,7 @@ def _try(args, parser):
             arg = args.pop(0)
         except IndexError:
             raise CommandArgError("invalid arguments to try: missing script body")
-        new_args.append(parse_script_arg(arg, parser))
+        new_args.append(parser.parse_script(arg))
 
         try:
             arg = args.pop(0)
@@ -562,7 +561,7 @@ def _while(args, parser):
 
     return [
         parser.parse_expression(args[0]),
-        parse_script_arg(args[1], parser),
+        parser.parse_script(args[1]),
     ]
 
 

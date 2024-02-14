@@ -5,31 +5,6 @@ class CommandArgError(Exception):
     pass
 
 
-def parse_script_arg(arg, parser):
-    # TODO: feels like parser should handle this more cleanly
-    # (particularly the end_pos)
-    contents = arg.contents
-    if contents is None:
-        raise CommandArgError(
-            "expected braced word or word without substitutions in argument interpreted"
-            " as script"
-        )
-
-    # TODO: less hacky way to handle this
-    cmd_sub = parser._cmd_sub
-    parser._cmd_sub = False
-    subtree = parser.parse(contents, pos=arg.contents_pos)
-    parser._cmd_sub = cmd_sub
-
-    # TODO: feels like unnecessary hack, but should be fixed with token-based subparse
-    subtree.line = arg.line
-    subtree.col = arg.col
-
-    subtree.end_pos = arg.end_pos
-
-    return subtree
-
-
 def arg_count(args, parser):
     # TODO: graceful handling of argsub going into things with recursive parsing.
     # if the argsub happens to be "concrete", we can technically do the right
