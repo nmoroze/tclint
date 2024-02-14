@@ -543,8 +543,7 @@ class Parser:
                 " interpreted as expr"
             )
 
-        # TODO: we need to figure out where contents start
-        ts = Lexer(pos=(node.line, node.col + 1))
+        ts = Lexer(pos=node.contents_pos)
         ts.input(node.contents)
 
         expr = self._parse_expression(ts)
