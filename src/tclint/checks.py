@@ -267,6 +267,25 @@ class SpacingChecker(Visitor):
             if len(group) == 1 or not all_aligned:
                 self.violations.extend(violations)
 
+    def visit_expression(self, expression):
+        last_child = expression.children[0]
+        for child in expression.children[1:]:
+            if last_child.end_pos[0] != child.pos[0]:
+                # ignore if on diff lines
+                continue
+
+            spacing = child.pos[1] - last_child.end_pos[1]
+            if spacing != 1:
+                self.violations.append(
+                    Violation(
+                        Rule.SPACING,
+                        "expected 1 space between operands and operators in expression",
+                        last_child.end_pos,
+                    )
+                )
+
+            last_child = child
+
 
 class LineChecker:
     """Ensures lines aren't too long and do not include trailing whitespace.
