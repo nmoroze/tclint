@@ -82,6 +82,16 @@ class Node:
         """
         return None
 
+    @property
+    def contents_pos(self):
+        """This is overloaded by word Nodes that may have concrete contents.
+
+        Returns the position at which the contents start.
+
+        TODO: consider combining with with `contents`?
+        """
+        return None
+
     def _pos_str(self):
         start_pos_str = "?"
         if self.pos is not None:
@@ -245,6 +255,10 @@ class BareWord(Node):
     def contents(self):
         return self.value
 
+    @property
+    def contents_pos(self):
+        return self.pos
+
 
 class BracedWord(Node):
     def accept(self, visitor, recurse=False):
@@ -255,6 +269,10 @@ class BracedWord(Node):
     @property
     def contents(self):
         return self.value
+
+    @property
+    def contents_pos(self):
+        return (self.line, self.col + 1)
 
 
 class QuotedWord(Node):
@@ -276,6 +294,12 @@ class QuotedWord(Node):
             return ""
 
         return self.children[0].contents
+
+    @property
+    def contents_pos(self):
+        if self.contents is None:
+            return None
+        return (self.line, self.col + 1)
 
 
 class CompoundBareWord(Node):

@@ -18,7 +18,7 @@ def parse_script_arg(arg, parser):
     # TODO: less hacky way to handle this
     cmd_sub = parser._cmd_sub
     parser._cmd_sub = False
-    subtree = parser.parse(contents, pos=(arg.line, arg.col))
+    subtree = parser.parse(contents, pos=arg.contents_pos)
     parser._cmd_sub = cmd_sub
 
     # TODO: feels like unnecessary hack, but should be fixed with token-based subparse

@@ -631,3 +631,27 @@ def test_newline_in_expr():
             ),
         )
     )
+
+
+def test_subparsed_positions():
+    script = r"""if {1} pwd
+if 1 {
+    pwd
+}"""
+    tree = parse(script)
+
+    if0 = tree.children[0]
+    if0_expr = if0.args[0]
+    if0_expr_inner = if0_expr.children[0]
+    assert if0_expr_inner.pos == (1, 5)
+    if0_body = if0.args[1]
+    if0_body_inner = if0_body.children[0]
+    assert if0_body_inner.pos == (1, 8)
+
+    if1 = tree.children[1]
+    if1_expr = if1.args[0]
+    if1_expr_inner = if1_expr.children[0]
+    assert if1_expr_inner.pos == (2, 4)
+    if1_body = if1.args[1]
+    if1_body_inner = if1_body.children[0]
+    assert if1_body_inner.pos == (3, 5)
