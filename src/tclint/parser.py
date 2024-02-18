@@ -628,7 +628,7 @@ class Parser:
             if ts.type() != TOK_RPAREN and ts.value() not in {":", ","}:
                 ts.expect(TOK_EOF, message=f"expected end of expression at {ts.pos()}")
 
-        expr.end_pos = ts.pos()
+        expr.end_pos = expr.children[-1].end_pos
         return expr
 
     @_strip_ws
@@ -642,13 +642,14 @@ class Parser:
         if ts.type() == TOK_LBRACKET:
             return self.parse_command_sub(ts)
         if ts.type() == TOK_LPAREN:
-            paren_pos = ts.pos()
+            expr = Expression(pos=ts.pos())
             ts.next()
-            expr = self._parse_expression(ts)
+            expr.add(self._parse_expression(ts))
             ts.expect(
                 TOK_RPAREN,
-                message=f"reached EOF without finding match for paren at {paren_pos}",
+                message=f"reached EOF without finding match for paren at {expr.pos}",
             )
+            expr.end_pos = ts.pos()
             return expr
         if ts.value() in {"-", "+", "~", "!"}:
             operator = ts.value()
@@ -657,7 +658,11 @@ class Parser:
             op = UnaryOp(pos=operator_pos)
             op.add(BareWord(operator, pos=operator_pos, end_pos=ts.pos())),
             op.add(self._parse_operand(ts))
-            op.end_pos = ts.pos()
+            # Since _parse_operand() munches whitespace after the operand, we
+            # set the end of the UnaryOp to the end of the operand rather than
+            # ts.pos(). Otherwise, the bounds of the UnaryOp would include all
+            # that whitespace.
+            op.end_pos = op.children[-1].end_pos
             return op
 
         # If none of these, collect tokens that may comprise an operand
@@ -784,6 +789,7 @@ class Parser:
             TOK_RPAREN,
             message=f"expected close paren after function arguments at {name_node.pos}",
         )
+        func.end_pos = ts.pos()
 
         return func
 
