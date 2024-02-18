@@ -574,21 +574,6 @@ class Parser:
 
     @_strip_ws
     def _parse_expression(self, ts):
-        # parse first part of expression:
-        # - VarSub
-        # - QuoteString
-        # - BraceString
-        # - CommandSub
-        # - Literal (integer, float, boolean)
-        # - Function
-        # - "(" Expression ")"
-        # - UnaryOp
-
-        # either BinaryOp, TernaryOp, or EOF
-        # If BinaryOp or TernaryOp, parse additional Expression(s)
-
-        # return Expression(node.contents, pos=node.pos, end_pos=node.end_pos)
-
         expr = Expression(pos=ts.pos())
 
         op1 = self._parse_operand(ts)
