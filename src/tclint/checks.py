@@ -35,6 +35,8 @@ class IndentLevelChecker(Visitor):
 
             if lineno not in self.expected_levels:
                 continue
+            if self.expected_levels[lineno] is None:
+                continue
 
             expected_level = self.expected_levels[lineno]
             indent = "\t" if config.style_indent == "tab" else " " * config.style_indent
@@ -103,11 +105,11 @@ class IndentLevelChecker(Visitor):
 
     def _visit_block(self, block, should_indent=True):
         if should_indent:
-            self.level += 1
+            self._incr_level()
         for child in block.children:
             child.accept(self)
         if should_indent:
-            self.level -= 1
+            self._decr_level()
 
         # check indentation of closing token of script
         if block.end_pos:
@@ -137,12 +139,12 @@ class IndentLevelChecker(Visitor):
             # or script however, the indentation only applies to contents of that node
             # (handled by the relevant visitors)
             if not isinstance(child, (Script, List)):
-                self.level += 1
+                self._incr_level()
 
             child.accept(self)
 
             if not isinstance(child, (Script, List)):
-                self.level -= 1
+                self._decr_level()
 
         self._is_namespace_eval = prev_namespace_eval
 
@@ -170,11 +172,29 @@ class IndentLevelChecker(Visitor):
     def visit_arg_expansion(self, arg_expansion):
         self._set_level(arg_expansion)
 
+    def visit_expression(self, expression):
+        prev_level = self.level
+        # don't check indents for things under expression
+        self.level = None
+        for child in expression.children:
+            child.accept(self)
+        self.level = prev_level
+
     def _set_level(self, node):
         if node.line in self.expected_levels:
             return
 
         self.expected_levels[node.line] = self.level
+
+    def _incr_level(self):
+        if self.level is None:
+            return
+        self.level += 1
+
+    def _decr_level(self):
+        if self.level is None:
+            return
+        self.level -= 1
 
 
 class SpacingChecker(Visitor):

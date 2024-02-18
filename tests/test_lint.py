@@ -78,3 +78,11 @@ puts "including in blocks"
     assert violations[0].pos[0] == 4
     assert violations[1].id == Rule.INDENT
     assert violations[1].pos[0] == 6
+
+
+def test_no_violation_multiline_expr():
+    script = r"""
+if {1 && \
+    2} {}"""
+    violations = lint(script, Config(), Path())
+    assert len(violations) == 0
