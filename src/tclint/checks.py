@@ -231,6 +231,7 @@ class SpacingChecker(Visitor):
         for i, word in enumerate(command.children[1:]):
             if last_word.end_pos[0] != word.pos[0]:
                 # ignore if on diff lines
+                last_word = word
                 continue
 
             if handle_as_aligned_set and i == 1:
@@ -292,6 +293,7 @@ class SpacingChecker(Visitor):
         for child in expression.children[1:]:
             if last_child.end_pos[0] != child.pos[0]:
                 # ignore if on diff lines
+                last_child = child
                 continue
 
             spacing = child.pos[1] - last_child.end_pos[1]

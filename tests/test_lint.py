@@ -86,3 +86,25 @@ if {1 && \
     2} {}"""
     violations = lint(script, Config(), Path())
     assert len(violations) == 0
+
+
+def test_spacing_multiline():
+    script = r"""
+foo asdf asdf \
+    qwerty    qwerty"""
+
+    violations = lint(script, Config(), Path())
+    assert len(violations) == 1
+    assert violations[0].id == Rule.SPACING
+    assert violations[0].pos == (3, 11)
+
+
+def test_spacing_multiline_expr():
+    script = r"""
+expr {$a ?
+      $b  : $d}"""
+
+    violations = lint(script, Config(), Path())
+    assert len(violations) == 1
+    assert violations[0].id == Rule.SPACING
+    assert violations[0].pos == (3, 9)
