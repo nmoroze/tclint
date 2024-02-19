@@ -306,6 +306,30 @@ class SpacingChecker(Visitor):
 
             last_child = child
 
+    def visit_unary_op(self, unary_op):
+        assert len(unary_op.children) == 2
+        operator = unary_op.children[0]
+        operand = unary_op.children[1]
+
+        if operator.line != operand.line:
+            self.violations.append(
+                Violation(
+                    Rule.SPACING,
+                    "expected unary operator and operand to be on the same line",
+                    unary_op.children[0].end_pos,
+                )
+            )
+
+        spacing = operand.pos[1] - operator.end_pos[1]
+        if spacing != 0:
+            self.violations.append(
+                Violation(
+                    Rule.SPACING,
+                    "expected no space between unary operator and operand",
+                    unary_op.children[0].end_pos,
+                )
+            )
+
 
 class LineChecker:
     """Ensures lines aren't too long and do not include trailing whitespace.
