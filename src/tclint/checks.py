@@ -260,14 +260,14 @@ class SpacingChecker(Visitor):
     def _check_set_spacing(self):
         for group in self.set_groups:
             furthest_value_start = 0
-            for i, cmd in enumerate(group):
+            for cmd in group:
                 value_start = cmd.args[1].pos[1]
                 if value_start > furthest_value_start:
                     furthest_value_start = value_start
 
             violations = []
             all_aligned = True
-            for i, cmd in enumerate(group):
+            for cmd in group:
                 if cmd.args[1].pos[1] != furthest_value_start:
                     all_aligned = False
 
