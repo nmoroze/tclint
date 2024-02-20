@@ -332,6 +332,55 @@ class SpacingChecker(Visitor):
                 )
             )
 
+    def visit_function(self, function):
+        """Function must be formatted like func(arg1, arg2, ...)"""
+        last_child = function.children[0]
+        for i, child in enumerate(function.children[1:]):
+            if child.pos[0] != last_child.end_pos[0]:
+                # ignore spacing if not on same line
+                last_child = child
+                continue
+
+            spacing = child.pos[1] - last_child.end_pos[1]
+            if i == 0 and spacing != 1:
+                self.violations.append(
+                    Violation(
+                        Rule.SPACING,
+                        "expected no space between opening paren of function and first"
+                        " argument",
+                        last_child.end_pos,
+                    )
+                )
+            elif i % 2 == 0 and spacing != 1:
+                self.violations.append(
+                    Violation(
+                        Rule.SPACING,
+                        "expected 1 space between function arguments",
+                        last_child.end_pos,
+                    )
+                )
+            elif i % 2 == 1 and spacing != 0:
+                self.violations.append(
+                    Violation(
+                        Rule.SPACING,
+                        "expected no space between argument and following comma",
+                        last_child.end_pos,
+                    )
+                )
+            last_child = child
+
+        if (function.end_pos[0] == last_child.end_pos[0]) and (
+            function.end_pos[1] - last_child.end_pos[1] != 1
+        ):
+            self.violations.append(
+                Violation(
+                    Rule.SPACING,
+                    "expected no space between final argument and closing paren of"
+                    " function",
+                    last_child.end_pos,
+                )
+            )
+
 
 class LineChecker:
     """Ensures lines aren't too long and do not include trailing whitespace.

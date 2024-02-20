@@ -6,3 +6,6 @@ if {$bool_a || \
 
 expr {![foo]}
 expr {~ [bar]}
+
+expr {max($a, $b, $c)}
+expr {max ( $a , $b,  $c )}
