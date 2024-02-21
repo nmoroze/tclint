@@ -382,6 +382,58 @@ class SpacingChecker(Visitor):
             )
 
 
+class BackslashNewlineChecker(Visitor):
+    """Checks that backslash newline substitutions are spaced properly. Reports
+    'backslash-spacing' violations."""
+
+    def check(self, input, tree, config):
+        self._excluded_ranges = []
+        tree.accept(self, recurse=True)
+
+        violations = []
+        lines = input.split("\n")
+        for min, max in self._excluded_ranges:
+            for i in range(min, max):
+                lines[i - 1] = None
+
+        for i, line in enumerate(lines):
+            if line is None:
+                continue
+
+            lineno = i + 1
+            line = line.rstrip(" \t")
+            if line.endswith("\\"):
+                # count whitespace before \
+                whitespace_count = 0
+                for c in reversed(line[:-1]):
+                    if c not in {" ", "\t"}:
+                        break
+                    whitespace_count += 1
+
+                if whitespace_count == len(line) - 1:
+                    # entire line consists of whitespace + \
+                    # TODO: consider flagging violation here? this is probably
+                    # not a necessary "\". could also be worth checking
+                    # indentation of a lonely "\", if we allow them
+                    continue
+                if whitespace_count != 1 or line[-2] == "\t":
+                    violations.append(
+                        Violation(
+                            Rule.SPACING,
+                            "expected 1 space between line contents and backslash",
+                            (lineno, len(line)),
+                        )
+                    )
+
+        return violations
+
+    def visit_braced_word(self, word):
+        self._excluded_ranges.append((word.pos[0], word.end_pos[0]))
+
+    def visit_quoted_word(self, word):
+        self._excluded_ranges.append((word.pos[0], word.end_pos[0]))
+
+
 class LineChecker:
     """Ensures lines aren't too long and do not include trailing whitespace.
 
@@ -564,4 +616,5 @@ def get_checkers():
         LineChecker(),
         RedefinedBuiltinChecker(),
         BlankLineChecker(),
+        BackslashNewlineChecker(),
     )

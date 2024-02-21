@@ -1,0 +1,3 @@
+data/backslash-spacing.tcl:3:9: expected 1 space between line contents and backslash [spacing]
+data/backslash-spacing.tcl:4:11: expected 1 space between line contents and backslash [spacing]
+data/backslash-spacing.tcl:7:11: expected 1 space between line contents and backslash [spacing]

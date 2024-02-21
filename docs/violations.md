@@ -9,6 +9,7 @@ This page lists all lint violations that may be reported by `tclint`.
 - [`blank-lines`](#blank-lines)
 - [`command-args`](#command-args)
 - [`redefined-builtin`](#redefined-builtin)
+- [`backslash-spacing`](#backslash-spacing)
 
 ## `indent`
 
@@ -81,3 +82,11 @@ Incorrect use of commands can result in runtime errors, and ambiguous script arg
 
 Redefining built-in commands can lead to confusion and result in `tclint`
 reporting false positive `command-args` violations.
+
+## `backslash-spacing`
+
+Backslashes used to split a command over multiple lines should be separated from line contents by one space.
+
+### Rationale
+
+Consistent spacing enhances readability.
