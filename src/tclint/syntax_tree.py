@@ -40,6 +40,9 @@ class Visitor:
     def visit_expression(self, expression):
         pass
 
+    def visit_paren_expression(self, expression):
+        pass
+
     def visit_unary_op(self, unary_op):
         pass
 
@@ -342,6 +345,13 @@ class Expression(Node):
         if recurse:
             self._recurse(visitor)
         visitor.visit_expression(self)
+
+
+class ParenExpression(Node):
+    def accept(self, visitor, recurse=False):
+        if recurse:
+            self._recurse(visitor)
+        visitor.visit_paren_expression(self)
 
 
 class UnaryOp(Node):

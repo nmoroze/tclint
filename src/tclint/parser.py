@@ -627,7 +627,7 @@ class Parser:
         if ts.type() == TOK_LBRACKET:
             return self.parse_command_sub(ts)
         if ts.type() == TOK_LPAREN:
-            expr = Expression(pos=ts.pos())
+            expr = ParenExpression(pos=ts.pos())
             ts.next()
             expr.add(self._parse_expression(ts))
             ts.expect(
