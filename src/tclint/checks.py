@@ -422,7 +422,7 @@ class BackslashNewlineChecker(Visitor):
                 if whitespace_count != 1 or line[-2] == "\t":
                     violations.append(
                         Violation(
-                            Rule.SPACING,
+                            Rule.BACKSLACH_SPACING,
                             "expected 1 space between line contents and backslash",
                             (lineno, len(line)),
                         )
