@@ -36,6 +36,7 @@ from tclint.syntax_tree import (
     CompoundBareWord,
     List,
     Expression,
+    ParenExpression,
     UnaryOp,
     Function,
 )

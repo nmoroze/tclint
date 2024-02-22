@@ -3,7 +3,7 @@ import re
 from tclint.commands import get_commands
 from tclint.violations import Rule, Violation
 
-from tclint.syntax_tree import Visitor, Script, List
+from tclint.syntax_tree import Visitor, Script, List, ParenExpression
 
 
 class IndentLevelChecker(Visitor):
@@ -307,6 +307,42 @@ class SpacingChecker(Visitor):
                 )
 
             last_child = child
+
+    def visit_paren_expression(self, expression):
+        assert len(expression.children) == 1
+        child = expression.children[0]
+
+        if len(child.children) == 1 and isinstance(child.children[0], ParenExpression):
+            # check for doubly-nested parens, e.g. `((foo))`
+            self.violations.append(
+                Violation(
+                    Rule.EXPR_FORMAT,
+                    "unecessary set of parentheses around expression",
+                    expression.pos,
+                )
+            )
+        if (
+            expression.pos[0] == child.pos[0]
+            and (child.pos[1] - expression.pos[1]) != 1
+        ):
+            self.violations.append(
+                Violation(
+                    Rule.EXPR_FORMAT,
+                    "expected no space between open paren and contained expression",
+                    expression.pos,
+                )
+            )
+        if (
+            expression.end_pos[0] == child.end_pos[0]
+            and (expression.end_pos[1] - child.end_pos[1]) != 1
+        ):
+            self.violations.append(
+                Violation(
+                    Rule.EXPR_FORMAT,
+                    "expected no space between close paren and contained expression",
+                    child.end_pos,
+                )
+            )
 
     def visit_unary_op(self, unary_op):
         assert len(unary_op.children) == 2
