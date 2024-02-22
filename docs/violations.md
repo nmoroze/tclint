@@ -10,6 +10,7 @@ This page lists all lint violations that may be reported by `tclint`.
 - [`command-args`](#command-args)
 - [`redefined-builtin`](#redefined-builtin)
 - [`backslash-spacing`](#backslash-spacing)
+- [`expr-format`](#expr-format)
 
 ## `indent`
 
@@ -90,3 +91,17 @@ Backslashes used to split a command over multiple lines should be separated from
 ### Rationale
 
 Consistent spacing enhances readability.
+
+## `expr-format`
+
+Components of expressions must be formatted according to the following rules:
+
+- Binary and ternary operations have one space between operators and operands
+- Unary operations have no space between the operator and operand
+- Functions must be formatted like so: `max($a, $b, ...)`
+
+Note that more style rules may be enforced as `expr-format` violations in future releases.
+
+### Rationale
+
+Consistent formatting enhances readability.

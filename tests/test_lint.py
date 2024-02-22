@@ -106,5 +106,5 @@ expr {$a ?
 
     violations = lint(script, Config(), Path())
     assert len(violations) == 1
-    assert violations[0].id == Rule.SPACING
+    assert violations[0].id == Rule.EXPR_FORMAT
     assert violations[0].pos == (3, 9)

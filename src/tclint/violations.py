@@ -18,6 +18,7 @@ class Rule(Enum):
     REDEFINED_BUILTIN = "redefined-builtin"
     BLANK_LINES = "blank-lines"
     BACKSLACH_SPACING = "backslash-spacing"
+    EXPR_FORMAT = "expr-format"
 
     def __str__(self):
         return self.value

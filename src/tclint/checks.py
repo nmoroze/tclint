@@ -300,7 +300,7 @@ class SpacingChecker(Visitor):
             if spacing != 1:
                 self.violations.append(
                     Violation(
-                        Rule.SPACING,
+                        Rule.EXPR_FORMAT,
                         "expected 1 space between operands and operators in expression",
                         last_child.end_pos,
                     )
@@ -316,7 +316,7 @@ class SpacingChecker(Visitor):
         if operator.line != operand.line:
             self.violations.append(
                 Violation(
-                    Rule.SPACING,
+                    Rule.EXPR_FORMAT,
                     "expected unary operator and operand to be on the same line",
                     unary_op.children[0].end_pos,
                 )
@@ -326,7 +326,7 @@ class SpacingChecker(Visitor):
         if spacing != 0:
             self.violations.append(
                 Violation(
-                    Rule.SPACING,
+                    Rule.EXPR_FORMAT,
                     "expected no space between unary operator and operand",
                     unary_op.children[0].end_pos,
                 )
@@ -345,7 +345,7 @@ class SpacingChecker(Visitor):
             if i == 0 and spacing != 1:
                 self.violations.append(
                     Violation(
-                        Rule.SPACING,
+                        Rule.EXPR_FORMAT,
                         "expected no space between opening paren of function and first"
                         " argument",
                         last_child.end_pos,
@@ -354,7 +354,7 @@ class SpacingChecker(Visitor):
             elif i % 2 == 0 and spacing != 1:
                 self.violations.append(
                     Violation(
-                        Rule.SPACING,
+                        Rule.EXPR_FORMAT,
                         "expected 1 space between function arguments",
                         last_child.end_pos,
                     )
@@ -362,7 +362,7 @@ class SpacingChecker(Visitor):
             elif i % 2 == 1 and spacing != 0:
                 self.violations.append(
                     Violation(
-                        Rule.SPACING,
+                        Rule.EXPR_FORMAT,
                         "expected no space between argument and following comma",
                         last_child.end_pos,
                     )
@@ -374,7 +374,7 @@ class SpacingChecker(Visitor):
         ):
             self.violations.append(
                 Violation(
-                    Rule.SPACING,
+                    Rule.EXPR_FORMAT,
                     "expected no space between final argument and closing paren of"
                     " function",
                     last_child.end_pos,
