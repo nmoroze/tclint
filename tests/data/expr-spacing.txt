@@ -6,3 +6,7 @@ data/expr-spacing.tcl:11:10: expected no space between opening paren of function
 data/expr-spacing.tcl:11:15: expected no space between argument and following comma [expr-format]
 data/expr-spacing.tcl:11:21: expected 1 space between function arguments [expr-format]
 data/expr-spacing.tcl:11:25: expected no space between final argument and closing paren of function [expr-format]
+data/expr-spacing.tcl:14:8: unecessary set of parentheses around expression [expr-format]
+data/expr-spacing.tcl:14:8: expected no space between open paren and contained expression [expr-format]
+data/expr-spacing.tcl:14:10: expected no space between open paren and contained expression [expr-format]
+data/expr-spacing.tcl:14:17: expected no space between close paren and contained expression [expr-format]
