@@ -77,4 +77,4 @@ $ pytest
 
 ## License
 
-This project is copyright 2023 Noah Moroze, released under the [MIT license](LICENSE).
+This project is copyright 2024 Noah Moroze, released under the [MIT license](LICENSE).
