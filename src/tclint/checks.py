@@ -401,6 +401,9 @@ class BackslashNewlineChecker(Visitor):
                 continue
 
             lineno = i + 1
+            # TODO: whitespace after a backslash could be an error. It'll be
+            # flagged as a trailing-whitespace violation, but maybe it's worth
+            # flagging something more distinct?
             line = line.rstrip(" \t")
             if line.endswith("\\"):
                 # count whitespace before \
