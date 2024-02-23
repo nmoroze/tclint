@@ -173,11 +173,17 @@ class IndentLevelChecker(Visitor):
         self._set_level(arg_expansion)
 
     def visit_expression(self, expression):
+        self._visit_expression(expression)
+
+    def visit_braced_expression(self, expression):
+        self._visit_expression(expression)
+
+    def _visit_expression(self, expression):
         prev_level = self.level
         # don't check indents for things under expression
         self.level = None
         for child in expression.children:
-            child.accept(self)
+            child.accept(self, recurse=True)
         self.level = prev_level
 
     def _set_level(self, node):
@@ -288,7 +294,13 @@ class SpacingChecker(Visitor):
             if len(group) == 1 or not all_aligned:
                 self.violations.extend(violations)
 
-    def visit_expression(self, expression):
+    def visit_binary_op(self, binary_op):
+        return self._check_op_spacing(binary_op)
+
+    def visit_ternary_op(self, ternary_op):
+        return self._check_op_spacing(ternary_op)
+
+    def _check_op_spacing(self, expression):
         last_child = expression.children[0]
         for child in expression.children[1:]:
             if last_child.end_pos[0] != child.pos[0]:
@@ -296,6 +308,7 @@ class SpacingChecker(Visitor):
                 last_child = child
                 continue
 
+            # TODO: collapse to one violation for multiple violations in one expression
             spacing = child.pos[1] - last_child.end_pos[1]
             if spacing != 1:
                 self.violations.append(
@@ -312,7 +325,7 @@ class SpacingChecker(Visitor):
         assert len(expression.children) == 1
         child = expression.children[0]
 
-        if len(child.children) == 1 and isinstance(child.children[0], ParenExpression):
+        if isinstance(child, ParenExpression):
             # check for doubly-nested parens, e.g. `((foo))`
             self.violations.append(
                 Violation(
@@ -321,6 +334,8 @@ class SpacingChecker(Visitor):
                     expression.pos,
                 )
             )
+
+        # TODO: collapse to one violation if both errors present
         if (
             expression.pos[0] == child.pos[0]
             and (child.pos[1] - expression.pos[1]) != 1
