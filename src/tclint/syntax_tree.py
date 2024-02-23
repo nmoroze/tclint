@@ -40,10 +40,19 @@ class Visitor:
     def visit_expression(self, expression):
         pass
 
+    def visit_braced_expression(self, expression):
+        pass
+
     def visit_paren_expression(self, expression):
         pass
 
     def visit_unary_op(self, unary_op):
+        pass
+
+    def visit_binary_op(self, binary_op):
+        pass
+
+    def visit_ternary_op(self, ternary_op):
         pass
 
     def visit_function(self, function):
@@ -347,6 +356,13 @@ class Expression(Node):
         visitor.visit_expression(self)
 
 
+class BracedExpression(Node):
+    def accept(self, visitor, recurse=False):
+        if recurse:
+            self._recurse(visitor)
+        visitor.visit_braced_expression(self)
+
+
 class ParenExpression(Node):
     def accept(self, visitor, recurse=False):
         if recurse:
@@ -359,6 +375,20 @@ class UnaryOp(Node):
         if recurse:
             self._recurse(visitor)
         visitor.visit_unary_op(self)
+
+
+class BinaryOp(Node):
+    def accept(self, visitor, recurse=False):
+        if recurse:
+            self._recurse(visitor)
+        visitor.visit_binary_op(self)
+
+
+class TernaryOp(Node):
+    def accept(self, visitor, recurse=False):
+        if recurse:
+            self._recurse(visitor)
+        visitor.visit_ternary_op(self)
 
 
 class Function(Node):

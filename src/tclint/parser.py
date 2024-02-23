@@ -36,8 +36,11 @@ from tclint.syntax_tree import (
     CompoundBareWord,
     List,
     Expression,
+    BracedExpression,
     ParenExpression,
     UnaryOp,
+    BinaryOp,
+    TernaryOp,
     Function,
 )
 from tclint.commands import CommandArgError, get_commands
@@ -564,26 +567,23 @@ class Parser:
         ts = Lexer(pos=node.contents_pos)
         ts.input(node.contents)
 
-        expr = self._parse_expression(ts)
+        contents = self._parse_expression(ts)
+        if isinstance(node, BracedWord):
+            return BracedExpression(contents, pos=node.pos, end_pos=node.end_pos)
 
-        # hack to make sure positions match the containing node, preserves spacing check
-        expr.line = node.pos[0]
-        expr.col = node.pos[1]
-        expr.end_pos = node.end_pos
-
-        return expr
+        return Expression(contents, pos=node.pos, end_pos=node.end_pos)
 
     @_strip_ws
     def _parse_expression(self, ts):
-        expr = Expression(pos=ts.pos())
-
         op1 = self._parse_operand(ts)
-        expr.add(op1)
+        expr = None
 
         # last condition is hack to break out of expression in case we're in ternary op
         if ts.type() not in {TOK_EOF, TOK_RPAREN} and ts.value() not in {":", ","}:
             if ts.value() == "?":
-                # ternary op
+                expr = TernaryOp(pos=op1.pos)
+                expr.add(op1)
+
                 # weird hack to record operator
                 n = BareWord("?", pos=ts.pos())
                 ts.next()
@@ -604,7 +604,9 @@ class Parser:
                 op3 = self._parse_expression(ts)
                 expr.add(op3)
             else:
-                # binary op
+                expr = BinaryOp(pos=op1.pos)
+                expr.add(op1)
+
                 operator = self._parse_operator(ts)
                 expr.add(operator)
 
@@ -613,6 +615,9 @@ class Parser:
 
             if ts.type() != TOK_RPAREN and ts.value() not in {":", ","}:
                 ts.expect(TOK_EOF, message=f"expected end of expression at {ts.pos()}")
+
+        if expr is None:
+            return op1
 
         expr.end_pos = expr.children[-1].end_pos
         return expr

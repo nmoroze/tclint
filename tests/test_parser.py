@@ -15,7 +15,10 @@ from tclint.parser import (
     BracedWord,
     VarSub,
     List,
+    BracedExpression,
     Expression,
+    BinaryOp,
+    TernaryOp,
     Function,
     TclSyntaxError,
 )
@@ -226,7 +229,7 @@ def test_multiline_braces():
     assert tree == Script(
         Command(
             BareWord("if"),
-            Expression(BareWord("1")),
+            BracedExpression(BareWord("1")),
             Script(
                 Command(
                     BareWord("cmd"),
@@ -248,58 +251,66 @@ def test_clean_tcl():
         Command(
             BareWord("for"),
             Script(Command(BareWord("set"), BareWord("i"), BareWord("1"))),
-            Expression(
-                VarSub("i"),
-                BareWord("<"),
-                Expression(BareWord("100")),
+            BracedExpression(
+                BinaryOp(
+                    VarSub("i"),
+                    BareWord("<"),
+                    BareWord("100"),
+                ),
             ),
             Script(Command(BareWord("incr"), BareWord("i"))),
             Script(
                 Command(
                     BareWord("if"),
-                    Expression(
-                        CommandSub(
-                            Command(
-                                BareWord("expr"),
-                                VarSub("i"),
-                                BareWord("%"),
-                                BareWord("15"),
-                            )
+                    BracedExpression(
+                        BinaryOp(
+                            CommandSub(
+                                Command(
+                                    BareWord("expr"),
+                                    VarSub("i"),
+                                    BareWord("%"),
+                                    BareWord("15"),
+                                )
+                            ),
+                            BareWord("=="),
+                            BareWord("0"),
                         ),
-                        BareWord("=="),
-                        Expression(BareWord("0")),
                     ),
                     Script(
                         Command(BareWord("puts"), QuotedWord(BareWord("FizzBuzz"))),
                     ),
                     BareWord("elseif"),
-                    Expression(
-                        CommandSub(
-                            Command(
-                                BareWord("expr"),
-                                VarSub("i"),
-                                BareWord("%"),
-                                BareWord("3"),
-                            )
+                    BracedExpression(
+                        BinaryOp(
+                            CommandSub(
+                                Command(
+                                    BareWord("expr"),
+                                    VarSub("i"),
+                                    BareWord("%"),
+                                    BareWord("3"),
+                                )
+                            ),
+                            BareWord("=="),
+                            BareWord("0"),
                         ),
-                        BareWord("=="),
-                        Expression(BareWord("0")),
                     ),
                     Script(
                         Command(BareWord("puts"), QuotedWord(BareWord("Fizz"))),
                     ),
                     BareWord("elseif"),
-                    Expression(
-                        CommandSub(
-                            Command(
-                                BareWord("expr"),
-                                VarSub("i"),
-                                BareWord("%"),
-                                BareWord("5"),
-                            )
+                    BracedExpression(
+                        BinaryOp(
+                            CommandSub(
+                                Command(
+                                    BareWord("expr"),
+                                    VarSub("i"),
+                                    BareWord("%"),
+                                    BareWord("5"),
+                                )
+                            ),
+                            BareWord("=="),
+                            BareWord("0"),
                         ),
-                        BareWord("=="),
-                        Expression(BareWord("0")),
                     ),
                     Script(
                         Command(BareWord("puts"), QuotedWord(BareWord("Buzz"))),
@@ -515,7 +526,7 @@ def test_expr_sub_brace():
     assert tree == Script(
         Command(
             BareWord("expr"),
-            Expression(Function(BareWord("int"), Expression(VarSub("foo")))),
+            BracedExpression(Function(BareWord("int"), VarSub("foo"))),
         )
     )
 
@@ -543,28 +554,28 @@ def test_expr_finite_check():
     assert tree == Script(
         Command(
             BareWord("expr"),
-            Expression(
-                CommandSub(
-                    Command(
-                        BareWord("string"),
-                        BareWord("is"),
-                        BareWord("double"),
-                        BareWord("-strict"),
-                        VarSub("x"),
-                    )
-                ),
-                BareWord("&&"),
-                Expression(
-                    VarSub("x"),
-                    BareWord("=="),
-                    Expression(
-                        VarSub("x"),
-                        BareWord("&&"),
-                        Expression(
+            BracedExpression(
+                BinaryOp(
+                    CommandSub(
+                        Command(
+                            BareWord("string"),
+                            BareWord("is"),
+                            BareWord("double"),
+                            BareWord("-strict"),
                             VarSub("x"),
-                            BareWord("+"),
-                            Expression(
-                                BareWord("1"), BareWord("!="), Expression(VarSub("x"))
+                        )
+                    ),
+                    BareWord("&&"),
+                    BinaryOp(
+                        VarSub("x"),
+                        BareWord("=="),
+                        BinaryOp(
+                            VarSub("x"),
+                            BareWord("&&"),
+                            BinaryOp(
+                                VarSub("x"),
+                                BareWord("+"),
+                                BinaryOp(BareWord("1"), BareWord("!="), VarSub("x")),
                             ),
                         ),
                     ),
@@ -583,12 +594,14 @@ def test_expr_newline():
     assert tree == Script(
         Command(
             BareWord("expr"),
-            Expression(
-                QuotedWord(BareWord("conditional")),
-                BareWord("?"),
-                Expression(VarSub("::env", BareWord("FOO"))),
-                BareWord(":"),
-                Expression(BracedWord("foo")),
+            BracedExpression(
+                TernaryOp(
+                    QuotedWord(BareWord("conditional")),
+                    BareWord("?"),
+                    VarSub("::env", BareWord("FOO")),
+                    BareWord(":"),
+                    BracedWord("foo"),
+                ),
             ),
         )
     )
@@ -600,11 +613,11 @@ def test_expr_no_spaces_binop():
     assert tree == Script(
         Command(
             BareWord("expr"),
-            Expression(BareWord("1"), BareWord("-"), Expression(BareWord("1"))),
+            BracedExpression(BinaryOp(BareWord("1"), BareWord("-"), BareWord("1"))),
         ),
         Command(
             BareWord("expr"),
-            Expression(BareWord("1"), BareWord("eq"), Expression(BareWord("1"))),
+            BracedExpression(BinaryOp(BareWord("1"), BareWord("eq"), BareWord("1"))),
         ),
     )
 
@@ -616,16 +629,18 @@ def test_newline_in_expr():
     assert tree == Script(
         Command(
             BareWord("expr"),
-            Expression(
-                VarSub("foo"),
-                BareWord("eq"),
-                Expression(
-                    QuotedWord(BareWord("foo")),
-                    BareWord("&&"),
-                    Expression(
-                        VarSub("bar"),
-                        BareWord("eq"),
-                        Expression(QuotedWord(BareWord("bar"))),
+            BracedExpression(
+                BinaryOp(
+                    VarSub("foo"),
+                    BareWord("eq"),
+                    BinaryOp(
+                        QuotedWord(BareWord("foo")),
+                        BareWord("&&"),
+                        BinaryOp(
+                            VarSub("bar"),
+                            BareWord("eq"),
+                            QuotedWord(BareWord("bar")),
+                        ),
                     ),
                 ),
             ),
