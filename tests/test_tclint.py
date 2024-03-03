@@ -19,7 +19,13 @@ def test_tclint(test):
     with open(output_path, "r") as f:
         expected = f.read()
 
-    p = subprocess.run(["tclint", test], capture_output=True, cwd=MY_DIR)
+    cmd = ["tclint", test]
+
+    config_file = (MY_DIR / test).with_suffix(".toml")
+    if config_file.exists():
+        cmd += ["-c", config_file]
+
+    p = subprocess.run(cmd, capture_output=True, cwd=MY_DIR)
 
     assert p.stdout.decode("utf-8") == expected
     assert p.returncode == 0 if not expected else 1
