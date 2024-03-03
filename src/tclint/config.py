@@ -33,6 +33,7 @@ class Config:
     style_allow_aligned_sets: bool = dataclasses.field(default=False)
     style_max_blank_lines: int = dataclasses.field(default=2)
     style_indent_namespace_eval: bool = dataclasses.field(default=True)
+    style_spaces_in_braces: bool = dataclasses.field(default=False)
 
     def apply_cli_args(self, args):
         args_dict = vars(args)
@@ -107,6 +108,7 @@ _VALIDATORS = {
     "style_indent_namespace_eval": Use(
         bool, error="indent-namespace-eval must be a bool"
     ),
+    "style_spaces_in_braces": Use(bool, error="spaces-in-braces must be a bool"),
 }
 
 
@@ -126,6 +128,7 @@ def _validate_config(config):
             Optional("indent-namespace-eval"): _VALIDATORS[
                 "style_indent_namespace_eval"
             ],
+            Optional("spaces-in-braces"): _VALIDATORS["style_spaces_in_braces"],
         },
     }
 
@@ -204,6 +207,11 @@ def setup_config_cli_args(parser):
         "style_indent_namespace_eval",
         "--style-indent-namespace-eval",
         "--style-no-indent-namespace-eval",
+    )
+    add_bool(
+        "style_spaces_in_braces",
+        "--style-spaces-in-braces",
+        "--style-no-spaces-in-braces",
     )
 
 

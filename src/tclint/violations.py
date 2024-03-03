@@ -19,6 +19,7 @@ class Rule(Enum):
     BLANK_LINES = "blank-lines"
     BACKSLACH_SPACING = "backslash-spacing"
     EXPR_FORMAT = "expr-format"
+    SPACES_IN_BRACES = "spaces-in-braces"
 
     def __str__(self):
         return self.value

@@ -25,6 +25,9 @@ max-blank-lines = 1
 allow-aligned-sets = true
 # whether to require indenting of "namespace eval" blocks. defaults to true.
 indent-namespace-eval = false
+# whether to expect a single space (true) or no spaces (false) surrounding the contents of a braced expression or script argument.
+# defaults to false.
+spaces-in-braces = true
 ```
 
 ## Filesets
@@ -67,6 +70,8 @@ configuration arguments:
   --style-no-aligned-sets
   --style-indent-namespace-eval
   --style-no-indent-namespace-eval
+  --style-spaces-in-braces
+  --style-no-spaces-in-braces
 ```
 
 ## Ignore violations with inline comments

@@ -10,5 +10,5 @@ expr {~ [bar]}
 expr {max($a, $b, $c)}
 expr {max ( $a , $b,  $c )}
 
-expr { (3 * 4) }
-expr { ( ( 3 * 4 )) }
+expr {(3 * 4)}
+expr {( ( 3 * 4 ))}

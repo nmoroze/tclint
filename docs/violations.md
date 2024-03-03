@@ -105,3 +105,25 @@ Note that more style rules may be enforced as `expr-format` violations in future
 ### Rationale
 
 Consistent formatting enhances readability.
+
+## `spaces-in-braces`
+
+The spacing around the contents of braced expression or script arguments must be consistent. If `style.spaces-in-braces` is true, `tclint` expects one space between the contents of a braced argument and the braces themselves. If `style.spaces-in-braces` is false, `tclint` expects no spaces between the contents and the braces.
+
+For example:
+
+```tcl
+# style.spaces-in-braces = True
+for { set i 0 } { $i < 10 } { incr i } {
+    puts $i
+}
+
+# style.spaces-in-braces = False
+for {set i 0} {$i < 10} {incr i} {
+    puts $i
+}
+```
+
+### Rationale
+
+Consistent formatting enhances readability.

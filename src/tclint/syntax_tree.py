@@ -221,6 +221,11 @@ class Node:
 
 
 class Script(Node):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # hack for spaces-in-braces check
+        self.braced = False
+
     def accept(self, visitor, recurse=False):
         if recurse:
             self._recurse(visitor)

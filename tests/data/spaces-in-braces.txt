@@ -1,0 +1,6 @@
+data/spaces-in-braces.tcl:4:4: expected 1 space between contents and enclosing braces [spaces-in-braces]
+data/spaces-in-braces.tcl:8:6: expected 1 space between contents and enclosing braces [spaces-in-braces]
+data/spaces-in-braces.tcl:10:36: expected 1 space between contents and enclosing braces [spaces-in-braces]
+data/spaces-in-braces.tcl:17:14: expected 1 space between contents and enclosing braces [spaces-in-braces]
+data/spaces-in-braces.tcl:17:16: expected 1 space between contents and enclosing braces [spaces-in-braces]
+data/spaces-in-braces.tcl:17:34: expected 1 space between contents and enclosing braces [spaces-in-braces]

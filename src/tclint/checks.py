@@ -663,6 +663,71 @@ class BlankLineChecker(Visitor):
             child.accept(self)
 
 
+class SpacesInBracesChecker(Visitor):
+    def check(self, _, tree, config):
+        self._violations = []
+        self._spaces_in_braces = config.style_spaces_in_braces
+        tree.accept(self, recurse=True)
+        return self._violations
+
+    def visit_script(self, script):
+        if not script.braced:
+            # We tag whether a script is braced using this member. It's a bit of
+            # a hack - it would probably be better to have a BracedScript
+            # analagous to BracedExpression, but that change is more invasive.
+            #
+            # We can distinguish between a braced and bare script using
+            # positions, but this extra info is important so we don't check
+            # quoted scripts.
+            return
+
+        return self._check_braced_arg(script)
+
+    def visit_braced_expression(self, expression):
+        return self._check_braced_arg(expression)
+
+    def _check_braced_arg(self, node):
+        if len(node.children) == 0:
+            # TODO: consider enforcing {} vs { }
+            return
+
+        if self._spaces_in_braces:
+            expected_spacing = 2
+            message = "expected 1 space between contents and enclosing braces"
+        else:
+            expected_spacing = 1
+            message = "expected no space between contents and enclosing braces"
+
+        # check violation at beginning
+        first = node.children[0]
+        if (
+            first.pos[0] == node.pos[0]
+            and first.pos[1] - node.pos[1] != expected_spacing
+        ):
+            self._violations.append(
+                Violation(
+                    Rule.SPACES_IN_BRACES,
+                    message,
+                    node.pos,
+                )
+            )
+            return
+
+        # check violation at end
+        last = node.children[-1]
+        if (
+            node.end_pos[0] == last.end_pos[0]
+            and node.end_pos[1] - last.end_pos[1] != expected_spacing
+        ):
+            self._violations.append(
+                Violation(
+                    Rule.SPACES_IN_BRACES,
+                    message,
+                    last.end_pos,
+                )
+            )
+
+
 def get_checkers():
     return (
         IndentLevelChecker(),
@@ -671,4 +736,5 @@ def get_checkers():
         RedefinedBuiltinChecker(),
         BlankLineChecker(),
         BackslashNewlineChecker(),
+        SpacesInBracesChecker(),
     )

@@ -180,6 +180,8 @@ class Parser:
         cmd_sub = self._cmd_sub
         self._cmd_sub = False
         script = self.parse(node.contents, pos=node.contents_pos)
+        if isinstance(node, BracedWord):
+            script.braced = True
         self._cmd_sub = cmd_sub
 
         script.line = node.line
@@ -281,7 +283,11 @@ class Parser:
             self.violations.append(Violation(Rule.COMMAND_ARGS, str(e), pos))
             parsed_args = args
 
-        return Command(routine, *parsed_args, pos=pos, end_pos=ts.pos())
+        children = [routine, *parsed_args]
+        # We need to inherit end pos of last child to prevent us from counting
+        # extra whitespace at end of command, which is important for
+        # spaces-in-braces check.
+        return Command(*children, pos=pos, end_pos=children[-1].end_pos)
 
     def parse_word(self, ts):
         self.debug(f"parse_word({ts.current})")
