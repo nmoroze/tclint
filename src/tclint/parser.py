@@ -221,7 +221,7 @@ class Parser:
                 TOK_EOF,
                 TOK_NEWLINE,
                 TOK_SEMI,
-                message=f"Expected newline or semicolon, got {ts.value()}",
+                message=f"expected newline or semicolon, got {ts.value()}",
                 pos=ts.pos(),
             )
 
@@ -359,7 +359,7 @@ class Parser:
         while True:
             if ts.type() == TOK_EOF:
                 raise TclSyntaxError(
-                    "Reached EOF without finding match for brace", expected_braces[-1]
+                    "reached EOF without finding match for brace", expected_braces[-1]
                 )
 
             if ts.type() == TOK_LBRACE:
@@ -369,7 +369,7 @@ class Parser:
                     expected_braces.pop()
                 except IndexError:
                     raise TclSyntaxError(
-                        "Found closing brace without matching open brace", ts.pos()
+                        "found closing brace without matching open brace", ts.pos()
                     )
 
                 if len(expected_braces) == 0:
@@ -432,7 +432,7 @@ class Parser:
             while ts.type() != TOK_RBRACE:
                 if ts.type() is TOK_EOF:
                     raise TclSyntaxError(
-                        "Reached EOF without finding match for brace", brace_pos
+                        "reached EOF without finding match for brace", brace_pos
                     )
                 var += ts.value()
                 ts.next()
@@ -455,7 +455,7 @@ class Parser:
             while ts.type() != TOK_RPAREN:
                 if ts.type() == TOK_EOF:
                     raise TclSyntaxError(
-                        "Reached EOF without finding match for paren", paren_pos
+                        "reached EOF without finding match for paren", paren_pos
                     )
                 if ts.type() == TOK_DOLLAR:
                     dollar_tok = ts.current
@@ -700,7 +700,7 @@ class Parser:
             or is_func
         ):
             raise TclSyntaxError(
-                f"Invalid bareword in expression: {operand}", operand_pos
+                f"invalid bareword in expression: {operand}", operand_pos
             )
 
         node = BareWord(operand, pos=operand_pos, end_pos=ts.pos())
@@ -732,16 +732,14 @@ class Parser:
             operator = ts.value()
             ts.next()
             if ts.value() != "=":
-                raise TclSyntaxError(
-                    f"expression has invalid operator: {operator}", pos
-                )
+                raise TclSyntaxError(f"invalid operator in expression: {operator}", pos)
             operator += ts.value()
             ts.next()
         elif ts.value() in {"*", "/", "%", "+", "-", "^", "eq", "ne", "in", "ni"}:
             operator = ts.value()
             ts.next()
         else:
-            raise TclSyntaxError(f"expression has invalid operator: {ts.value()}", pos)
+            raise TclSyntaxError(f"invalid operator in expression: {ts.value()}", pos)
 
         return BareWord(operator, pos=pos, end_pos=ts.pos())
 
