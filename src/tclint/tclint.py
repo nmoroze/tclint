@@ -106,17 +106,15 @@ def filter_violations(violations, config_ignore, inline_ignore, path):
     return filtered_violations
 
 
-def lint(
-    script: str, config: Config, path: pathlib.Path, debug=False
-) -> List[Violation]:
-    parser = Parser(debug=debug, command_plugins=config.command_plugins)
+def lint(script: str, config: Config, path: pathlib.Path, debug=0) -> List[Violation]:
+    parser = Parser(debug=(debug > 0), command_plugins=config.command_plugins)
 
     violations = []
     tree = parser.parse(script)
     violations += parser.violations
 
-    if debug:
-        print(tree.pretty())
+    if debug > 0:
+        print(tree.pretty(positions=(debug > 1)))
 
     for checker in get_checkers():
         violations += checker.check(script, tree, config)
@@ -143,7 +141,16 @@ def main():
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
     parser.add_argument("source", nargs="+", help="files to lint", type=pathlib.Path)
-    parser.add_argument("--debug", action="store_true", help="display debug output")
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action="count",
+        default=0,
+        help=(
+            "display debug output. Provide additional times to increase the verbosity"
+            " of output (e.g. -dd)"
+        ),
+    )
     parser.add_argument(
         "-c",
         "--config",
