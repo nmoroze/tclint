@@ -57,7 +57,7 @@ Trailing whitespace is rarely semantically meaningful and often pollutes version
 
 ## `blank-lines`
 
-Scripts may not contain too many consecutive blank lines. This number can be configured by `style.max_blank_lines`.
+Scripts may not contain too many consecutive blank lines. This number can be configured by `style.max-blank-lines`.
 
 ### Rationale
 
