@@ -11,6 +11,7 @@ This page lists all lint violations that may be reported by `tclint`.
 - [`redefined-builtin`](#redefined-builtin)
 - [`backslash-spacing`](#backslash-spacing)
 - [`expr-format`](#expr-format)
+- [`spaces-in-braces`](#spaces-in-braces)
 
 ## `indent`
 
