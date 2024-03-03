@@ -65,6 +65,8 @@ configuration arguments:
   --style-max-blank-lines <max_blank_lines>
   --style-aligned-sets
   --style-no-aligned-sets
+  --style-indent-namespace-eval
+  --style-no-indent-namespace-eval
 ```
 
 ## Ignore violations with inline comments
