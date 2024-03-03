@@ -221,15 +221,13 @@ class Parser:
                 TOK_EOF,
                 TOK_NEWLINE,
                 TOK_SEMI,
-                message=(
-                    f"Expected newline or semicolon at {ts.pos()}, got {ts.value()}"
-                ),
+                message=f"Expected newline or semicolon, got {ts.value()}",
+                pos=ts.pos(),
             )
 
         if self._cmd_sub and ts.type() is TOK_EOF:
             raise TclSyntaxError(
-                "reached EOF without finding end of command substitution starting at"
-                f" {pos}"
+                "reached EOF without finding end of command substitution", pos
             )
 
         self._debug_indent -= 1
@@ -338,7 +336,7 @@ class Parser:
         res = word.resolve(ts.pos())
 
         ts.expect(
-            TOK_QUOTE, message=f"reached EOF without finding match for quote at {pos}"
+            TOK_QUOTE, message="reached EOF without finding match for quote", pos=pos
         )
 
         self._debug_indent -= 1
@@ -361,8 +359,7 @@ class Parser:
         while True:
             if ts.type() == TOK_EOF:
                 raise TclSyntaxError(
-                    "Reached EOF without finding match for brace at"
-                    f" {expected_braces[-1]}"
+                    "Reached EOF without finding match for brace", expected_braces[-1]
                 )
 
             if ts.type() == TOK_LBRACE:
@@ -372,7 +369,7 @@ class Parser:
                     expected_braces.pop()
                 except IndexError:
                     raise TclSyntaxError(
-                        f"Found closing brace at {ts.pos()} without matching open brace"
+                        "Found closing brace without matching open brace", ts.pos()
                     )
 
                 if len(expected_braces) == 0:
@@ -435,7 +432,7 @@ class Parser:
             while ts.type() != TOK_RBRACE:
                 if ts.type() is TOK_EOF:
                     raise TclSyntaxError(
-                        f"Reached EOF without finding match for brace at {brace_pos}"
+                        "Reached EOF without finding match for brace", brace_pos
                     )
                 var += ts.value()
                 ts.next()
@@ -458,7 +455,7 @@ class Parser:
             while ts.type() != TOK_RPAREN:
                 if ts.type() == TOK_EOF:
                     raise TclSyntaxError(
-                        f"Reached EOF without finding match for paren at {paren_pos}"
+                        "Reached EOF without finding match for paren", paren_pos
                     )
                 if ts.type() == TOK_DOLLAR:
                     dollar_tok = ts.current
@@ -546,10 +543,8 @@ class Parser:
 
                 ts.expect(
                     TOK_QUOTE,
-                    message=(
-                        "reached EOF without finding match for quote at"
-                        f" {quote_word_pos}"
-                    ),
+                    message="reached EOF without finding match for quote",
+                    pos=quote_word_pos,
                 )
 
                 list_node.add(QuotedWord(word, pos=quote_word_pos, end_pos=ts.pos()))
@@ -599,7 +594,9 @@ class Parser:
                 op2 = self._parse_expression(ts)
                 expr.add(op2)
                 if ts.value() != ":":
-                    raise TclSyntaxError("expected ':' to continue ternary expression")
+                    raise TclSyntaxError(
+                        "expected ':' to continue ternary expression", ts.pos()
+                    )
 
                 # weird hack again
                 n = BareWord(":", pos=ts.pos())
@@ -620,7 +617,7 @@ class Parser:
                 expr.add(op2)
 
             if ts.type() != TOK_RPAREN and ts.value() not in {":", ","}:
-                ts.expect(TOK_EOF, message=f"expected end of expression at {ts.pos()}")
+                ts.expect(TOK_EOF, message="expected end of expression", pos=ts.pos())
 
         if expr is None:
             return op1
@@ -644,7 +641,8 @@ class Parser:
             expr.add(self._parse_expression(ts))
             ts.expect(
                 TOK_RPAREN,
-                message=f"reached EOF without finding match for paren at {expr.pos}",
+                message="reached EOF without finding match for paren",
+                pos=expr.pos,
             )
             expr.end_pos = ts.pos()
             return expr
@@ -702,7 +700,7 @@ class Parser:
             or is_func
         ):
             raise TclSyntaxError(
-                f"Invalid bareword in expression: {operand} at {operand_pos}"
+                f"Invalid bareword in expression: {operand}", operand_pos
             )
 
         node = BareWord(operand, pos=operand_pos, end_pos=ts.pos())
@@ -735,7 +733,7 @@ class Parser:
             ts.next()
             if ts.value() != "=":
                 raise TclSyntaxError(
-                    f"expression has invalid operator: {operator} at {pos}"
+                    f"expression has invalid operator: {operator}", pos
                 )
             operator += ts.value()
             ts.next()
@@ -743,9 +741,7 @@ class Parser:
             operator = ts.value()
             ts.next()
         else:
-            raise TclSyntaxError(
-                f"expression has invalid operator: {ts.value()} at {pos}"
-            )
+            raise TclSyntaxError(f"expression has invalid operator: {ts.value()}", pos)
 
         return BareWord(operator, pos=pos, end_pos=ts.pos())
 
@@ -759,7 +755,8 @@ class Parser:
 
         ts.expect(
             TOK_LPAREN,
-            message=f"expected open paren after function name at {name_node.pos}",
+            message="expected open paren after function name",
+            pos=name_node.pos,
         )
 
         delims = {TOK_RPAREN, TOK_EOF}
@@ -770,7 +767,9 @@ class Parser:
 
         while ts.type() not in delims:
             if ts.value() != ",":
-                raise TclSyntaxError("expected comma between function arguments")
+                raise TclSyntaxError(
+                    "expected comma between function arguments", ts.pos()
+                )
 
             # adding comma may seem a little weird since it's non-functional,
             # but this lets us store comma position for style checks
@@ -784,7 +783,8 @@ class Parser:
 
         ts.expect(
             TOK_RPAREN,
-            message=f"expected close paren after function arguments at {name_node.pos}",
+            message="expected close paren after function arguments",
+            pos=name_node.pos,
         )
         func.end_pos = ts.pos()
 

@@ -24,7 +24,9 @@ TOK_EOF = None
 
 
 class TclSyntaxError(Exception):
-    pass
+    def __init__(self, message, pos):
+        super().__init__(message)
+        self.pos = pos
 
 
 class Lexer:
@@ -192,9 +194,9 @@ class Lexer:
     def next(self):
         self.current = self.lexer.token()
 
-    def expect(self, *tokens, message=None):
+    def expect(self, *tokens, message, pos):
         if self.type() not in tokens:
-            raise TclSyntaxError(message)
+            raise TclSyntaxError(message, pos)
 
         self.next()
 

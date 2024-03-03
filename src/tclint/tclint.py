@@ -185,7 +185,8 @@ def main():
         try:
             violations = lint(script, config.get_for_path(path), path, debug=args.debug)
         except TclSyntaxError as e:
-            print(f"{path}: syntax error: {e}")
+            line, col = e.pos
+            print(f"{path}:{line}:{col}: syntax error: {e}")
             retcode |= EXIT_SYNTAX_ERROR
             continue
 
