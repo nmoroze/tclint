@@ -1,12 +1,12 @@
 import argparse
 import pathlib
-from typing import Union, List
+from typing import Union, List, Any
 import dataclasses
+import sys
 
-try:
+if sys.version_info >= (3, 11):
     import tomllib
-except ModuleNotFoundError:
-    # tomli backfills on Python < 3.11
+else:
     import tomli as tomllib
 
 from schema import Schema, Optional, Or, Use, SchemaError, And
@@ -25,8 +25,8 @@ class Config:
     validation (and normalization) is defined by `validators` below.
     """
 
-    exclude: List[any] = dataclasses.field(default_factory=list)
-    ignore: List[any] = dataclasses.field(default_factory=list)
+    exclude: List[Any] = dataclasses.field(default_factory=list)
+    ignore: List[Any] = dataclasses.field(default_factory=list)
     command_plugins: List[str] = dataclasses.field(default_factory=list)
     style_indent: Union[str, int] = dataclasses.field(default=4)
     style_line_length: int = dataclasses.field(default=80)
