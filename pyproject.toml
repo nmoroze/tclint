@@ -35,3 +35,10 @@ timeout = 10
 
 [tool.setuptools_scm]
 version_file = "src/tclint/_version.py"
+
+[[tool.mypy.overrides]]
+module = [
+    "ply.*",
+    "schema",
+]
+ignore_missing_imports = true

@@ -65,3 +65,8 @@ jobs:
         run: |
           pip install flake8 -c dev-constraints.txt
           flake8 --statistics .
+
+      - name: Typecheck
+        run: |
+          pip install mypy -c dev-constraints.txt
+          mypy src

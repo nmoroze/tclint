@@ -5,7 +5,7 @@ import codecs
 import os
 import pathlib
 import sys
-from typing import List
+from typing import List, Optional
 
 from tclint.config import get_config, setup_config_cli_args, Config, ConfigError
 from tclint.parser import Parser, TclSyntaxError
@@ -15,7 +15,7 @@ from tclint.comments import CommentVisitor
 from tclint import utils
 
 try:
-    from tclint._version import __version__
+    from tclint._version import __version__  # type: ignore
 except ModuleNotFoundError:
     __version__ = "(unknown version)"
 
@@ -27,7 +27,7 @@ EXIT_INPUT_ERROR = 4
 
 
 def resolve_sources(
-    paths: List[pathlib.Path], exclude: List[pathlib.Path] = None
+    paths: List[pathlib.Path], exclude: Optional[List[pathlib.Path]] = None
 ) -> List[pathlib.Path]:
     """Resolves paths passed via CLI to a list of filepaths to lint.
 

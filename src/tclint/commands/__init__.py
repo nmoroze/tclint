@@ -22,12 +22,12 @@ def _get_entry_points(group):
 
 
 def validate_command_plugins(plugins: List[str]) -> List[str]:
-    plugins = set(plugins)
+    plugins_set = set(plugins)
     installed_plugins = _get_entry_points("tclint.plugins")
 
     plugins_found = set()
     for plugin in installed_plugins:
-        if plugin.name not in plugins:
+        if plugin.name not in plugins_set:
             continue
 
         try:
@@ -47,7 +47,7 @@ def validate_command_plugins(plugins: List[str]) -> List[str]:
 
         plugins_found.add(plugin.name)
 
-    plugins_diff = plugins.difference(plugins_found)
+    plugins_diff = plugins_set.difference(plugins_found)
     if plugins_diff:
         plugins_str = ", ".join(plugins_diff)
         print(f"Warning: following plugins could not be found: {plugins_str}")
@@ -55,7 +55,7 @@ def validate_command_plugins(plugins: List[str]) -> List[str]:
     return list(plugins_found)
 
 
-def get_commands(plugins: List[str] = None) -> Dict:
+def get_commands(plugins: List[str]) -> Dict:
     plugins_to_find = set(plugins)
     installed_plugins = _get_entry_points("tclint.plugins")
 
