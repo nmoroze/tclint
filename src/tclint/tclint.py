@@ -64,11 +64,9 @@ def resolve_sources(
         if is_excluded(path):
             continue
 
-        if path.is_file():
+        if not path.is_dir():
             sources.append(path)
             continue
-
-        assert path.is_dir()
 
         for dirpath, _, filenames in os.walk(path):
             for name in filenames:

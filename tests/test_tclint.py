@@ -69,3 +69,8 @@ data/dirty.tcl:10:1: expected indent of 2 spaces, got 4 [indent]
 
     assert p.stdout.decode("utf-8") == expected
     assert p.returncode == 1
+
+
+def test_special_file():
+    p = subprocess.run(["tclint", "/dev/stdin"])
+    assert p.returncode == 0
