@@ -74,3 +74,17 @@ data/dirty.tcl:10:1: expected indent of 2 spaces, got 4 [indent]
 def test_special_file():
     p = subprocess.run(["tclint", "/dev/stdin"])
     assert p.returncode == 0
+
+
+def test_read_stdin():
+    p = subprocess.Popen(
+        ["tclint", "-"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stdout, stderr = p.communicate(input=' puts "hello world"'.encode("utf-8"))
+
+    output = stdout.decode("utf-8").strip()
+    assert output == "(stdin):1:1: expected indent of 0 spaces, got 1 [indent]"
+    assert stderr == b""

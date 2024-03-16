@@ -28,7 +28,7 @@ EXIT_INPUT_ERROR = 4
 
 def resolve_sources(
     paths: List[pathlib.Path], exclude: Optional[List[pathlib.Path]] = None
-) -> List[pathlib.Path]:
+) -> List[Optional[pathlib.Path]]:
     """Resolves paths passed via CLI to a list of filepaths to lint.
 
     `paths` is a list of paths that may be files or directories. Files are
@@ -55,9 +55,13 @@ def resolve_sources(
 
         return False
 
-    sources = []
+    sources: List[Optional[pathlib.Path]] = []
 
     for path in paths:
+        if str(path) == "-":
+            sources.append(None)
+            continue
+
         if not path.exists():
             raise FileNotFoundError(f"path {path} does not exist")
 
@@ -79,13 +83,16 @@ def resolve_sources(
     return sources
 
 
-def filter_violations(violations, config_ignore, inline_ignore, path):
+def filter_violations(
+    violations, config_ignore, inline_ignore, path: Optional[pathlib.Path]
+):
     global_ignore = []
-    path = path.resolve()
+    if path is not None:
+        path = path.resolve()
     for entry in config_ignore:
         if isinstance(entry, Rule):
             global_ignore.append(entry)
-        else:
+        elif path is not None:
             ignore_path = entry["path"].resolve()
             if utils.is_relative_to(path, ignore_path):
                 global_ignore.extend(entry["rules"])
@@ -104,7 +111,9 @@ def filter_violations(violations, config_ignore, inline_ignore, path):
     return filtered_violations
 
 
-def lint(script: str, config: Config, path: pathlib.Path, debug=0) -> List[Violation]:
+def lint(
+    script: str, config: Config, path: Optional[pathlib.Path], debug=0
+) -> List[Violation]:
     parser = Parser(debug=(debug > 0), command_plugins=config.command_plugins)
 
     violations = []
@@ -138,7 +147,12 @@ def main():
     parser.add_argument(
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
-    parser.add_argument("source", nargs="+", help="files to lint", type=pathlib.Path)
+    parser.add_argument(
+        "source",
+        nargs="+",
+        help="files to lint. Provide '-' to read from stdin",
+        type=pathlib.Path,
+    )
     parser.add_argument(
         "-d",
         "--debug",
@@ -177,19 +191,24 @@ def main():
     retcode = EXIT_OK
 
     for path in sources:
-        with open(path, "r", errors="replace_with_warning") as f:
-            script = f.read()
+        if path is None:
+            script = sys.stdin.read()
+            out_prefix = "(stdin)"
+        else:
+            with open(path, "r", errors="replace_with_warning") as f:
+                script = f.read()
+            out_prefix = str(path)
 
         try:
             violations = lint(script, config.get_for_path(path), path, debug=args.debug)
         except TclSyntaxError as e:
             line, col = e.pos
-            print(f"{path}:{line}:{col}: syntax error: {e}")
+            print(f"{out_prefix}:{line}:{col}: syntax error: {e}")
             retcode |= EXIT_SYNTAX_ERROR
             continue
 
         for violation in sorted(violations):
-            print(f"{path}:{violation}")
+            print(f"{out_prefix}:{violation}")
 
         if len(violations) > 0:
             retcode |= EXIT_LINT_VIOLATIONS

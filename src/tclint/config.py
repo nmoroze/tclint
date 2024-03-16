@@ -319,6 +319,9 @@ class RunConfig:
             raise ConfigError(f"pyproject.toml: {e}")
 
     def get_for_path(self, path) -> Config:
+        if path is None:
+            return self._global_config
+
         path = path.resolve()
         for fileset_paths, config in self._fileset_configs:
             for fileset_path in fileset_paths:

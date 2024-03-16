@@ -87,4 +87,5 @@ class CommentVisitor(Visitor):
 
     def _warning(self, message, pos):
         # TODO: formal warning mechanism
-        print(f"Warning: {self._path}:{pos[0]}:{pos[1]}: {message}")
+        prefix = self._path if self._path is not None else "(stdin)"
+        print(f"Warning: {prefix}:{pos[0]}:{pos[1]}: {message}")
