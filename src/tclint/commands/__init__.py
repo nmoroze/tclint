@@ -3,6 +3,7 @@ from importlib.metadata import entry_points
 from typing import List, Dict
 
 from tclint.commands import builtin as _builtin
+from tclint.commands.plugins import PluginManager
 
 # import to expose in package
 from tclint.commands.utils import CommandArgError
@@ -22,55 +23,21 @@ def _get_entry_points(group):
 
 
 def validate_command_plugins(plugins: List[str]) -> List[str]:
-    plugins_set = set(plugins)
-    installed_plugins = _get_entry_points("tclint.plugins")
+    valid_plugins = []
+    for plugin in set(plugins):
+        if PluginManager.load(plugin) is not None:
+            valid_plugins.append(plugin)
 
-    plugins_found = set()
-    for plugin in installed_plugins:
-        if plugin.name not in plugins_set:
-            continue
-
-        try:
-            module = plugin.load()
-        except Exception:
-            print(
-                f"Warning: skipping plugin {plugin.name} due to an error in the plugin"
-            )
-            continue
-
-        if not hasattr(module, "commands"):
-            print(
-                f"Warning: skipping plugin {plugin.name} since it does not define"
-                " commands"
-            )
-            continue
-
-        plugins_found.add(plugin.name)
-
-    plugins_diff = plugins_set.difference(plugins_found)
-    if plugins_diff:
-        plugins_str = ", ".join(plugins_diff)
-        print(f"Warning: following plugins could not be found: {plugins_str}")
-
-    return list(plugins_found)
+    return valid_plugins
 
 
 def get_commands(plugins: List[str]) -> Dict:
-    plugins_to_find = set(plugins)
-    installed_plugins = _get_entry_points("tclint.plugins")
-
     commands = {}
     commands.update(_builtin.commands)
 
-    for plugin in installed_plugins:
-        try:
-            plugins_to_find.remove(plugin.name)
-        except KeyError:
-            continue
-
-        module = plugin.load()
-        plugin_commands = getattr(module, "commands")
-
-        commands.update(plugin_commands)
+    for plugin in set(plugins):
+        plugin_commands = PluginManager.load(plugin)
+        if plugin_commands is not None:
+            commands.update(plugin_commands)
 
     return commands
