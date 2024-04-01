@@ -34,6 +34,28 @@ def test_tclint(test):
     assert p.returncode == 0 if not expected else 1
 
 
+def test_tclint_show_categories():
+    test = (test_case_dir / "example.tcl").relative_to(MY_DIR)
+
+    p = subprocess.run(
+        [
+            "tclint",
+            "--show-categories",
+            test,
+        ],
+        capture_output=True,
+        cwd=MY_DIR,
+    )
+    expected = """
+data/example.tcl:1:1: too many args to puts: got 4, expected no more than 3 [func:command-args]
+data/example.tcl:2:1: expected indent of 0 spaces, got 2 [style:indent]
+data/example.tcl:3:5: expected 1 space between words, got 3 [style:spacing]
+""".lstrip()  # noqa E501
+
+    assert p.stdout.decode("utf-8") == expected
+    assert p.returncode == 1
+
+
 def test_switches():
     test = (test_case_dir / "dirty.tcl").relative_to(MY_DIR)
     config_file = test_case_dir / "tclint.toml"

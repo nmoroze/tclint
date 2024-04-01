@@ -13,6 +13,12 @@ This page lists all lint violations that may be reported by `tclint`.
 - [`expr-format`](#expr-format)
 - [`spaces-in-braces`](#spaces-in-braces)
 
+Each of these violations is sorted into one of two coarse categories, which can
+be displayed using the `--show-categories` CLI option.
+
+- `func`: violations that may impact the script's functionality
+- `style`: style-related violations with no functional impact
+
 ## `indent`
 
 Source files must be indented consistently. `tclint` requires an additional level of indentation within script arguments (e.g. the body of an `if` or `while` command), as well as for continuations of command arguments.

@@ -179,6 +179,11 @@ def main():
         default=None,
         metavar="<path>",
     )
+    parser.add_argument(
+        "--show-categories",
+        help="print category tag for each violation",
+        action="store_true",
+    )
     setup_config_cli_args(parser)
     args = parser.parse_args()
 
@@ -222,7 +227,7 @@ def main():
             continue
 
         for violation in sorted(violations):
-            print(f"{out_prefix}:{violation}")
+            print(f"{out_prefix}:{violation.str(show_category=args.show_categories)}")
 
         if len(violations) > 0:
             retcode |= EXIT_LINT_VIOLATIONS
