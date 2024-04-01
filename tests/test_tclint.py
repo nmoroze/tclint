@@ -1,7 +1,10 @@
+import os
 import pathlib
 import subprocess
 
 import pytest
+
+from tclint import tclint
 
 MY_DIR = pathlib.Path(__file__).parent.resolve()
 
@@ -88,3 +91,54 @@ def test_read_stdin():
     output = stdout.decode("utf-8").strip()
     assert output == "(stdin):1:1: expected indent of 0 spaces, got 1 [indent]"
     assert stderr == b""
+
+
+def test_resolve_sources(tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp("a")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "ignore").mkdir()
+    (tmp_path / "src" / "ignore" / "bar.tcl").touch()
+    (tmp_path / "src" / "ignore1.tcl").touch()
+    (tmp_path / "src" / "ignore2.tcl").touch()
+    to_include = tmp_path / "src" / "foo.tcl"
+    to_include.touch()
+
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+
+    sources = tclint.resolve_sources(
+        [pathlib.Path(".")],
+        exclude_patterns=[
+            # test bare pattern matches anywhere in tree
+            "ignore",
+            # test glob
+            "ignore*.tcl",
+            # test pattern with "/" only matches from root of tree
+            "/foo.tcl",
+        ],
+        exclude_root=tmp_path,
+    )
+
+    assert len(sources) == 1
+    assert sources[0] == to_include.relative_to(tmp_path)
+
+    # test absolute path outside of exclude_root doesn't get matched by ignore
+    # pattern starting with "/"
+    other_dir = tmp_path_factory.mktemp("b")
+    in_path = other_dir / "foo.tcl"
+    in_path.touch()
+    sources = tclint.resolve_sources(
+        [in_path], exclude_patterns=[str(in_path)], exclude_root=tmp_path
+    )
+    assert len(sources) == 1
+    assert sources[0] == in_path
+
+    # test that we can match outside of exclude root with explicit relative path
+    top_src = tmp_path / "top.tcl"
+    top_src.touch()
+    sources = tclint.resolve_sources(
+        [top_src], exclude_patterns=["../top.tcl"], exclude_root=tmp_path / "src"
+    )
+    assert len(sources) == 0
+
+    os.chdir(cwd)

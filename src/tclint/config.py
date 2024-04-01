@@ -71,7 +71,7 @@ def _str2list(s):
 _VALIDATORS = {
     # note: it's ok if paths don't exist - allows for generic
     # configurations with directories like .git/ excluded
-    "exclude": And(Use(_str2list), [Use(pathlib.Path)]),
+    "exclude": Use(_str2list),
     "ignore": And(
         Use(_str2list),
         [

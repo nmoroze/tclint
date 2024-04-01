@@ -5,8 +5,9 @@
 The following example shows all supported fields:
 
 ```toml
-# paths to exclude when searching directories. defaults to empty list.
-exclude = ["ignore_me/", "ignore.tcl"]
+# patterns to exclude when searching directories. defaults to empty list.
+# follows gitignore pattern format: https://git-scm.com/docs/gitignore#_pattern_format
+exclude = ["ignore_me/", "ignore*.tcl", "/ignore_from_here"]
 # lint violations to ignore. defaults to empty list.
 # can also supply an inline table with a path and a list of violations to ignore under that path.
 ignore = [
@@ -61,8 +62,8 @@ Each configuration field supports at least one command line argument that can be
 configuration arguments:
   --ignore "rule1, rule2, ..."
   --extend-ignore "rule1, rule2, ..."
-  --exclude "path1, path2, ..."
-  --extend-exclude "path1, path2, ..."
+  --exclude "pattern1, pattern2, ..."
+  --extend-exclude "pattern1, pattern2, ..."
   --style-indent <indent>
   --style-line-length <line_length>
   --style-max-blank-lines <max_blank_lines>

@@ -7,6 +7,8 @@ import pathlib
 import sys
 from typing import List, Optional
 
+import pathspec
+
 from tclint.config import get_config, setup_config_cli_args, Config, ConfigError
 from tclint.parser import Parser, TclSyntaxError
 from tclint.checks import get_checkers
@@ -27,14 +29,15 @@ EXIT_INPUT_ERROR = 4
 
 
 def resolve_sources(
-    paths: List[pathlib.Path], exclude: Optional[List[pathlib.Path]] = None
+    paths: List[pathlib.Path], exclude_patterns: List[str], exclude_root: pathlib.Path
 ) -> List[Optional[pathlib.Path]]:
     """Resolves paths passed via CLI to a list of filepaths to lint.
 
     `paths` is a list of paths that may be files or directories. Files are
     returned verbatim if they exist, and directories are recursively searched
-    for files that have the extension .tcl, .xdc, or .sdc. Paths that match or
-    are underneath a path provided in `exclude` are ignored.
+    for files that have the extension .tcl, .xdc, or .sdc. Paths that match a
+    pattern in `exclude_patterns` are ignored (based on gitignore pattern
+    format, see https://git-scm.com/docs/gitignore#_pattern_format).
 
     Raises FileNotFoundError if a supplied path does not exist.
     """
@@ -42,17 +45,22 @@ def resolve_sources(
     # TODO: make configurable
     EXTENSIONS = [".tcl", ".xdc", ".sdc"]
 
-    if exclude is None:
-        exclude = []
-    exclude = [path.resolve() for path in exclude]
+    exclude_root = exclude_root.resolve()
+    exclude_spec = pathspec.PathSpec.from_lines("gitwildmatch", exclude_patterns)
 
     def is_excluded(path):
-        resolved_path = path.resolve()
-        for exclude_path in exclude:
-            # if the current path is under an excluded path it should be ignored
-            if utils.is_relative_to(resolved_path, exclude_path):
-                return True
+        abspath = path.resolve()
+        try:
+            relpath = os.path.relpath(abspath, start=exclude_root)
+        except ValueError:
+            print(
+                "Warning: processing files on different drive from where tclint was"
+                " run, 'exclude' config may not behave as expected"
+            )
+            relpath = abspath
 
+        if exclude_spec.match_file(relpath):
+            return True
         return False
 
     sources: List[Optional[pathlib.Path]] = []
@@ -183,7 +191,13 @@ def main():
     config.apply_cli_args(args)
 
     try:
-        sources = resolve_sources(args.source, exclude=config.exclude)
+        # TODO: we should eventually allow tclint to find a config by walking up
+        # directories, at which point exclude_root should be the parent dir of
+        # the config file, unless -c is used (eslint rules)
+        exclude_root = pathlib.Path.cwd()
+        sources = resolve_sources(
+            args.source, exclude_patterns=config.exclude, exclude_root=exclude_root
+        )
     except FileNotFoundError as e:
         print(f"Invalid path provided: {e}")
         return EXIT_INPUT_ERROR

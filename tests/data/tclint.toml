@@ -1,5 +1,5 @@
 # paths to exclude when searching directories. defaults to empty list.
-exclude = ["ignore_me/", "ignore.tcl"]
+exclude = ["ignore_me/", "ignore*.tcl", "/ignore_from_here"]
 # lint violations to ignore. defaults to empty list.
 # can also supply an inline table with a path and a list of violations to ignore under that path.
 ignore = [
