@@ -3,7 +3,7 @@ import re
 from tclint.commands import get_commands
 from tclint.violations import Rule, Violation
 
-from tclint.syntax_tree import Visitor, Script, List, ParenExpression
+from tclint.syntax_tree import Visitor, Script, List, ParenExpression, BracedExpression
 
 
 class IndentLevelChecker(Visitor):
@@ -728,6 +728,31 @@ class SpacesInBracesChecker(Visitor):
             )
 
 
+class UnbracedExprChecker(Visitor):
+    def check(self, _, tree, __):
+        self._violations = []
+        tree.accept(self, recurse=True)
+        return self._violations
+
+    def visit_command(self, command):
+        if command.routine != "expr":
+            return
+
+        if len(command.args) == 1 and isinstance(command.args[0], BracedExpression):
+            return
+
+        for child in command.args:
+            if child.contents is None:
+                self._violations.append(
+                    Violation(
+                        Rule.UNBRACED_EXPR,
+                        "expression with substitutions should be enclosed by braces",
+                        command.args[0].pos,
+                    )
+                )
+                return
+
+
 def get_checkers():
     return (
         IndentLevelChecker(),
@@ -737,4 +762,5 @@ def get_checkers():
         BlankLineChecker(),
         BackslashNewlineChecker(),
         SpacesInBracesChecker(),
+        UnbracedExprChecker(),
     )

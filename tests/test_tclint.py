@@ -84,13 +84,14 @@ data/dirty.tcl:4:1: expected indent of 2 spaces, got 0 [indent]
 data/dirty.tcl:4:2: expected 1 space between words, got 3 [spacing]
 data/dirty.tcl:5:1: expected indent of 4 spaces, got 8 [indent]
 data/dirty.tcl:6:1: expected indent of 2 spaces, got 0 [indent]
+data/dirty.tcl:6:17: expression with substitutions should be enclosed by braces [unbraced-expr]
 data/dirty.tcl:7:1: expected indent of 4 spaces, got 8 [indent]
 data/dirty.tcl:7:13: expected 1 space between words, got 3 [spacing]
 data/dirty.tcl:8:1: expected indent of 2 spaces, got 4 [indent]
 data/dirty.tcl:9:1: expected indent of 4 spaces, got 8 [indent]
 data/dirty.tcl:9:13: expected 1 space between words, got 5 [spacing]
 data/dirty.tcl:10:1: expected indent of 2 spaces, got 4 [indent]
-""".lstrip()
+""".lstrip()  # noqa E501
 
     assert p.stdout.decode("utf-8") == expected
     assert p.returncode == 1

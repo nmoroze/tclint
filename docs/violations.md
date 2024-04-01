@@ -12,6 +12,7 @@ This page lists all lint violations that may be reported by `tclint`.
 - [`backslash-spacing`](#backslash-spacing)
 - [`expr-format`](#expr-format)
 - [`spaces-in-braces`](#spaces-in-braces)
+- [`unbraced-expr`](#unbraced-expr)
 
 Each of these violations is sorted into one of two coarse categories, which can
 be displayed using the `--show-categories` CLI option.
@@ -134,3 +135,16 @@ for {set i 0} {$i < 10} {incr i} {
 ### Rationale
 
 Consistent formatting enhances readability.
+
+## `unbraced-expr`
+
+Expressions that contain substitutions should be enclosed by braces.
+
+### Rationale
+
+Without braces, the Tcl parser will perform substitutions before interpreting
+the expression. This is not actually the desired behavior in most cases, and may
+impact functionality in some edge cases. In addition, this can reduce
+performance.
+
+See "Performance Considerations" in the [Tcl docs for `expr`](https://www.tcl.tk/man/tcl/TclCmd/expr.html).
