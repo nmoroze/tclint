@@ -17,7 +17,7 @@ class Rule(Enum):
     COMMAND_ARGS = "command-args"
     REDEFINED_BUILTIN = "redefined-builtin"
     BLANK_LINES = "blank-lines"
-    BACKSLACH_SPACING = "backslash-spacing"
+    BACKSLASH_SPACING = "backslash-spacing"
     EXPR_FORMAT = "expr-format"
     SPACES_IN_BRACES = "spaces-in-braces"
 
