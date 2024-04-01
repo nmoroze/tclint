@@ -7,6 +7,7 @@ The following example shows all supported fields:
 ```toml
 # patterns to exclude when searching directories. defaults to empty list.
 # follows gitignore pattern format: https://git-scm.com/docs/gitignore#_pattern_format
+# the one exception is that a leading "#" character will be automatically escaped
 exclude = ["ignore_me/", "ignore*.tcl", "/ignore_from_here"]
 # lint violations to ignore. defaults to empty list.
 # can also supply an inline table with a path and a list of violations to ignore under that path.

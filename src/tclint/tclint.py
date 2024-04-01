@@ -4,6 +4,7 @@ import argparse
 import codecs
 import os
 import pathlib
+import re
 import sys
 from typing import List, Optional
 
@@ -46,6 +47,9 @@ def resolve_sources(
     EXTENSIONS = [".tcl", ".xdc", ".sdc"]
 
     exclude_root = exclude_root.resolve()
+    exclude_patterns = [
+        re.sub(r"^\s*#", r"\#", pattern) for pattern in exclude_patterns
+    ]
     exclude_spec = pathspec.PathSpec.from_lines("gitwildmatch", exclude_patterns)
 
     def is_excluded(path):

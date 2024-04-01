@@ -164,4 +164,17 @@ def test_resolve_sources(tmp_path_factory):
     )
     assert len(sources) == 0
 
+    # test auto-escape leading hash
+    other_other_dir = tmp_path_factory.mktemp("c")
+    hash_srcs = [other_other_dir / "#foo.tcl", other_other_dir / "#bar.tcl"]
+    for src in hash_srcs:
+        src.touch()
+    sources = tclint.resolve_sources(
+        hash_srcs,
+        # extra space before #bar.tcl is important to make sure we don't just match ^#
+        exclude_patterns=["#foo.tcl", " #bar.tcl"],
+        exclude_root=other_other_dir,
+    )
+    assert len(sources) == 0
+
     os.chdir(cwd)
