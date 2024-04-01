@@ -264,16 +264,13 @@ def test_clean_tcl():
                     BareWord("if"),
                     BracedExpression(
                         BinaryOp(
-                            CommandSub(
-                                Command(
-                                    BareWord("expr"),
-                                    VarSub("i"),
-                                    BareWord("%"),
-                                    BareWord("15"),
-                                )
+                            VarSub("i"),
+                            BareWord("%"),
+                            BinaryOp(
+                                BareWord("15"),
+                                BareWord("=="),
+                                BareWord("0"),
                             ),
-                            BareWord("=="),
-                            BareWord("0"),
                         ),
                     ),
                     Script(
@@ -282,16 +279,13 @@ def test_clean_tcl():
                     BareWord("elseif"),
                     BracedExpression(
                         BinaryOp(
-                            CommandSub(
-                                Command(
-                                    BareWord("expr"),
-                                    VarSub("i"),
-                                    BareWord("%"),
-                                    BareWord("3"),
-                                )
+                            VarSub("i"),
+                            BareWord("%"),
+                            BinaryOp(
+                                BareWord("3"),
+                                BareWord("=="),
+                                BareWord("0"),
                             ),
-                            BareWord("=="),
-                            BareWord("0"),
                         ),
                     ),
                     Script(
@@ -300,16 +294,13 @@ def test_clean_tcl():
                     BareWord("elseif"),
                     BracedExpression(
                         BinaryOp(
-                            CommandSub(
-                                Command(
-                                    BareWord("expr"),
-                                    VarSub("i"),
-                                    BareWord("%"),
-                                    BareWord("5"),
-                                )
+                            VarSub("i"),
+                            BareWord("%"),
+                            BinaryOp(
+                                BareWord("5"),
+                                BareWord("=="),
+                                BareWord("0"),
                             ),
-                            BareWord("=="),
-                            BareWord("0"),
                         ),
                     ),
                     Script(
