@@ -1,5 +1,3 @@
-import sys
-from importlib.metadata import entry_points
 from typing import List, Dict
 
 from tclint.commands import builtin as _builtin
@@ -9,17 +7,6 @@ from tclint.commands.plugins import PluginManager
 from tclint.commands.utils import CommandArgError
 
 __all__ = ["CommandArgError", "validate_command_plugins", "get_commands"]
-
-
-def _get_entry_points(group):
-    if sys.version_info < (3, 10):
-        eps = entry_points()
-        try:
-            return eps[group]
-        except KeyError:
-            return []
-    else:
-        return entry_points(group=group)
 
 
 def validate_command_plugins(plugins: List[str]) -> List[str]:
