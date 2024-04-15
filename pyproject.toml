@@ -16,7 +16,8 @@ dependencies = [
     "ply==3.11",
     "schema==0.7.5",
     "tomli~=2.0.1; python_version < '3.11'",
-    "pathspec==0.11.2"
+    "pathspec==0.11.2",
+    "importlib-metadata==6.8.0",
 ]
 
 [project.optional-dependencies]
