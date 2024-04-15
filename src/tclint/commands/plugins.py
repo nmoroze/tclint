@@ -1,24 +1,12 @@
-import sys
-from importlib.metadata import entry_points
+from importlib_metadata import entry_points
 from typing import Dict, Optional
-
-
-def _get_entry_points(group):
-    if sys.version_info < (3, 10):
-        eps = entry_points()
-        try:
-            return eps[group]
-        except KeyError:
-            return []
-    else:
-        return entry_points(group=group)
 
 
 class _PluginManager:
     def __init__(self):
         self._loaded = {}
         self._installed = {}
-        for plugin in _get_entry_points("tclint.plugins"):
+        for plugin in entry_points(group="tclint.plugins"):
             if plugin.name in self._installed:
                 self._installed[plugin.name].append(plugin)
             else:
