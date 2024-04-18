@@ -30,6 +30,7 @@ dev = [
 
 [project.scripts]
 tclint = "tclint.tclint:main"
+tclint-plugins = "tclint.cli.tclint_plugins:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
