@@ -115,7 +115,13 @@ def make_command_spec():
         if command_name in _patches:
             command_spec[command_name] = _patches[command_name]
         else:
-            command_spec.update(spec_from_help_entry(line))
+            try:
+                command_spec.update(spec_from_help_entry(line))
+            except Exception:
+                print(
+                    f"Warning: failed to parse help string for {command_name}, this"
+                    " command will not be documented"
+                )
 
     return command_spec
 
