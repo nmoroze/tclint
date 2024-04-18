@@ -23,10 +23,11 @@ def _check_arg_spec(command, arg_spec):
                 continue
 
             if contents in args_allowed:
-                for _ in range(arg_spec[contents]["value"]):
-                    # pop off however many values required
-                    args.pop(0)
-                    # TODO: error check
+                if arg_spec[contents]["value"]:
+                    try:
+                        args.pop(0)
+                    except IndexError:
+                        raise CommandArgError(f"expected value after {contents}")
                 args_allowed.remove(contents)
             else:
                 if contents in arg_spec:
@@ -45,39 +46,39 @@ _patches = {
     # missing {} around -box metavars
     "detailed_route_debug": {
         "": {"min": 0, "max": 0},
-        "-pa": {"required": False, "value": 0},
-        "-ta": {"required": False, "value": 0},
-        "-dr": {"required": False, "value": 0},
-        "-maze": {"required": False, "value": 0},
-        "-net": {"required": False, "value": 1},
-        "-pin": {"required": False, "value": 1},
-        "-box": {"required": False, "value": 1},
-        "-dump_last_worker": {"required": False, "value": 0},
-        "-iter": {"required": False, "value": 1},
-        "-pa_markers": {"required": False, "value": 0},
-        "-dump_dr": {"required": False, "value": 0},
-        "-dump_dir": {"required": False, "value": 1},
-        "-pa_edge": {"required": False, "value": 0},
-        "-pa_commit": {"required": False, "value": 0},
-        "-write_net_tracks": {"required": False, "value": 0},
+        "-pa": {"required": False, "value": False},
+        "-ta": {"required": False, "value": False},
+        "-dr": {"required": False, "value": False},
+        "-maze": {"required": False, "value": False},
+        "-net": {"required": False, "value": True},
+        "-pin": {"required": False, "value": True},
+        "-box": {"required": False, "value": True},
+        "-dump_last_worker": {"required": False, "value": False},
+        "-iter": {"required": False, "value": True},
+        "-pa_markers": {"required": False, "value": False},
+        "-dump_dr": {"required": False, "value": False},
+        "-dump_dir": {"required": False, "value": True},
+        "-pa_edge": {"required": False, "value": False},
+        "-pa_commit": {"required": False, "value": False},
+        "-write_net_tracks": {"required": False, "value": False},
     },
     # need to handle pair of switches in exclusive group
     "remove_from_physical_cluster": {
         "": {"min": 1, "max": 1},
-        "-parent_module": {"required": False, "value": 1},
-        "-modinst": {"required": False, "value": 1},
-        "-inst": {"required": False, "value": 1},
-        "-physical_cluster": {"required": False, "value": 1},
+        "-parent_module": {"required": False, "value": True},
+        "-modinst": {"required": False, "value": True},
+        "-inst": {"required": False, "value": True},
+        "-physical_cluster": {"required": False, "value": True},
     },
     # need to handle parens around switches
     "set_bump": {
         "": {"min": 0, "max": 0},
-        "-row": {"required": True, "value": 1},
-        "-col": {"required": True, "value": 1},
-        "-remove": {"required": False, "value": 0},
-        "-power": {"required": False, "value": 1},
-        "-ground": {"required": False, "value": 1},
-        "-net": {"required": False, "value": 1},
+        "-row": {"required": True, "value": True},
+        "-col": {"required": True, "value": True},
+        "-remove": {"required": False, "value": False},
+        "-power": {"required": False, "value": True},
+        "-ground": {"required": False, "value": True},
+        "-net": {"required": False, "value": True},
     },
 }
 
