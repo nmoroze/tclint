@@ -374,6 +374,16 @@ def _process_arg(arg: ArgType, spec: dict, optional=False):
     elif isinstance(arg, ExclusiveArgs):
         has_positional = False
         for subarg in arg.choices:
+            # bit of a hack, right now everything under ExclusiveArgs is treated
+            # as effectively optional, so just pop into the child of the
+            # Optional
+            if isinstance(subarg, OptionalArg):
+                subarg = subarg.child
+
+            assert not isinstance(
+                subarg, (ExclusiveArgs, OptionalArg)
+            ), "Invalid argument type inside exclusive args"
+
             if isinstance(subarg, Switch):
                 # TODO: make this stricter w/ exclusive field
                 spec[subarg.name] = {
