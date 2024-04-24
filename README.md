@@ -45,7 +45,7 @@ example.tcl:3:5: expected 1 space between words, got 3 [spacing]
 
 ## Usage
 
-`tclint` is a command-line utility. It takes a list of paths as positional arguments, which may either be direct paths to source files, or directories which will be recursively searched for files ending in `.tcl`, `.sdc`, or `.xdc`.
+`tclint` is a command-line utility. It takes a list of paths as positional arguments, which may either be direct paths to source files, or directories which will be recursively searched for files ending in `.tcl`, `.sdc`, `.xdc`, or `.upf`.
 
 Collected files will be checked for lint violations.  See the
 [Violations](docs/violations.md) documentation page for a description of all

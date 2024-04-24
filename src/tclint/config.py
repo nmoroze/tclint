@@ -28,6 +28,9 @@ class Config:
     exclude: List[Any] = dataclasses.field(default_factory=list)
     ignore: List[Any] = dataclasses.field(default_factory=list)
     command_plugins: List[str] = dataclasses.field(default_factory=list)
+    extensions: List[str] = dataclasses.field(
+        default_factory=lambda: ["tcl", "sdc", "xdc", "upf"]
+    )
     style_indent: Union[str, int] = dataclasses.field(default=4)
     style_line_length: int = dataclasses.field(default=80)
     style_allow_aligned_sets: bool = dataclasses.field(default=False)
@@ -93,6 +96,7 @@ _VALIDATORS = {
         ],
     ),
     "command_plugins": Use(validate_command_plugins),
+    "extensions": Use(_str2list),
     "style_indent": Or(
         lambda v: v == "tab", Use(int), error="indent must be integer or 'tab'"
     ),
@@ -133,8 +137,9 @@ def _validate_config(config):
     }
 
     schema = Schema({
-        # exclude is special - only has meaning in global context
+        # exclude and extensions can only be used in global context
         Optional("exclude"): _VALIDATORS["exclude"],
+        Optional("extensions"): _VALIDATORS["extensions"],
         **base_config,
         Optional("fileset"): Schema([{"paths": [Use(pathlib.Path)], **base_config}]),
     })
@@ -183,6 +188,9 @@ def setup_config_cli_args(parser):
     )
     config_group.add_argument(
         "--extend-exclude", type=validator("exclude"), metavar='"path1, path2, ..."'
+    )
+    config_group.add_argument(
+        "--extensions", type=validator("extensions"), metavar='"tcl, xdc, ..."'
     )
     config_group.add_argument(
         "--style-indent", type=validator("style_indent"), metavar="<indent>"
@@ -251,6 +259,10 @@ class RunConfig:
     @property
     def exclude(self):
         return self._global_config.exclude
+
+    @property
+    def extensions(self):
+        return self._global_config.extensions
 
     @classmethod
     def from_dict(cls, config_dict: dict):

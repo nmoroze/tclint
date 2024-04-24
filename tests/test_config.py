@@ -19,6 +19,7 @@ def test_example_config():
         Rule("spacing"),
         {"path": pathlib.Path("files_with_bad_indent/"), "rules": [Rule("indent")]},
     ]
+    assert global_.extensions == ["tcl"]
 
     assert global_.style_indent == 2
     assert global_.style_line_length == 100

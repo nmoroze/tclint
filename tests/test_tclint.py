@@ -129,6 +129,8 @@ def test_resolve_sources(tmp_path_factory):
     cwd = os.getcwd()
     os.chdir(tmp_path)
 
+    extensions = ["tcl"]
+
     sources = tclint.resolve_sources(
         [pathlib.Path(".")],
         exclude_patterns=[
@@ -140,6 +142,7 @@ def test_resolve_sources(tmp_path_factory):
             "/foo.tcl",
         ],
         exclude_root=tmp_path,
+        extensions=extensions,
     )
 
     assert len(sources) == 1
@@ -151,7 +154,10 @@ def test_resolve_sources(tmp_path_factory):
     in_path = other_dir / "foo.tcl"
     in_path.touch()
     sources = tclint.resolve_sources(
-        [in_path], exclude_patterns=[str(in_path)], exclude_root=tmp_path
+        [in_path],
+        exclude_patterns=[str(in_path)],
+        exclude_root=tmp_path,
+        extensions=extensions,
     )
     assert len(sources) == 1
     assert sources[0] == in_path
@@ -160,7 +166,10 @@ def test_resolve_sources(tmp_path_factory):
     top_src = tmp_path / "top.tcl"
     top_src.touch()
     sources = tclint.resolve_sources(
-        [top_src], exclude_patterns=["../top.tcl"], exclude_root=tmp_path / "src"
+        [top_src],
+        exclude_patterns=["../top.tcl"],
+        exclude_root=tmp_path / "src",
+        extensions=extensions,
     )
     assert len(sources) == 0
 
@@ -174,7 +183,32 @@ def test_resolve_sources(tmp_path_factory):
         # extra space before #bar.tcl is important to make sure we don't just match ^#
         exclude_patterns=["#foo.tcl", " #bar.tcl"],
         exclude_root=other_other_dir,
+        extensions=extensions,
     )
     assert len(sources) == 0
+
+    os.chdir(cwd)
+
+
+def test_resolve_sources_extensions(tmp_path):
+    foo_file = tmp_path / "file.foo"
+    foo_file.touch()
+    bar_file = tmp_path / "file.BAR"
+    bar_file.touch()
+
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+
+    sources = tclint.resolve_sources(
+        [tmp_path], exclude_patterns=[], exclude_root=tmp_path, extensions=["foo"]
+    )
+    assert len(sources) == 1
+    assert sources[0] == foo_file
+
+    sources = tclint.resolve_sources(
+        [tmp_path], exclude_patterns=[], exclude_root=tmp_path, extensions=["bar"]
+    )
+    assert len(sources) == 1
+    assert sources[0] == bar_file
 
     os.chdir(cwd)

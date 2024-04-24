@@ -6,6 +6,9 @@ ignore = [
     "spacing",
     { path = "files_with_bad_indent/", rules = ["indent"] }
 ]
+# extensions of files to lint when searching directories. defaults to tcl, sdc,
+# xdc, and upf.
+extensions = ["tcl"]
 
 [style]
 # number of spaces to indent. can also be set to "tab". defaults to 4.

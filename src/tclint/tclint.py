@@ -30,22 +30,22 @@ EXIT_INPUT_ERROR = 4
 
 
 def resolve_sources(
-    paths: List[pathlib.Path], exclude_patterns: List[str], exclude_root: pathlib.Path
+    paths: List[pathlib.Path],
+    exclude_patterns: List[str],
+    exclude_root: pathlib.Path,
+    extensions: List[str],
 ) -> List[Optional[pathlib.Path]]:
     """Resolves paths passed via CLI to a list of filepaths to lint.
 
     `paths` is a list of paths that may be files or directories. Files are
     returned verbatim if they exist, and directories are recursively searched
-    for files that have the extension .tcl, .xdc, or .sdc. Paths that match a
+    for files that have an extension specified in `extensions`. Paths that match a
     pattern in `exclude_patterns` are ignored (based on gitignore pattern
     format, see https://git-scm.com/docs/gitignore#_pattern_format).
 
     Raises FileNotFoundError if a supplied path does not exist.
     """
-    # Extensions that may indicate tcl files
-    # TODO: make configurable
-    EXTENSIONS = [".tcl", ".xdc", ".sdc"]
-
+    extensions = [f".{ext}" if not ext.startswith(".") else ext for ext in extensions]
     exclude_root = exclude_root.resolve()
     exclude_patterns = [
         re.sub(r"^\s*#", r"\#", pattern) for pattern in exclude_patterns
@@ -87,7 +87,7 @@ def resolve_sources(
         for dirpath, _, filenames in os.walk(path):
             for name in filenames:
                 _, ext = os.path.splitext(name)
-                if ext in EXTENSIONS:
+                if ext.lower() in extensions:
                     child = pathlib.Path(dirpath) / name
                     if not is_excluded(child):
                         sources.append(child)
@@ -205,7 +205,10 @@ def main():
         # the config file, unless -c is used (eslint rules)
         exclude_root = pathlib.Path.cwd()
         sources = resolve_sources(
-            args.source, exclude_patterns=config.exclude, exclude_root=exclude_root
+            args.source,
+            exclude_patterns=config.exclude,
+            exclude_root=exclude_root,
+            extensions=config.extensions,
         )
     except FileNotFoundError as e:
         print(f"Invalid path provided: {e}")

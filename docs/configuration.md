@@ -15,6 +15,9 @@ ignore = [
     "spacing",
     { path = "files_with_bad_indent/", rules = ["indent"] }
 ]
+# extensions of files to lint when searching directories. defaults to tcl, sdc,
+# xdc, and upf.
+extensions = ["tcl"]
 
 [style]
 # number of spaces to indent. can also be set to "tab". defaults to 4.
@@ -34,7 +37,7 @@ spaces-in-braces = true
 
 ## Filesets
 
-The configuration file can define an arbitrary number of sub-configurations that apply to a specific set of paths. These sub-configs support the same set of fields as the global configuration, with the exception of `exclude`.
+The configuration file can define an arbitrary number of sub-configurations that apply to a specific set of paths. These sub-configs support the same set of fields as the global configuration, with the exception of `exclude` and `extensions`.
 
 The following example shows how to add two fileset sub-configs that each override different configuration fields:
 
@@ -65,6 +68,7 @@ configuration arguments:
   --extend-ignore "rule1, rule2, ..."
   --exclude "pattern1, pattern2, ..."
   --extend-exclude "pattern1, pattern2, ..."
+  --extensions "tcl, xdc, ..."
   --style-indent <indent>
   --style-line-length <line_length>
   --style-max-blank-lines <max_blank_lines>
