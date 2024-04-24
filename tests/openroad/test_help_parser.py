@@ -1,5 +1,6 @@
 from tclint.plugins.openroad.help_parser import (
     parse_help_entry,
+    make_spec,
     Command,
     Switch,
     OptionalArg,
@@ -116,3 +117,17 @@ def test_exclusive_list_any():
         ],
     )
     assert tree == expected, f"{tree} != {expected}"
+
+
+def test_exclusive_optionals():
+    tree = parse_help_entry("command [-foo] | [-bar]")
+    spec = make_spec(tree)
+
+    assert "-foo" in spec and spec["-foo"] == {
+        "required": False,
+        "value": False,
+    }
+    assert "-bar" in spec and spec["-bar"] == {
+        "required": False,
+        "value": False,
+    }
