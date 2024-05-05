@@ -1,6 +1,6 @@
+import os
 import subprocess
 import re
-import tempfile
 
 from tclint.plugins.openroad.help_parser import spec_from_help_entry
 from tclint.commands.utils import CommandArgError
@@ -84,31 +84,36 @@ _patches = {
 
 
 def make_command_spec():
-    with tempfile.NamedTemporaryFile() as out_file:
-        input = f"help > {out_file.name}; exit"
-        try:
-            subprocess.run(
-                ["openroad", "-no_init"],
-                input=input.encode(),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=True,
-            )
-        except FileNotFoundError:
-            raise Exception("openroad not installed")
-        except subprocess.CalledProcessError:
-            print("Warning: openroad exited with non-zero status")
+    cmd = []
+    if "TCLINT_OR_CONTAINER" in os.environ:
+        # TODO: bit of a hack for my own debugging... need to determine how to work
+        # this into UX
+        cmd += ["docker", "run", "-i", os.environ["TCLINT_OR_CONTAINER"]]
+    cmd += ["openroad", "-no_init", "-no_splash"]
+    input = "help; exit"
 
-        help = out_file.read()
+    try:
+        p = subprocess.run(
+            cmd,
+            input=input.encode(),
+            capture_output=True,
+        )
+    except FileNotFoundError:
+        raise Exception("openroad not installed")
+
+    if p.returncode != 0:
+        print("Warning: openroad exited with non-zero status")
+
+    help = p.stdout.decode()
 
     # collapsing each command on one line makes parsing easier
-    help = re.sub(r"\n\s+", " ", help.decode())
+    help = re.sub(r"\n\s+", " ", help)
 
     command_spec = {}
 
     for line in help.split("\n"):
-        if not line:
-            # skip empty line
+        if not line or line.startswith("openroad>"):
+            # skip empty line or prompt line
             continue
 
         command_name = line.split()[0]
