@@ -80,6 +80,10 @@ _patches = {
         "-ground": {"required": False, "value": True},
         "-net": {"required": False, "value": True},
     },
+    "with_output_to_variable": {
+        # TODO: technically infinite? currently not supported though
+        "": {"min": 1, "max": 2},
+    },
 }
 
 
