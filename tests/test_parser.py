@@ -427,19 +427,25 @@ def test_eval_positions():
     assert command.children[2].pos == (2, 2)
 
 
-@pytest.mark.skip(reason="we don't support parsing this anymore")
 def test_eval_braced_multi_arg():
     script = "eval puts {a b c}"
 
     tree = parse(script)
     assert tree == Script(
-        Command(
-            BareWord("eval"),
-            Script(
-                Command(BareWord("puts"), BareWord("a"), BareWord("b"), BareWord("c"))
-            ),
-        )
+        Command(BareWord("eval"), BareWord("puts"), BracedWord("a b c"))
     )
+
+    # This reflects the actual Tcl semantics, but we currently treat this as
+    # un-parseable since we don't have a clean way to handle the positions of these
+    # items for style-checking purposes.
+    # assert tree == Script(
+    #     Command(
+    #         BareWord("eval"),
+    #         Script(
+    #             Command(BareWord("puts"), BareWord("a"), BareWord("b"), BareWord("c"))
+    #         ),
+    #     )
+    # )
 
 
 def test_eval():

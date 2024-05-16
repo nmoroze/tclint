@@ -97,10 +97,6 @@ def eval(args, parser, command):
         # CST for style checks and AST for logical checks we may be able to
         # handle it.
 
-        # TODO: once we have warnings, we could refactor to make this non-fatal
-        # and at least parse these arguments as lists to facilitate style
-        # checks.
-
         raise CommandArgError(
             f"unable to parse multiple {command} arguments when one includes a braced"
             " or quoted word"
