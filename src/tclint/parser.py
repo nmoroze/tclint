@@ -164,10 +164,6 @@ class Parser:
         if new_args is None:
             return args
 
-        # This constraint ensures the parse tree represents the shape of the
-        # code for style checking purposes (e.g. arg spacing)
-        assert len(new_args) == len(args)
-
         return new_args
 
     def parse_script(self, node):
