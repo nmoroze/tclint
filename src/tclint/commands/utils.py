@@ -106,7 +106,11 @@ def eval(args, parser, command):
             " or quoted word"
         )
 
-    eval_args = []
+    # Construct the body of the eval taking whitespace into account to ensure we get
+    # style checking.
+
+    eval_script = ""
+    prev_arg_end_pos = None
     for arg in args:
         contents = arg.contents
         if contents is None:
@@ -116,9 +120,20 @@ def eval(args, parser, command):
                 f"{command} received an argument with a substitution, unable to parse"
                 " its arguments"
             )
-        eval_args.append(contents)
 
-    script = parser.parse(" ".join(eval_args), pos=(args[0].pos))
+        if prev_arg_end_pos is not None:
+            if prev_arg_end_pos[0] != arg.line:
+                # If we have multiple args on the same line, we know there must be a
+                # backslash newline. Add it so the parsing works.
+                eval_script += "\\\n" * (arg.line - prev_arg_end_pos[0])
+                eval_script += " " * (arg.col - 1)
+            else:
+                eval_script += " " * (arg.col - prev_arg_end_pos[1])
+        eval_script += contents
+
+        prev_arg_end_pos = arg.end_pos
+
+    script = parser.parse(eval_script, pos=(args[0].pos))
     script.end_pos = args[-1].end_pos
 
     return [script]

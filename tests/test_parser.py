@@ -408,6 +408,25 @@ def test_puts_blank():
     assert tree == Script(Command(BareWord("puts"), QuotedWord()))
 
 
+def test_eval_positions():
+    script = r"""eval  command  arg1\
+ arg2"""
+
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("eval"),
+            Script(Command(BareWord("command"), BareWord("arg1"), BareWord("arg2"))),
+        )
+    )
+    eval_command = tree.children[0]
+    script = eval_command.args[0]
+    command = script.children[0]
+    assert command.children[0].pos == (1, 7)
+    assert command.children[1].pos == (1, 16)
+    assert command.children[2].pos == (2, 2)
+
+
 @pytest.mark.skip(reason="we don't support parsing this anymore")
 def test_eval_braced_multi_arg():
     script = "eval puts {a b c}"
