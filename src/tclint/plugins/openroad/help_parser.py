@@ -66,7 +66,7 @@ class Lexer:
         return t
 
     def t_SWITCH(self, t):
-        r"(-[^\[\]\s\|]+|>+)"
+        r"(-[^\[\]\s\|\(\)]+|>+)"
         return t
 
     def t_VALUE(self, t):
@@ -257,7 +257,13 @@ def parse_arg(lexer: Lexer) -> ArgType:
     tok = lexer.current
 
     arg: Optional[ArgType] = None
-    if tok.type == "LBRACKET":
+    if tok.type == "LPAREN":
+        lexer.token()
+        arg = parse_arg(lexer)
+        tok = lexer.token()
+        assert tok.type == "RPAREN", f"expected closing paren, got {tok.type}"
+        return arg
+    elif tok.type == "LBRACKET":
         lexer.token()
         arg = OptionalArg(parse_arg(lexer))
         assert lexer.token().type == "RBRACKET", "expected closing bracket"
