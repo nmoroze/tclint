@@ -131,3 +131,12 @@ def test_exclusive_optionals():
         "required": False,
         "value": False,
     }
+
+
+def test_parenthesized_args():
+    help = "command [(-foo|-bar)]"
+    tree = parse_help_entry(help)
+    expected = Command(
+        "command", [OptionalArg(ExclusiveArgs([Switch("-foo"), Switch("-bar")]))]
+    )
+    assert tree == expected, f"{tree} != {expected}"
