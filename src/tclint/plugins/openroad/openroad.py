@@ -107,11 +107,12 @@ def make_command_spec():
 
     if p.returncode != 0:
         print("Warning: openroad exited with non-zero status")
+        print(f" stderr: {p.stderr}")
 
     help = p.stdout.decode()
 
     # collapsing each command on one line makes parsing easier
-    help = re.sub(r"\n\s+", " ", help)
+    help = re.sub(r"\n +", " ", help)
 
     command_spec = {}
 
