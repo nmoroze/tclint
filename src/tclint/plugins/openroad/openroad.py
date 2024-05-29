@@ -41,7 +41,8 @@ def check_arg_spec(command, arg_spec):
                             f"invalid arguments for {command}: expected value after"
                             f" {contents}"
                         )
-                args_allowed.remove(contents)
+                if not arg_spec[contents]["repeated"]:
+                    args_allowed.remove(contents)
             elif contents in arg_spec:
                 raise CommandArgError(f"duplicate argument for {command}: {contents}")
             else:
@@ -78,39 +79,39 @@ _patches = {
     # missing {} around -box metavars
     "detailed_route_debug": {
         "": {"min": 0, "max": 0},
-        "-pa": {"required": False, "value": False},
-        "-ta": {"required": False, "value": False},
-        "-dr": {"required": False, "value": False},
-        "-maze": {"required": False, "value": False},
-        "-net": {"required": False, "value": True},
-        "-pin": {"required": False, "value": True},
-        "-box": {"required": False, "value": True},
-        "-dump_last_worker": {"required": False, "value": False},
-        "-iter": {"required": False, "value": True},
-        "-pa_markers": {"required": False, "value": False},
-        "-dump_dr": {"required": False, "value": False},
-        "-dump_dir": {"required": False, "value": True},
-        "-pa_edge": {"required": False, "value": False},
-        "-pa_commit": {"required": False, "value": False},
-        "-write_net_tracks": {"required": False, "value": False},
+        "-pa": {"required": False, "value": False, "repeated": False},
+        "-ta": {"required": False, "value": False, "repeated": False},
+        "-dr": {"required": False, "value": False, "repeated": False},
+        "-maze": {"required": False, "value": False, "repeated": False},
+        "-net": {"required": False, "value": True, "repeated": False},
+        "-pin": {"required": False, "value": True, "repeated": False},
+        "-box": {"required": False, "value": True, "repeated": False},
+        "-dump_last_worker": {"required": False, "value": False, "repeated": False},
+        "-iter": {"required": False, "value": True, "repeated": False},
+        "-pa_markers": {"required": False, "value": False, "repeated": False},
+        "-dump_dr": {"required": False, "value": False, "repeated": False},
+        "-dump_dir": {"required": False, "value": True, "repeated": False},
+        "-pa_edge": {"required": False, "value": False, "repeated": False},
+        "-pa_commit": {"required": False, "value": False, "repeated": False},
+        "-write_net_tracks": {"required": False, "value": False, "repeated": False},
     },
     # need to handle pair of switches in exclusive group
     "remove_from_physical_cluster": {
         "": {"min": 1, "max": 1},
-        "-parent_module": {"required": False, "value": True},
-        "-modinst": {"required": False, "value": True},
-        "-inst": {"required": False, "value": True},
-        "-physical_cluster": {"required": False, "value": True},
+        "-parent_module": {"required": False, "value": True, "repeated": False},
+        "-modinst": {"required": False, "value": True, "repeated": False},
+        "-inst": {"required": False, "value": True, "repeated": False},
+        "-physical_cluster": {"required": False, "value": True, "repeated": False},
     },
     # need to handle parens around switches
     "set_bump": {
         "": {"min": 0, "max": 0},
-        "-row": {"required": True, "value": True},
-        "-col": {"required": True, "value": True},
-        "-remove": {"required": False, "value": False},
-        "-power": {"required": False, "value": True},
-        "-ground": {"required": False, "value": True},
-        "-net": {"required": False, "value": True},
+        "-row": {"required": True, "value": True, "repeated": False},
+        "-col": {"required": True, "value": True, "repeated": False},
+        "-remove": {"required": False, "value": False, "repeated": False},
+        "-power": {"required": False, "value": True, "repeated": False},
+        "-ground": {"required": False, "value": True, "repeated": False},
+        "-net": {"required": False, "value": True, "repeated": False},
     },
     "with_output_to_variable": {
         # TODO: technically infinite? currently not supported though
@@ -121,12 +122,12 @@ _patches = {
         # pin ^|r|rise|v|f|fall
         "": {"min": 2, "max": 2},
         # exclusive
-        "-min": {"required": False, "value": False},
-        "-max": {"required": False, "value": False},
-        "-format": {"required": False, "value": True},
-        "-fields": {"required": False, "value": True},
-        "-digits": {"required": False, "value": True},
-        "-no_line_splits": {"required": False, "value": False},
+        "-min": {"required": False, "value": False, "repeated": False},
+        "-max": {"required": False, "value": False, "repeated": False},
+        "-format": {"required": False, "value": True, "repeated": False},
+        "-fields": {"required": False, "value": True, "repeated": False},
+        "-digits": {"required": False, "value": True, "repeated": False},
+        "-no_line_splits": {"required": False, "value": False, "repeated": False},
     },
 }
 

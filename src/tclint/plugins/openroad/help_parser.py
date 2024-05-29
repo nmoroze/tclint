@@ -362,7 +362,7 @@ def make_spec(command: Command) -> dict:
 
     for redirect in (">", ">>"):
         if redirect not in spec:
-            spec[redirect] = {"required": False, "value": True}
+            spec[redirect] = {"required": False, "value": True, "repeated": False}
 
     return spec
 
@@ -376,6 +376,7 @@ def _process_arg(arg: ArgType, spec: dict, optional=False):
         spec[arg.name] = {
             "required": not optional,
             "value": arg.value is not None,
+            "repeated": False,
         }
     elif isinstance(arg, ExclusiveArgs):
         has_positional = False
@@ -395,6 +396,7 @@ def _process_arg(arg: ArgType, spec: dict, optional=False):
                 spec[subarg.name] = {
                     "required": False,
                     "value": subarg.value is not None,
+                    "repeated": False,
                 }
             elif isinstance(subarg, Positional):
                 has_positional = True
