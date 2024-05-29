@@ -141,6 +141,15 @@ _patches = {
         "-comment": {"required": False, "value": True, "repeated": False},
         "-group": {"required": True, "value": True, "repeated": True},
     },
+    # Need to fix help string to disambiguate that "-mirror" doesn't consume "name" as a
+    # value
+    "place_pad": {
+        "": {"min": 1, "max": 1},
+        "-master": {"required": False, "value": True, "repeated": False},
+        "-row": {"required": True, "value": True, "repeated": False},
+        "-location": {"required": True, "value": True, "repeated": False},
+        "-mirror": {"required": True, "value": False, "repeated": False},
+    },
 }
 
 
