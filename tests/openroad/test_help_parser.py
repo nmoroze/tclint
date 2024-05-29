@@ -124,10 +124,12 @@ def test_exclusive_optionals():
     spec = make_spec(tree)
 
     assert "-foo" in spec and spec["-foo"] == {
+        "repeated": False,
         "required": False,
         "value": False,
     }
     assert "-bar" in spec and spec["-bar"] == {
+        "repeated": False,
         "required": False,
         "value": False,
     }
