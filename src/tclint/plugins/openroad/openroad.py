@@ -4,10 +4,10 @@ import re
 
 from tclint.plugins.openroad.help_parser import spec_from_help_entry
 from tclint.commands.utils import CommandArgError
-from tclint.syntax_tree import ArgExpansion
+from tclint.syntax_tree import ArgExpansion, BareWord
 
 
-def _check_arg_spec(command, arg_spec):
+def check_arg_spec(command, arg_spec):
     def check(args, parser):
         args_allowed = set(arg_spec.keys())
         positional_args_allowed = arg_spec[""]["max"]
@@ -17,8 +17,18 @@ def _check_arg_spec(command, arg_spec):
         args = list(args)
         while len(args) > 0:
             arg = args.pop(0)
+
+            # To facilitate better error messages, we expect that switches are always
+            # specified as BareWords that start with "-" or ">". This lets us throw an
+            # error when a switch-like thing doesn't match any supported arguments,
+            # rather than counting it towards the positional arguments (which usually
+            # ends up in a vague "too many arguments" error). To make tclint interpret a
+            # switch-like word as a positional argument, users should wrap it in "", and
+            # any switches should be BareWords.
             contents = arg.contents
-            if contents is None:
+            if not (
+                isinstance(arg, BareWord) and contents and contents[0] in {"-", ">"}
+            ):
                 positional_args_allowed -= 1
                 continue
 
@@ -27,12 +37,34 @@ def _check_arg_spec(command, arg_spec):
                     try:
                         args.pop(0)
                     except IndexError:
-                        raise CommandArgError(f"expected value after {contents}")
+                        raise CommandArgError(
+                            f"invalid arguments for {command}: expected value after"
+                            f" {contents}"
+                        )
                 args_allowed.remove(contents)
+            elif contents in arg_spec:
+                raise CommandArgError(f"duplicate argument for {command}: {contents}")
             else:
-                if contents in arg_spec:
-                    raise CommandArgError(f"duplicate argument {contents}")
-                positional_args_allowed -= 1
+                prefix_matches = []
+                for switch in arg_spec:
+                    if switch.startswith(contents):
+                        prefix_matches.append(switch)
+
+                if len(prefix_matches) == 1:
+                    raise CommandArgError(
+                        f"shortened argument for {command}: expand {contents} to"
+                        f" {prefix_matches[0]}"
+                    )
+
+                if len(prefix_matches) > 1:
+                    raise CommandArgError(
+                        f"ambiguous argument for {command}: {contents} could be any of"
+                        f" {', '.join(prefix_matches)}"
+                    )
+
+                raise CommandArgError(
+                    f"unrecognized argument for {command}: {contents}"
+                )
 
         if not has_argsub and positional_args_allowed < 0:
             raise CommandArgError(f"too many arguments for {command}")
@@ -150,6 +182,6 @@ def make_command_spec():
 
 def commands_from_spec(command_spec):
     return {
-        command: _check_arg_spec(command, arg_spec)
+        command: check_arg_spec(command, arg_spec)
         for command, arg_spec in command_spec.items()
     }
