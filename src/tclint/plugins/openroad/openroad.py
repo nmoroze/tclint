@@ -129,6 +129,18 @@ _patches = {
         "-digits": {"required": False, "value": True, "repeated": False},
         "-no_line_splits": {"required": False, "value": False, "repeated": False},
     },
+    # TODO: probably need to evaluate other SDC commands to see if they require
+    # repeating values
+    "set_clock_groups": {
+        "": {"min": 0, "max": 0},
+        "-name": {"required": False, "value": True, "repeated": False},
+        "-logically_exclusive": {"required": False, "value": False, "repeated": False},
+        "-physically_exclusive": {"required": False, "value": False, "repeated": False},
+        "-asynchronous": {"required": False, "value": False, "repeated": False},
+        "-allow_paths": {"required": False, "value": False, "repeated": False},
+        "-comment": {"required": False, "value": True, "repeated": False},
+        "-group": {"required": True, "value": True, "repeated": True},
+    },
 }
 
 
