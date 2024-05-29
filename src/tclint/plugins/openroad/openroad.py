@@ -84,6 +84,18 @@ _patches = {
         # TODO: technically infinite? currently not supported though
         "": {"min": 1, "max": 2},
     },
+    # need to fix unclosed [ after -fields
+    "report_path": {
+        # pin ^|r|rise|v|f|fall
+        "": {"min": 2, "max": 2},
+        # exclusive
+        "-min": {"required": False, "value": False},
+        "-max": {"required": False, "value": False},
+        "-format": {"required": False, "value": True},
+        "-fields": {"required": False, "value": True},
+        "-digits": {"required": False, "value": True},
+        "-no_line_splits": {"required": False, "value": False},
+    },
 }
 
 
