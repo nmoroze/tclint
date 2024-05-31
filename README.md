@@ -38,7 +38,7 @@ puts too many arguments !
   puts "unexpected indent"
 puts   "too many spaces after command"
 $ tclint example.tcl
-example.tcl:1:1: too many args to puts: got 4, expected no more than 3 [command-args]
+example.tcl:1:1: too many args for puts: got 4, expected no more than 3 [command-args]
 example.tcl:2:1: expected indent of 0 spaces, got 2 [indent]
 example.tcl:3:5: expected 1 space between words, got 3 [spacing]
 ```

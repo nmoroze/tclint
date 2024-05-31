@@ -39,18 +39,18 @@ def check_count(command, min=None, max=None, args_name="args"):
 
         if not has_arg_expansion and min == max and count != min:
             raise CommandArgError(
-                f"wrong # of {args_name} to {command}: got {count}, expected {min}"
+                f"wrong # of {args_name} for {command}: got {count}, expected {min}"
             )
 
         if not has_arg_expansion and min is not None and count < min:
             raise CommandArgError(
-                f"not enough {args_name} to {command}: got {count}, expected at least"
+                f"not enough {args_name} for {command}: got {count}, expected at least"
                 f" {min}"
             )
 
         if max is not None and count > max:
             raise CommandArgError(
-                f"too many {args_name} to {command}: got {count}, expected no more"
+                f"too many {args_name} for {command}: got {count}, expected no more"
                 f" than {max}"
             )
 
