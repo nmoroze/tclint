@@ -17,39 +17,41 @@ def arg_count(args, parser):
     #
 
     arg_count = 0
+    has_arg_expansion = False
     for arg in args:
         if isinstance(arg, ArgExpansion):
             if arg.contents is None:
-                return None
+                has_arg_expansion = True
+                continue
             arg_count += len(parser.parse_list(arg.contents))
         else:
             arg_count += 1
 
-    return arg_count
+    return arg_count, has_arg_expansion
 
 
-def check_count(command, min=None, max=None):
+def check_count(command, min=None, max=None, args_name="args"):
     def check(args, parser):
         if min is None and max is None:
             return None
 
-        count = arg_count(args, parser)
-        if count is None:
-            return None
+        count, has_arg_expansion = arg_count(args, parser)
 
-        if min == max and count != min:
+        if not has_arg_expansion and min == max and count != min:
             raise CommandArgError(
-                f"wrong # of args to {command}: got {count}, expected {min}"
+                f"wrong # of {args_name} to {command}: got {count}, expected {min}"
             )
 
-        if min is not None and count < min:
+        if not has_arg_expansion and min is not None and count < min:
             raise CommandArgError(
-                f"not enough args to {command}: got {count}, expected at least {min}"
+                f"not enough {args_name} to {command}: got {count}, expected at least"
+                f" {min}"
             )
 
         if max is not None and count > max:
             raise CommandArgError(
-                f"too many args to {command}: got {count}, expected no more than {max}"
+                f"too many {args_name} to {command}: got {count}, expected no more"
+                f" than {max}"
             )
 
         return None
