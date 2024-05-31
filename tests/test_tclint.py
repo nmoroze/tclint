@@ -47,7 +47,7 @@ def test_tclint_show_categories():
         cwd=MY_DIR,
     )
     expected = """
-data/example.tcl:1:1: too many args to puts: got 4, expected no more than 3 [func:command-args]
+data/example.tcl:1:1: too many args for puts: got 4, expected no more than 3 [func:command-args]
 data/example.tcl:2:1: expected indent of 0 spaces, got 2 [style:indent]
 data/example.tcl:3:5: expected 1 space between words, got 3 [style:spacing]
 """.lstrip()  # noqa E501
