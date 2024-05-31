@@ -3,16 +3,15 @@ import subprocess
 import re
 
 from tclint.plugins.openroad.help_parser import spec_from_help_entry
-from tclint.commands.utils import CommandArgError
-from tclint.syntax_tree import ArgExpansion, BareWord
+from tclint.commands.utils import CommandArgError, check_count
+from tclint.syntax_tree import BareWord
 
 
 def check_arg_spec(command, arg_spec):
+    # TODO check required arguments
     def check(args, parser):
         args_allowed = set(arg_spec.keys())
-        positional_args_allowed = arg_spec[""]["max"]
-
-        has_argsub = any([isinstance(a, ArgExpansion) for a in args])
+        positional_args = []
 
         args = list(args)
         while len(args) > 0:
@@ -29,7 +28,7 @@ def check_arg_spec(command, arg_spec):
             if not (
                 isinstance(arg, BareWord) and contents and contents[0] in {"-", ">"}
             ):
-                positional_args_allowed -= 1
+                positional_args.append(arg)
                 continue
 
             if contents in args_allowed:
@@ -67,8 +66,13 @@ def check_arg_spec(command, arg_spec):
                     f"unrecognized argument for {command}: {contents}"
                 )
 
-        if not has_argsub and positional_args_allowed < 0:
-            raise CommandArgError(f"too many arguments for {command}")
+        check = check_count(
+            command,
+            min=arg_spec[""]["min"],
+            max=arg_spec[""]["max"],
+            args_name="positional args",
+        )
+        check(positional_args, parser)
 
         return None
 
@@ -114,8 +118,7 @@ _patches = {
         "-net": {"required": False, "value": True, "repeated": False},
     },
     "with_output_to_variable": {
-        # TODO: technically infinite? currently not supported though
-        "": {"min": 1, "max": 2},
+        "": {"min": 1, "max": None},
     },
     # need to fix unclosed [ after -fields
     "report_path": {
@@ -149,6 +152,70 @@ _patches = {
         "-row": {"required": True, "value": True, "repeated": False},
         "-location": {"required": True, "value": True, "repeated": False},
         "-mirror": {"required": True, "value": False, "repeated": False},
+    },
+    # help string is missing metavars for most switches that take a value
+    "clock_tree_synthesis": {
+        "": {"min": 0, "max": 0},
+        "-root_buf": {"required": False, "value": True, "repeated": False},
+        "-buf_list": {"required": False, "value": True, "repeated": False},
+        "-wire_unit": {"required": False, "value": True, "repeated": False},
+        "-clk_nets": {"required": False, "value": True, "repeated": False},
+        "-sink_clustering_size": {"required": False, "value": True, "repeated": False},
+        "-num_static_layers": {"required": False, "value": True, "repeated": False},
+        "-sink_clustering_buffer": {
+            "required": False,
+            "value": True,
+            "repeated": False,
+        },
+        "-distance_between_buffers": {
+            "required": False,
+            "value": True,
+            "repeated": False,
+        },
+        "-branching_point_buffers_distance": {
+            "required": False,
+            "value": True,
+            "repeated": False,
+        },
+        "-clustering_exponent": {"required": False, "value": True, "repeated": False},
+        "-clustering_unbalance_ratio": {
+            "required": False,
+            "value": True,
+            "repeated": False,
+        },
+        "-sink_clustering_max_diameter": {
+            "required": False,
+            "value": True,
+            "repeated": False,
+        },
+        "-sink_clustering_levels": {
+            "required": False,
+            "value": True,
+            "repeated": False,
+        },
+        "-tree_buf": {"required": False, "value": True, "repeated": False},
+        "-sink_clustering_buffer_max_cap_derate": {
+            "required": False,
+            "value": True,
+            "repeated": False,
+        },
+        "-delay_buffer_derate": {"required": False, "value": True, "repeated": False},
+        "-post_cts_disable": {"required": False, "value": False, "repeated": False},
+        "-sink_clustering_enable": {
+            "required": False,
+            "value": False,
+            "repeated": False,
+        },
+        "-balance_levels": {"required": False, "value": False, "repeated": False},
+        "-obstruction_aware": {"required": False, "value": False, "repeated": False},
+        "-apply_ndr": {"required": False, "value": False, "repeated": False},
+        "-dont_use_dummy_load": {"required": False, "value": False, "repeated": False},
+    },
+    # help string needs to present diode_cell as optional
+    "repair_antennas": {
+        "": {"min": 0, "max": 1},
+        "-iterations": {"required": False, "value": True, "repeated": False},
+        "-ratio_margin": {"required": False, "value": True, "repeated": False},
     },
 }
 
