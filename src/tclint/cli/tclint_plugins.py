@@ -1,5 +1,6 @@
 import argparse
 import json
+import shlex
 import sys
 
 from tclint.commands.plugins import PluginManager
@@ -21,9 +22,13 @@ def make_cmd_spec(args) -> int:
         print(f"Plugin {plugin_name} does not support command spec generation")
         return 1
 
+    exec_cmd = None
+    if args.exec is not None:
+        exec_cmd = shlex.split(args.exec)
+
     make_command_spec = getattr(plugin, "make_command_spec")
     try:
-        command_spec = make_command_spec()
+        command_spec = make_command_spec(exec_cmd)
     except Exception as e:
         print(f"Error encountered while generating command spec: {e}")
         return 1
@@ -50,7 +55,15 @@ def main() -> int:
     )
     cmd_spec_parser.set_defaults(func=make_cmd_spec)
     cmd_spec_parser.add_argument("plugin", help="name of plugin to generate spec for")
-    cmd_spec_parser.add_argument("-o", "--output", help="path to store command spec")
+    cmd_spec_parser.add_argument(
+        "-o", "--output", metavar="<path>", help="path to store command spec"
+    )
+    cmd_spec_parser.add_argument(
+        "-e",
+        "--exec",
+        metavar="<cmd>",
+        help="path to binary or shell invocation for tool",
+    )
 
     args = parser.parse_args()
     return args.func(args)

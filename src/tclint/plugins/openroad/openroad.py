@@ -1,6 +1,6 @@
-import os
 import subprocess
 import re
+from typing import Optional, List, Dict
 
 from tclint.plugins.openroad.help_parser import spec_from_help_entry
 from tclint.commands.utils import CommandArgError, check_count
@@ -220,13 +220,12 @@ _patches = {
 }
 
 
-def make_command_spec():
-    cmd = []
-    if "TCLINT_OR_CONTAINER" in os.environ:
-        # TODO: bit of a hack for my own debugging... need to determine how to work
-        # this into UX
-        cmd += ["docker", "run", "-i", os.environ["TCLINT_OR_CONTAINER"]]
-    cmd += ["openroad", "-no_init", "-no_splash"]
+def make_command_spec(exec: Optional[List[str]] = None) -> Dict:
+    if exec is not None:
+        cmd = exec
+    else:
+        cmd = ["openroad"]
+    cmd += ["-no_init", "-no_splash"]
     input = "help; exit"
 
     try:
