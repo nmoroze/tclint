@@ -238,8 +238,9 @@ def make_command_spec(exec: Optional[List[str]] = None) -> Dict:
         raise Exception("openroad not installed")
 
     if p.returncode != 0:
-        print("Warning: openroad exited with non-zero status")
-        print(f" stderr: {p.stderr}")
+        raise Exception(
+            f"openroad exited with non-zero status. stderr: {p.stderr.decode()}"
+        )
 
     help = p.stdout.decode()
 
