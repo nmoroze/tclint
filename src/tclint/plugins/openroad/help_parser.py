@@ -3,6 +3,7 @@ from typing import Union, Optional, List
 
 from ply import lex
 
+# TODO: add -d/--debug to make-spec
 DEBUG = False
 
 
