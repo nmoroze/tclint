@@ -1,4 +1,5 @@
-from typing import List, Dict
+import pathlib
+from typing import List, Dict, Union
 
 from tclint.commands import builtin as _builtin
 from tclint.commands.plugins import PluginManager
@@ -18,12 +19,18 @@ def validate_command_plugins(plugins: List[str]) -> List[str]:
     return valid_plugins
 
 
-def get_commands(plugins: List[str]) -> Dict:
+def get_commands(plugins: List[Union[str, pathlib.Path]]) -> Dict:
     commands = {}
     commands.update(_builtin.commands)
 
-    for plugin in set(plugins):
-        plugin_commands = PluginManager.load(plugin)
+    for plugin in plugins:
+        if isinstance(plugin, str):
+            plugin_commands = PluginManager.load(plugin)
+        elif isinstance(plugin, pathlib.Path):
+            plugin_commands = PluginManager.load_from_spec(plugin)
+        else:
+            raise TypeError(f"Plugins must be strings or paths, got {type(plugin)}")
+
         if plugin_commands is not None:
             commands.update(plugin_commands)
 

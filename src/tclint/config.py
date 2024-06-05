@@ -1,6 +1,7 @@
 import argparse
 import pathlib
 from typing import Union, List, Any
+from typing import Optional as OptionalType
 import dataclasses
 import sys
 
@@ -12,7 +13,6 @@ else:
 from schema import Schema, Optional, Or, Use, SchemaError, And
 
 from tclint.violations import Rule
-from tclint.commands import validate_command_plugins
 from tclint import utils
 
 
@@ -27,7 +27,7 @@ class Config:
 
     exclude: List[Any] = dataclasses.field(default_factory=list)
     ignore: List[Any] = dataclasses.field(default_factory=list)
-    command_plugins: List[str] = dataclasses.field(default_factory=list)
+    commands: OptionalType[pathlib.Path] = dataclasses.field(default=None)
     extensions: List[str] = dataclasses.field(
         default_factory=lambda: ["tcl", "sdc", "xdc", "upf"]
     )
@@ -95,7 +95,7 @@ _VALIDATORS = {
             )
         ],
     ),
-    "command_plugins": Use(validate_command_plugins),
+    "commands": Use(pathlib.Path),
     "extensions": Use(_str2list),
     "style_indent": Or(
         lambda v: v == "tab", Use(int), error="indent must be integer or 'tab'"
@@ -123,7 +123,7 @@ def _validate_config(config):
 
     base_config = {
         Optional("ignore"): _VALIDATORS["ignore"],
-        Optional("command-plugins"): _VALIDATORS["command_plugins"],
+        Optional("commands"): _VALIDATORS["commands"],
         Optional("style"): {
             Optional("indent"): _VALIDATORS["style_indent"],
             Optional("line-length"): _VALIDATORS["style_line_length"],
@@ -191,6 +191,9 @@ def setup_config_cli_args(parser):
     )
     config_group.add_argument(
         "--extensions", type=validator("extensions"), metavar='"tcl, xdc, ..."'
+    )
+    config_group.add_argument(
+        "--commands", type=validator("commands"), metavar="<path>"
     )
     config_group.add_argument(
         "--style-indent", type=validator("style_indent"), metavar="<indent>"
