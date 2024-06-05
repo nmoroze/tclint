@@ -10,6 +10,7 @@ class _PluginManager:
         self._loaded = {}
         self._installed = {}
         self._command_specs = {}
+        self._loaded_specs = {}
         for plugin in entry_points(group="tclint.plugins"):
             if plugin.name in self._installed:
                 print(f"Warning: found duplicate definitions for plugin {plugin.name}")
@@ -23,9 +24,51 @@ class _PluginManager:
         self._loaded[name] = mod
         return mod
 
+    def load_from_spec(self, path: pathlib.Path) -> Optional[Dict]:
+        if path in self._loaded_specs:
+            return self._loaded_specs[path]
+
+        spec = self._load_from_spec(path)
+        self._loaded_specs[path] = spec
+        return spec
+
+    def _load_from_spec(self, path: pathlib.Path) -> Optional[Dict]:
+        try:
+            with open(path.expanduser(), "r") as f:
+                spec = json.load(f)
+        except (FileNotFoundError, RuntimeError):
+            print(f"Warning: command spec {path} not found, skipping...")
+            return None
+
+        try:
+            plugin_name = spec["plugin"]
+        except KeyError:
+            print(f"Warning: invalid command spec {path}, missing key 'plugin'")
+            return None
+
+        module = self.get_mod(plugin_name)
+        if module is None:
+            return None
+
+        try:
+            command_spec = spec["spec"]
+        except KeyError:
+            print(f"Warning: invalid command spec {path}, missing key 'spec'")
+            return None
+
+        if not hasattr(module, "commands_from_spec"):
+            print(
+                f"Warning: command spec provided for {plugin_name} but this plugin "
+                "doesn't support command specs"
+            )
+            return None
+
+        commands_from_spec = getattr(module, "commands_from_spec")
+        return commands_from_spec(command_spec)
+
     def get_mod(self, name: str) -> Optional[ModuleType]:
         if name not in self._installed:
-            print(f"Warning: plugin {name} could not be found")
+            print(f"Warning: plugin {name} is not installed")
             return None
 
         plugin = self._installed[name]
