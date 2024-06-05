@@ -10,7 +10,6 @@ from typing import List, Optional
 
 import pathspec
 
-from tclint.commands.plugins import PluginManager
 from tclint.config import get_config, setup_config_cli_args, Config, ConfigError
 from tclint.parser import Parser, TclSyntaxError
 from tclint.checks import get_checkers
@@ -190,19 +189,8 @@ def main():
         help="print category tag for each violation",
         action="store_true",
     )
-    parser.add_argument(
-        "--command-specs",
-        help="path(s) to command spec files for plugins",
-        nargs="*",
-        type=pathlib.Path,
-        default=list(),
-    )
     setup_config_cli_args(parser)
     args = parser.parse_args()
-
-    # this needs to be done before config validation!
-    # TODO: this ordering is dangerous...
-    PluginManager.load_command_specs(args.command_specs)
 
     try:
         config = get_config(args.config)
