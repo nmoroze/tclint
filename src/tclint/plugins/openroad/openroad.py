@@ -244,7 +244,12 @@ def make_command_spec(exec: Optional[List[str]] = None) -> Dict:
 
     help = p.stdout.decode()
 
-    # collapsing each command on one line makes parsing easier
+    # Preprocessing help output to make it parseable
+    # - Strip out comments
+    help = re.sub(r"#.*$", "", help, flags=re.MULTILINE)
+    # - Remove blank lines
+    help = re.sub(r"^\n", "", help, flags=re.MULTILINE)
+    # - Collapse each command onto one line
     help = re.sub(r"\n +", " ", help)
 
     command_spec = {}
