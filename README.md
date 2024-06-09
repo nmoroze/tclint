@@ -6,6 +6,7 @@
 
 - Configurable style checks
 - Usage checks for built-in commands
+- [Plugin system](docs/plugins.md) for usage checks of EDA tool-specific commands, including [OpenROAD][openroad]
 - More coming soon!
 
 ## Getting Started
@@ -53,6 +54,8 @@ lint violations `tclint` may report.
 
 Aspects of `tclint`'s behavior can be controlled by a configuration file. By default, `tclint` will look for a file named `tclint.toml` or `.tclint` in the current working directory (in that order), but a path to an alternate configuration file can be provided using the `-c` or `--config` flag. See [Configuration](docs/configuration.md) for documentation on the configuration file.
 
+`tclint` includes a plugin system for checking EDA tool-specific commands. See the [Plugins](docs/plugins.md) documentation page for more info.
+
 ## Contributing
 
 `tclint` welcomes community contributions. The best way to help the project is to [open an issue](https://github.com/nmoroze/tclint/issues/new) if you find a bug or have a feature request.
@@ -78,3 +81,5 @@ $ pytest
 ## License
 
 This project is copyright 2024 Noah Moroze, released under the [MIT license](LICENSE).
+
+[openroad]: https://github.com/The-OpenROAD-Project/OpenROAD
