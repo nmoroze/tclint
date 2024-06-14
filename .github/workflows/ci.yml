@@ -71,3 +71,64 @@ jobs:
           pip install . # need to install package to ensure we get type stubs for deps
           pip install mypy -c dev-constraints.txt
           mypy src
+
+  openroad:
+    name: Test OR plugin
+    runs-on: ubuntu-latest
+    container:
+      image: openroad/ubuntu-cpp20
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install tclint
+        run: |
+          python3 -m pip install .[dev] -c dev-constraints.txt
+
+      - name: Get OpenROAD version
+        id: openroad-version
+        run: |
+          # Workaround for "fatal: detected dubious ownership in repository" error
+          git config --global --add safe.directory '*'
+
+          COMMIT=$(git submodule status --cached submodules/OpenROAD | cut -d' ' -f2)
+          echo "COMMIT=$COMMIT" >> $GITHUB_OUTPUT
+
+      - name: Restore cached OpenROAD
+        id: cache-openroad
+        uses: actions/cache/restore@v4
+        with:
+          path: submodules/OpenROAD/build/bin/openroad
+          key: ${{ steps.openroad-version.outputs.commit }}
+
+      - name: Build OpenROAD
+        if: steps.cache-openroad.outputs.cache-hit != 'true'
+        working-directory: submodules/OpenROAD
+        run: |
+          ./etc/Build.sh -compiler='clang-16' -cmake='-DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_STANDARD=20'
+
+      - name: Cache OpenROAD
+        if: steps.cache-openroad.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: submodules/OpenROAD/build/src/openroad
+          key: ${{ steps.cache-openroad.outputs.cache-primary-key }}
+
+      - name: Generate command spec
+        working-directory: submodules/OpenROAD
+        run: |
+          tclint-plugins make-spec openroad --exec build/src/openroad -o tclint-openroad-spec.json
+
+      - name: Lint commands
+        working-directory: submodules/OpenROAD
+        run: |
+          tclint src/**/test test --commands tclint-openroad-spec.json | tee violations.out
+          ! grep "command-args" violations.out
