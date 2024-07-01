@@ -40,7 +40,7 @@ class Formatter:
             elif isinstance(node, Comment):
                 formatted += self.format_comment(node)
             elif isinstance(node, CommandSub):
-                formatted += self.format_command(node)
+                formatted += self.format_command_sub(node)
             elif isinstance(node, BareWord):
                 formatted += self.format_bare_word(node)
             elif isinstance(node, QuotedWord):
@@ -128,7 +128,10 @@ class Formatter:
     def format_comment(self, comment: Comment) -> str:
         return f"#{comment.value}"
 
-    def visit_command_sub(self, command_sub):
+    def format_command_sub(self, command_sub):
+        if len(command_sub.children) == 0:
+            return "[]"
+
         # TODO: enforce in type?
         assert len(command_sub.children) == 1
         assert isinstance(command_sub.children[0], Command)
