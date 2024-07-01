@@ -20,7 +20,7 @@ def test_fizzbuzz():
     puts "FizzBuzz"
   } elseif { $i % 3 == 0 } {
     puts "Fizz"
-  } elseif { expr $i % 5 == 0 } {
+  } elseif { [expr $i % 5] == 0 } {
     puts "Buzz"
   } else {
     puts $i
