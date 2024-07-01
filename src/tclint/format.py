@@ -1,6 +1,7 @@
 from tclint.syntax_tree import (
     Node,
     Script,
+    List,
     Command,
     Comment,
     CommandSub,
@@ -52,6 +53,8 @@ class Formatter:
                 formatted += self.format_var_sub(node)
             elif isinstance(node, ArgExpansion):
                 formatted += self.format_arg_expansion(node)
+            elif isinstance(node, List):
+                formatted += self.format_list(node)
             elif isinstance(node, Expression):
                 formatted += self.format_expression(node)
             elif isinstance(node, BracedExpression):
@@ -173,9 +176,19 @@ class Formatter:
 
         return "{*}" + self.format(arg_expansion.children[0])
 
-    def format_list(self, _list) -> str:
-        # TODO: implement once we know how to make indents work
-        return ""
+    def format_list(self, list_node) -> str:
+        # Similar to Script, but the contents are much more straightforward.
+        list_contents = " ".join([self.format(child) for child in list_node.children])
+
+        if list_node.pos[0] == list_node.end_pos[0]:
+            return _STYLE_SPACES_IN_BRACES.join(list_contents)
+
+        return (
+            "{\n"
+            + _STYLE_INDENT
+            + list_contents.replace("\n", "\n" + _STYLE_INDENT)
+            + "\n}"
+        )
 
     def format_expression(self, expr) -> str:
         formatted = ""
