@@ -248,5 +248,7 @@ class Formatter:
         # TODO: enforce in type?
         assert len(function.children) >= 1
 
-        formatted_args = ", ".join(function.children[1:])
+        formatted_args = ", ".join([
+            self.format(child) for child in function.children[1:]
+        ])
         return f"{function.children[0]}({formatted_args})"
