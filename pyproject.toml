@@ -32,6 +32,7 @@ dev = [
 [project.scripts]
 tclint = "tclint.tclint:main"
 tclint-plugins = "tclint.cli.tclint_plugins:main"
+tclfmt = "tclint.cli.tclfmt:main"
 
 [project.entry-points."tclint.plugins"]
 openroad = "tclint.plugins.openroad.openroad"
