@@ -2,6 +2,7 @@ from tclint.syntax_tree import (
     Node,
     Script,
     Command,
+    Comment,
     CommandSub,
     BareWord,
     QuotedWord,
@@ -35,6 +36,8 @@ class Formatter:
                 formatted += self.format_script(node)
             elif isinstance(node, Command):
                 formatted += self.format_command(node)
+            elif isinstance(node, Comment):
+                formatted += self.format_comment(node)
             elif isinstance(node, CommandSub):
                 formatted += self.format_command(node)
             elif isinstance(node, BareWord):
@@ -69,19 +72,24 @@ class Formatter:
         return formatted
 
     def format_top(self, script: Script) -> str:
-        # TODO: handle comments
         formatted = ""
         last_line = None
 
         for child in script.children:
             if last_line is not None:
-                # We preserve line breaks in the input tree to an extent, but enforce
-                # at least one newline between commands, and at most three.
-                # The maximum ensures formatted script doesn't have `blank-lines`
-                # violations.
-                newlines = child.pos[0] - last_line
-                newlines = max(1, min(newlines, 3))
-                formatted += "\n" * newlines
+                # We preserve line breaks in the input tree to an extent, but allow at
+                # most two consecutive blank lines. This eliminates `blank-lines`
+                # violations. Spacing between commands/comments on the same line is
+                # normalized, although this isn't checked by tclint.
+                if last_line == child.pos[0]:
+                    if isinstance(child, Comment):
+                        formatted += "  ;"
+                    else:
+                        formatted += "; "
+                else:
+                    newlines = child.pos[0] - last_line
+                    newlines = min(newlines, 3)
+                    formatted += "\n" * newlines
 
             formatted += self.format(child)
             last_line = child.end_pos[0]
@@ -113,6 +121,9 @@ class Formatter:
         #     formatted = (" \\\n" + _STYLE_INDENT).join(words)
 
         return formatted
+
+    def format_comment(self, comment: Comment) -> str:
+        return f"#{comment.value}"
 
     def visit_command_sub(self, command_sub):
         # TODO: enforce in type?

@@ -3,6 +3,7 @@ import pathlib
 from tclint.syntax_tree import (
     Script,
     Command,
+    Comment,
     BareWord,
 )
 
@@ -51,12 +52,31 @@ def test_blank_lines():
     assert Formatter().format_top(TREE) == expected
 
 
-def test_one_cmd_per_line():
-    """Formatter breaks up commands on same line."""
+def test_multiple_cmds_per_line():
+    """Formatter preserves commands on same line."""
     TREE = Script(
         Command(BareWord("foo"), pos=(1, 1), end_pos=(1, 4)),
         Command(BareWord("foo"), pos=(1, 5), end_pos=(1, 8)),
     )
-    expected = "foo\nfoo"
+    expected = "foo; foo"
+
+    assert Formatter().format_top(TREE) == expected
+
+
+def test_comments():
+    """Formatter preserves comments and normalizes spacing (indent, spaces between
+    command and inline comment)."""
+    TREE = Script(
+        Comment(" this is foo", pos=(1, 3), end_pos=(1, 16)),
+        Command(
+            BareWord("foo", pos=(2, 1), end_pos=(2, 4)), pos=(2, 1), end_pos=(2, 4)
+        ),
+        Comment(" foo", pos=(2, 8), end_pos=(2, 13)),
+        pos=(1, 1),
+        end_pos=(3, 1),
+    )
+
+    expected = """# this is foo
+foo  ;# foo"""
 
     assert Formatter().format_top(TREE) == expected
