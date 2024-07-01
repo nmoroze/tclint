@@ -1,11 +1,6 @@
 import pathlib
 
-from tclint.syntax_tree import (
-    Script,
-    Command,
-    Comment,
-    BareWord,
-)
+from tclint.syntax_tree import Script, Command, Comment, BareWord, VarSub, List
 
 from tclint.format import Formatter
 from tclint.parser import Parser
@@ -78,5 +73,52 @@ def test_comments():
 
     expected = """# this is foo
 foo  ;# foo"""
+
+    assert Formatter().format_top(TREE) == expected
+
+
+def test_switch():
+    TREE = Script(
+        Command(
+            BareWord("switch", pos=(1, 1), end_pos=(1, 7)),
+            VarSub("arg", pos=(1, 8), end_pos=(1, 12)),
+            List(
+                BareWord("a", pos=(2, 9), end_pos=(2, 10)),
+                Script(
+                    Command(
+                        BareWord("foo", pos=(3, 9), end_pos=(3, 12)),
+                        pos=(3, 9),
+                        end_pos=(3, 12),
+                    ),
+                    pos=(2, 11),
+                    end_pos=(4, 6),
+                ),
+                BareWord("b", pos=(5, 1), end_pos=(5, 2)),
+                Script(
+                    Command(
+                        BareWord("bar", pos=(6, 5), end_pos=(6, 8)),
+                        pos=(6, 5),
+                        end_pos=(6, 8),
+                    ),
+                    pos=(5, 3),
+                    end_pos=(7, 6),
+                ),
+                pos=(1, 13),
+                end_pos=(8, 6),
+            ),
+            pos=(1, 1),
+            end_pos=(8, 6),
+        ),
+        pos=(1, 1),
+        end_pos=(10, 1),
+    )
+
+    expected = """switch $arg {
+  a {
+    foo
+  } b {
+    bar
+  }
+}"""
 
     assert Formatter().format_top(TREE) == expected
