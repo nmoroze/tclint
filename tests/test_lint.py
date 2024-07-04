@@ -108,3 +108,12 @@ expr {$a ?
     assert len(violations) == 1
     assert violations[0].id == Rule.EXPR_FORMAT
     assert violations[0].pos == (3, 9)
+
+
+def test_no_indent_violation_after_close_brace():
+    """Regression test for https://github.com/nmoroze/tclint/issues/48."""
+    script = r"""puts {
+  Hello} ;# asdf"""
+
+    violations = lint(script, Config(), Path())
+    assert len(violations) == 0

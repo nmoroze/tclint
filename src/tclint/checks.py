@@ -160,6 +160,12 @@ class IndentLevelChecker(Visitor):
     def visit_braced_word(self, word):
         self._set_level(word)
 
+        # Ensure that we don't check indentation of things that come after closing
+        # brace, if this is closed on a different line than it starts.
+        end_line = word.end_pos[0]
+        if end_line not in self.expected_levels:
+            self.expected_levels[end_line] = None
+
     def visit_quoted_word(self, word):
         self._set_level(word)
 
