@@ -26,9 +26,9 @@ EXIT_SYNTAX_ERROR = 2
 EXIT_INPUT_ERROR = 4
 
 
-def format(script: str, config: Config, debug=0) -> str:
+def format(script: str, config: Config, debug=False) -> str:
     plugins = [config.commands] if config.commands is not None else []
-    parser = Parser(debug=(debug > 0), command_plugins=plugins)
+    parser = Parser(debug=debug, command_plugins=plugins)
 
     tree = parser.parse(script)
 
@@ -37,6 +37,15 @@ def format(script: str, config: Config, debug=0) -> str:
 
     formatter = Formatter()
     return formatter.format_top(tree)
+
+
+def check(path: pathlib.Path, script: str, formatted: str):
+    parser = Parser()
+    original_tree = parser.parse(script)
+    formatted_tree = parser.parse(formatted)
+    if original_tree != formatted_tree:
+        print(f"Warning: {path} syntax trees don't match", file=sys.stderr)
+        print("\n".join(original_tree.diff(formatted_tree)), file=sys.stderr)
 
 
 def main():
@@ -108,8 +117,12 @@ def main():
             out_prefix = str(path)
 
         try:
-            formatted = format(script, config.get_for_path(path), debug=args.debug)
+            formatted = format(
+                script, config.get_for_path(path), debug=(args.debug > 1)
+            )
             print(formatted)
+            if args.debug > 0:
+                check(path, script, formatted)
         except TclSyntaxError as e:
             line, col = e.pos
             print(f"{out_prefix}:{line}:{col}: syntax error: {e}", file=sys.stderr)

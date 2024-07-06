@@ -181,7 +181,14 @@ class Formatter:
         return formatted
 
     def format_var_sub(self, varsub) -> List[str]:
-        formatted = [f"${varsub.value}"]
+        # We might be able to make the formatter infer whether braces are required, and
+        # remove them from the syntax tree. For now it's easier to just mimic the
+        # original format.
+        if varsub.braced:
+            formatted = [f"${{{varsub.value}}}"]
+        else:
+            formatted = [f"${varsub.value}"]
+
         if varsub.children:
             formatted[-1] += "("
             for child in varsub.children:
@@ -323,6 +330,8 @@ class Formatter:
 
         last = function.children[0]
         for i, child in enumerate(function.children[1:]):
+            if child == BareWord(","):
+                continue
             if i > 0:
                 formatted[-1] += ","
             lines = self.format(child)
