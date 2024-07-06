@@ -77,7 +77,7 @@ class Formatter:
         return formatted
 
     def format_top(self, script: Script) -> str:
-        return "\n".join(self.format_script_contents(script))
+        return "\n".join(self.format_script_contents(script)) + "\n"
 
     def format_script_contents(self, script: Script) -> List[str]:
         formatted = [""]
