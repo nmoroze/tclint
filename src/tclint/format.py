@@ -1,7 +1,8 @@
+from typing import List
+
 from tclint.syntax_tree import (
     Node,
     Script,
-    List,
     Command,
     Comment,
     CommandSub,
@@ -19,6 +20,7 @@ from tclint.syntax_tree import (
     TernaryOp,
     Function,
 )
+from tclint.syntax_tree import List as ListNode
 
 # TODO: replace with real config
 _STYLE_LINE_LENGTH = 80
@@ -30,8 +32,8 @@ class Formatter:
     def __init__(self):
         pass
 
-    def format(self, *nodes: Node) -> str:
-        formatted = ""
+    def format(self, *nodes: Node) -> List[str]:
+        formatted = []
         for node in nodes:
             if isinstance(node, Script):
                 formatted += self.format_script(node)
@@ -53,7 +55,7 @@ class Formatter:
                 formatted += self.format_var_sub(node)
             elif isinstance(node, ArgExpansion):
                 formatted += self.format_arg_expansion(node)
-            elif isinstance(node, List):
+            elif isinstance(node, ListNode):
                 formatted += self.format_list(node)
             elif isinstance(node, Expression):
                 formatted += self.format_expression(node)
@@ -94,125 +96,156 @@ class Formatter:
                     newlines = min(newlines, 3)
                     formatted += "\n" * newlines
 
-            formatted += self.format(child)
+            formatted += "\n".join(self.format(child))
             last_line = child.end_pos[0]
 
         return formatted
 
-    def format_script(self, script) -> str:
+    def format_script(self, script) -> List[str]:
         script_contents = self.format_top(script)
         if script.pos[0] == script.end_pos[0]:
-            return _STYLE_SPACES_IN_BRACES.join(["{", script_contents, "}"])
+            return [_STYLE_SPACES_IN_BRACES.join(["{", script_contents, "}"])]
+        return [
+            "\n".join(
+                ["{"]
+                + [_STYLE_INDENT + line for line in script_contents.split("\n")]
+                + ["}"]
+            )
+        ]
 
-        return (
-            "{\n"
-            + _STYLE_INDENT
-            + script_contents.replace("\n", "\n" + _STYLE_INDENT)
-            + "\n}"
-        )
+    def format_command(self, command) -> List[str]:
+        # TODO: enforce in type
+        assert len(command.children) > 0
 
-    def format_command(self, command) -> str:
-        words = []
-        for child in command.children:
-            words.append(self.format(child))
+        formatted = self.format(command.children[0])
+        last_line = command.children[0].end_pos[0]
+        for child in command.children[1:]:
+            child_lines = self.format(child)
+            if last_line == child.pos[0]:
+                formatted[-1] += " "
+                indent = " " * len(formatted[-1])
+                formatted[-1] += child_lines[0]
+                formatted.extend([indent + line for line in child_lines[1:]])
+            else:
+                formatted[-1] += " \\"
+                formatted.extend([_STYLE_INDENT + line for line in child_lines])
 
-        formatted = " ".join(words)
-
-        # TODO this doesn't work, we must know the current indentation
-        # TODO: handle grouping switches w/ args
-        # if len(formatted) > _STYLE_LINE_LENGTH:
-        #     formatted = (" \\\n" + _STYLE_INDENT).join(words)
+            last_line = child.end_pos[0]
 
         return formatted
 
-    def format_comment(self, comment: Comment) -> str:
-        return f"#{comment.value}"
+    def format_comment(self, comment: Comment) -> List[str]:
+        return [f"#{comment.value}"]
 
     def format_command_sub(self, command_sub):
         if len(command_sub.children) == 0:
-            return "[]"
+            return ["[]"]
 
         # TODO: enforce in type?
         assert len(command_sub.children) == 1
         assert isinstance(command_sub.children[0], Command)
 
-        return f"[{self.format(command_sub.children[0])}]"
+        child_lines = self.format(command_sub.children[0])
+        lines = ["[" + child_lines[0]]
+        # Add extra space of indent to account for [
+        lines.extend([" " + line for line in child_lines[1:]])
+        lines[-1] += "]"
 
-    def format_bare_word(self, word) -> str:
+        return lines
+
+    def format_bare_word(self, word) -> List[str]:
+        # Property enforced by parser
         assert word.contents is not None
-        return word.contents
+        return [word.contents]
 
-    def format_quoted_word(self, word) -> str:
+    def format_quoted_word(self, word) -> List[str]:
         if word.contents is not None:
-            return f'"{word.contents}"'
+            return [f'"{word.contents}"']
 
         formatted = ""
         for child in word.children:
-            formatted += self.format(child)
+            formatted += "\n".join(self.format(child))
 
-        return f'"{formatted}"'
+        return [f'"{formatted}"']
 
-    def format_braced_word(self, word) -> str:
+    def format_braced_word(self, word) -> List[str]:
         assert word.contents is not None
-        return f"{{{word.contents}}}"
+        return [f"{{{word.contents}}}"]
 
-    def format_compound_bare_word(self, word) -> str:
-        formatted = ""
+    def format_compound_bare_word(self, word) -> List[str]:
+        formatted = [""]
         for child in word.children:
-            formatted += self.format(child)
+            child_lines = self.format(child)
+            indent = " " * len(formatted[-1])
+            formatted[-1] += child_lines[0]
+            formatted.extend([indent + line for line in child_lines[1:]])
 
         return formatted
 
-    def format_var_sub(self, varsub) -> str:
-        formatted = f"${varsub.value}"
+    def format_var_sub(self, varsub) -> List[str]:
+        formatted = [f"${varsub.value}"]
         if varsub.children:
-            formatted += "("
+            formatted[-1] += "("
             for child in varsub.children:
-                formatted += self.format(child)
-            formatted += ")"
+                indent = " " * len(formatted[-1])
+                child_lines = self.format(child)
+                formatted[-1] += child_lines[0]
+                formatted.extend([indent + line for line in child_lines[1:]])
+            formatted[-1] += ")"
 
         return formatted
 
-    def format_arg_expansion(self, arg_expansion) -> str:
+    def format_arg_expansion(self, arg_expansion) -> List[str]:
         # TODO: enforce in type?
         assert len(arg_expansion.children) == 1
+        lines = self.format(arg_expansion.children[0])
+        lines[0] = "{*}" + lines[0]
+        lines[1:] = [" " * len("{*}") + line for line in lines[1:]]
 
-        return "{*}" + self.format(arg_expansion.children[0])
+        return lines
 
-    def format_list(self, list_node) -> str:
+    def format_list(self, list_node) -> List[str]:
         # Similar to Script, but the contents are much more straightforward.
-        list_contents = " ".join([self.format(child) for child in list_node.children])
+        # TODO: fix
+        list_contents = " ".join([
+            self.format(child) for child in list_node.children  # type: ignore
+        ])
 
         if list_node.pos[0] == list_node.end_pos[0]:
-            return _STYLE_SPACES_IN_BRACES.join(list_contents)
+            return [_STYLE_SPACES_IN_BRACES.join(["{", list_contents, "}"])]
 
         return (
-            "{\n"
-            + _STYLE_INDENT
-            + list_contents.replace("\n", "\n" + _STYLE_INDENT)
-            + "\n}"
+            ["{"] + [_STYLE_INDENT + line for line in list_contents.split("\n")] + ["}"]
         )
 
-    def format_expression(self, expr) -> str:
-        formatted = ""
+    def format_expression(self, expr) -> List[str]:
+        # TODO: add \ where needed
+        formatted = [""]
         for child in expr.children:
-            formatted += self.format(child)
+            lines = self.format(child)
+            formatted[-1] += lines[0]
+            formatted.extend(lines[1:])
 
         return formatted
 
-    def format_braced_expression(self, expr) -> str:
-        formatted = "{" + _STYLE_SPACES_IN_BRACES
+    def format_braced_expression(self, expr) -> List[str]:
+        formatted = ["{" + _STYLE_SPACES_IN_BRACES]
+        indent = " " * (1 + len(_STYLE_SPACES_IN_BRACES))
         for child in expr.children:
-            formatted += self.format(child)
-        formatted += _STYLE_SPACES_IN_BRACES + "}"
+            lines = self.format(child)
+            formatted[-1] += lines[0]
+            formatted.extend([indent + line for line in lines[1:]])
+        formatted[-1] += _STYLE_SPACES_IN_BRACES + "}"
 
         return formatted
 
-    def format_paren_expression(self, expr) -> str:
-        formatted = "("
+    def format_paren_expression(self, expr) -> List[str]:
+        formatted = ["("]
         for child in expr.children:
-            formatted += self.format(child)
-        formatted += ")"
+            lines = self.format(child)
+            formatted[-1] += lines[0]
+            formatted.extend([" " + line for line in lines[1:]])
+        formatted[-1] += ")"
 
         return formatted
 
@@ -220,35 +253,75 @@ class Formatter:
         # TODO: enforce in type?
         assert len(expr.children) == 2
 
-        return self.format(expr.children[0], expr.children[1])
+        op = self.format(expr.children[0])
+        assert len(op) == 1
+
+        lines = self.format(expr.children[1])
+        lines[0] = op[0] + lines[0]
+        return lines
 
     def format_binary_op(self, expr):
         # TODO: enforce in type?
         assert len(expr.children) == 3
 
-        return " ".join([
-            self.format(expr.children[0]),
-            self.format(expr.children[1]),
-            self.format(expr.children[2]),
-        ])
+        formatted = self.format(expr.children[0])
+
+        op = self.format(expr.children[1])
+        assert len(op) == 1
+
+        if expr.children[0].end_pos[0] != expr.children[1].pos[0]:
+            formatted.extend(op)
+        else:
+            formatted[-1] += " " + op[0]
+
+        lines = self.format(expr.children[2])
+        if expr.children[1].end_pos[0] != expr.children[2].pos[0]:
+            formatted.extend(lines)
+        else:
+            formatted[-1] += " " + lines[0]
+            formatted.extend(lines[1:])
+
+        return formatted
 
     def format_ternary_op(self, expr):
         # TODO: enforce in type?
         assert len(expr.children) == 5
 
-        return " ".join(
-            self.format(expr.children[0]),
-            self.format(expr.children[1]),
-            self.format(expr.children[2]),
-            self.format(expr.children[3]),
-            self.format(expr.children[4]),
-        )
+        formatted = self.format(expr.children[0])
+
+        last = expr.children[0]
+        for next in expr.children[1:]:
+            lines = self.format(next)
+            if last.end_pos[0] != next.pos[0]:
+                formatted.extend(lines)
+            else:
+                formatted[-1] += " " + lines[0]
+                formatted.extend(lines[1:])
+            last = next
+
+        return formatted
 
     def format_function(self, function):
         # TODO: enforce in type?
         assert len(function.children) >= 1
 
-        formatted_args = ", ".join([
-            self.format(child) for child in function.children[1:]
-        ])
-        return f"{function.children[0]}({formatted_args})"
+        name = self.format(function.children[0])
+        assert len(name) == 1
+        name = name[0]
+
+        formatted = [f"{name}("]
+        indent = " " * len(formatted[-1])
+
+        last = function.children[0]
+        for i, child in enumerate(function.children[1:]):
+            if i > 0:
+                formatted[-1] += ","
+            lines = self.format(child)
+            if last.end_pos[0] != child.pos[0]:
+                formatted.extend([indent + line for line in lines])
+            else:
+                formatted[-1] += " " + lines[0]
+                formatted.extend(lines[1:])
+        formatted[-1] += ")"
+
+        return formatted
