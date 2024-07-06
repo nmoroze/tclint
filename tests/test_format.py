@@ -252,3 +252,13 @@ $foo(asdf$asdf[asdf \
                            -uiop])""".strip()
 
     _test(script, expected)
+
+
+def test_braced_varsub():
+    script = r"${one_two}_three"
+    _test(script, script)
+
+
+def test_function():
+    script = r"max($a, $b)"
+    _test(script, script)

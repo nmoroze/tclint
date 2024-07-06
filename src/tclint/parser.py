@@ -430,7 +430,7 @@ class Parser:
                 ts.next()
             ts.next()
 
-            return VarSub(var, pos=pos, end_pos=ts.pos())
+            return VarSub(var, pos=pos, end_pos=ts.pos(), braced=True)
 
         while ts.type() in {TOK_ALPHA_CHARS, TOK_NUM_CHARS, TOK_NAMESPACE_SEP}:
             var += ts.value()

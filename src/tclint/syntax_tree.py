@@ -333,6 +333,10 @@ class CompoundBareWord(Node):
 
 
 class VarSub(Node):
+    def __init__(self, *args, braced=False, **kwargs):
+        self.braced = braced
+        return super().__init__(*args, **kwargs)
+
     def accept(self, visitor, recurse=False):
         if recurse:
             self._recurse(visitor)
