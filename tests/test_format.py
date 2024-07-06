@@ -240,3 +240,21 @@ def test_braced_varsub():
 def test_function():
     script = r"max($a, $b)"
     _test(script, script)
+
+
+def test_dont_add_trailing_space_indent():
+    script = r"""
+if { 1 } {
+puts "one"
+
+puts "two"
+}"""
+
+    expected = r"""
+if { 1 } {
+  puts "one"
+
+  puts "two"
+}""".strip()
+
+    _test(script, expected)

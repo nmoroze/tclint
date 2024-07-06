@@ -32,6 +32,16 @@ class Formatter:
     def __init__(self):
         pass
 
+    def _indent(self, lines: List[str], indent: str):
+        indented = []
+        for line in lines:
+            if line == "":
+                indented.append("")
+            else:
+                indented.append(indent + line)
+
+        return indented
+
     def format(self, *nodes: Node) -> List[str]:
         formatted = []
         for node in nodes:
@@ -106,7 +116,7 @@ class Formatter:
         if script.pos[0] == script.end_pos[0]:
             return [_STYLE_SPACES_IN_BRACES.join(["{", lines[0], "}"])]
 
-        return ["{"] + [_STYLE_INDENT + line for line in lines] + ["}"]
+        return ["{"] + self._indent(lines, _STYLE_INDENT) + ["}"]
 
     def format_command(self, command) -> List[str]:
         # TODO: enforce in type
@@ -123,10 +133,10 @@ class Formatter:
                 if isinstance(child, (Script, ListNode)):
                     formatted.extend(child_lines[1:])
                 else:
-                    formatted.extend([indent + line for line in child_lines[1:]])
+                    formatted.extend(self._indent(child_lines[1:], indent))
             else:
                 formatted[-1] += " \\"
-                formatted.extend([_STYLE_INDENT + line for line in child_lines])
+                formatted.extend(self._indent(child_lines, _STYLE_INDENT))
 
             last_line = child.end_pos[0]
 
@@ -145,8 +155,8 @@ class Formatter:
 
         child_lines = self.format(command_sub.children[0])
         lines = ["[" + child_lines[0]]
-        # Add extra space of indent to account for [
-        lines.extend([" " + line for line in child_lines[1:]])
+        # Add extra space to account for [
+        lines.extend(self._indent(child_lines[1:], " "))
         lines[-1] += "]"
 
         return lines
@@ -176,7 +186,7 @@ class Formatter:
             child_lines = self.format(child)
             indent = " " * len(formatted[-1])
             formatted[-1] += child_lines[0]
-            formatted.extend([indent + line for line in child_lines[1:]])
+            formatted.extend(self._indent(child_lines[1:], indent))
 
         return formatted
 
@@ -195,7 +205,7 @@ class Formatter:
                 indent = " " * len(formatted[-1])
                 child_lines = self.format(child)
                 formatted[-1] += child_lines[0]
-                formatted.extend([indent + line for line in child_lines[1:]])
+                formatted.extend(self._indent(child_lines[1:], indent))
             formatted[-1] += ")"
 
         return formatted
@@ -205,7 +215,8 @@ class Formatter:
         assert len(arg_expansion.children) == 1
         lines = self.format(arg_expansion.children[0])
         lines[0] = "{*}" + lines[0]
-        lines[1:] = [" " * len("{*}") + line for line in lines[1:]]
+        indent = " " * len("{*}")
+        lines[1:] = self._indent(lines[1:], indent)
 
         return lines
 
@@ -231,7 +242,7 @@ class Formatter:
         if list_node.pos[0] == list_node.end_pos[0]:
             return [_STYLE_SPACES_IN_BRACES.join(["{", contents[0], "}"])]
 
-        return ["{"] + [_STYLE_INDENT + line for line in contents] + ["}"]
+        return ["{"] + self._indent(contents, _STYLE_INDENT) + ["}"]
 
     def format_expression(self, expr) -> List[str]:
         # TODO: add \ where needed
@@ -249,7 +260,7 @@ class Formatter:
         for child in expr.children:
             lines = self.format(child)
             formatted[-1] += lines[0]
-            formatted.extend([indent + line for line in lines[1:]])
+            formatted.extend(self._indent(lines[1:], indent))
         formatted[-1] += _STYLE_SPACES_IN_BRACES + "}"
 
         return formatted
@@ -259,7 +270,7 @@ class Formatter:
         for child in expr.children:
             lines = self.format(child)
             formatted[-1] += lines[0]
-            formatted.extend([" " + line for line in lines[1:]])
+            formatted.extend(self._indent(lines[1:], " "))
         formatted[-1] += ")"
 
         return formatted
@@ -273,7 +284,7 @@ class Formatter:
 
         lines = self.format(expr.children[1])
         lines[0] = op[0] + lines[0]
-        lines[1:] = [" " * len(op[0]) + line for line in lines[1:]]
+        lines[1:] = self._indent(lines[1:], " " * len(op[0]))
         return lines
 
     def format_binary_op(self, expr):
@@ -336,7 +347,7 @@ class Formatter:
                 formatted[-1] += ","
             lines = self.format(child)
             if last.end_pos[0] != child.pos[0]:
-                formatted.extend([indent + line for line in lines])
+                formatted.extend(self._indent(lines, indent))
             else:
                 formatted[-1] += " " + lines[0]
                 formatted.extend(lines[1:])
