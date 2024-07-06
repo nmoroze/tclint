@@ -1,7 +1,5 @@
 import pathlib
 
-from tclint.syntax_tree import Script, Command, BareWord
-
 from tclint.format import Formatter
 from tclint.parser import Parser
 
@@ -14,17 +12,15 @@ def _test(script, expected):
     format = Formatter()
     out = format.format_top(tree)
 
-    assert out == expected
+    assert out == expected + "\n"
 
 
 def test_fizzbuzz():
     with open(MY_DIR / "data" / "dirty.tcl", "r") as f:
         script = f.read()
 
-    parser = Parser()
-    tree = parser.parse(script)
-
-    EXPECTED = """for { set i 1 } { $i < 100 } { incr i } {
+    expected = r"""
+for { set i 1 } { $i < 100 } { incr i } {
   if { $i % 15 == 0 } {
     puts "FizzBuzz"
   } elseif { $i % 3 == 0 } {
@@ -34,49 +30,43 @@ def test_fizzbuzz():
   } else {
     puts $i
   }
-}"""
+}""".strip()
 
-    format = Formatter()
-    out = format.format_top(tree)
-
-    assert out == EXPECTED
+    _test(script, expected)
 
 
 def test_blank_lines():
     """Formatter preserves up to two blank lines."""
-    TREE = Script(
-        Command(
-            BareWord("foo", pos=(1, 1), end_pos=(1, 4)), pos=(1, 1), end_pos=(1, 4)
-        ),
-        Command(
-            BareWord("foo", pos=(3, 1), end_pos=(3, 4)), pos=(3, 1), end_pos=(3, 4)
-        ),
-        Command(
-            BareWord("foo", pos=(6, 1), end_pos=(6, 4)), pos=(6, 1), end_pos=(6, 4)
-        ),
-        Command(
-            BareWord("foo", pos=(10, 1), end_pos=(10, 4)), pos=(10, 1), end_pos=(10, 4)
-        ),
-    )
+    script = r"""
+foo
 
-    expected = "foo\n\nfoo\n\n\nfoo\n\n\nfoo"
+foo
 
-    assert Formatter().format_top(TREE) == expected
+
+foo
+
+
+
+foo"""
+
+    expected = r"""
+foo
+
+foo
+
+
+foo
+
+
+foo""".strip()
+
+    _test(script, expected)
 
 
 def test_multiple_cmds_per_line():
     """Formatter preserves commands on same line."""
-    TREE = Script(
-        Command(
-            BareWord("foo", pos=(1, 1), end_pos=(1, 4)), pos=(1, 1), end_pos=(1, 4)
-        ),
-        Command(
-            BareWord("foo", pos=(1, 5), end_pos=(1, 8)), pos=(1, 5), end_pos=(1, 8)
-        ),
-    )
-    expected = "foo; foo"
-
-    assert Formatter().format_top(TREE) == expected
+    script = "foo; foo"
+    _test(script, script)
 
 
 def test_comments():
@@ -123,18 +113,12 @@ puts \
   two }
 """
 
-    parser = Parser()
-    tree = parser.parse(script)
-
-    EXPECTED = r"""
+    expected = r"""
 puts \
   { one
   two }""".strip()
 
-    format = Formatter()
-    out = format.format_top(tree)
-
-    assert out == EXPECTED
+    _test(script, expected)
 
 
 def test_no_reindent_braced_word_script():
@@ -160,18 +144,12 @@ def test_reindent_command_sub():
 puts [command \
 foo]"""
 
-    parser = Parser()
-    tree = parser.parse(script)
-
-    EXPECTED = r"""
+    expected = r"""
 puts [command \
         foo]
 """.strip()
 
-    format = Formatter()
-    out = format.format_top(tree)
-
-    assert out == EXPECTED
+    _test(script, expected)
 
 
 def test_reindent_command_sub_new_line():
