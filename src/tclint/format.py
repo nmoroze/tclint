@@ -349,7 +349,9 @@ class Formatter:
             if last.end_pos[0] != child.pos[0]:
                 formatted.extend(self._indent(lines, indent))
             else:
-                formatted[-1] += " " + lines[0]
+                if i > 0:
+                    formatted[-1] += " "
+                formatted[-1] += lines[0]
                 formatted.extend(lines[1:])
         formatted[-1] += ")"
 
