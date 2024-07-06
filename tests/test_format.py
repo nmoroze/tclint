@@ -238,7 +238,7 @@ def test_braced_varsub():
 
 
 def test_function():
-    script = r"max($a, $b)"
+    script = r"expr { max($a, $b) }"
     _test(script, script)
 
 
