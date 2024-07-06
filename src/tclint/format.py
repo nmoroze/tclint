@@ -24,13 +24,15 @@ from tclint.syntax_tree import List as ListNode
 
 # TODO: replace with real config
 _STYLE_LINE_LENGTH = 80
-_STYLE_INDENT = "  "
 _STYLE_SPACES_IN_BRACES = " "
 
 
 class Formatter:
-    def __init__(self):
-        pass
+    def __init__(self, config):
+        if config.style_indent == "tab":
+            self.style_indent = "\t"
+        else:
+            self.style_indent = " " * config.style_indent
 
     def _indent(self, lines: List[str], indent: str):
         indented = []
@@ -116,7 +118,7 @@ class Formatter:
         if script.pos[0] == script.end_pos[0]:
             return [_STYLE_SPACES_IN_BRACES.join(["{", lines[0], "}"])]
 
-        return ["{"] + self._indent(lines, _STYLE_INDENT) + ["}"]
+        return ["{"] + self._indent(lines, self.style_indent) + ["}"]
 
     def format_command(self, command) -> List[str]:
         # TODO: enforce in type
@@ -136,7 +138,7 @@ class Formatter:
                     formatted.extend(self._indent(child_lines[1:], indent))
             else:
                 formatted[-1] += " \\"
-                formatted.extend(self._indent(child_lines, _STYLE_INDENT))
+                formatted.extend(self._indent(child_lines, self.style_indent))
 
             last_line = child.end_pos[0]
 
@@ -242,7 +244,7 @@ class Formatter:
         if list_node.pos[0] == list_node.end_pos[0]:
             return [_STYLE_SPACES_IN_BRACES.join(["{", contents[0], "}"])]
 
-        return ["{"] + self._indent(contents, _STYLE_INDENT) + ["}"]
+        return ["{"] + self._indent(contents, self.style_indent) + ["}"]
 
     def format_expression(self, expr) -> List[str]:
         # TODO: add \ where needed

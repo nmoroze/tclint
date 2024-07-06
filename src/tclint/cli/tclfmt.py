@@ -34,7 +34,7 @@ def format(script: str, config: Config, debug=False) -> str:
     if debug > 0:
         print(tree.pretty(positions=(debug > 1)))
 
-    formatter = Formatter()
+    formatter = Formatter(config)
     return formatter.format_top(tree)
 
 
