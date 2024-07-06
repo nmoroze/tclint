@@ -1,7 +1,6 @@
 """CLI utility for formatting Tcl code."""
 
 # TODO: Add modes
-# - --in-place (modifies files in-place)
 # - --check (status code, doesn't modify files)
 # - Optional: --dif
 
@@ -77,6 +76,7 @@ def main():
         default=None,
         metavar="<path>",
     )
+    parser.add_argument("-i", "--in-place", help="update files", action="store_true")
     setup_config_cli_args(parser)
     args = parser.parse_args()
 
@@ -120,7 +120,12 @@ def main():
             formatted = format(
                 script, config.get_for_path(path), debug=(args.debug > 1)
             )
-            print(formatted)
+            if args.in_place:
+                with open(path, "w") as f:
+                    f.write(formatted)
+            else:
+                print(formatted)
+
             if args.debug > 0:
                 check(path, script, formatted)
         except TclSyntaxError as e:
