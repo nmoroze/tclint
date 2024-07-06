@@ -77,41 +77,36 @@ class Formatter:
         return formatted
 
     def format_top(self, script: Script) -> str:
-        formatted = ""
-        last_line = None
+        return "\n".join(self.format_script_contents(script))
 
+    def format_script_contents(self, script: Script) -> List[str]:
+        formatted = [""]
+        last_line = None
         for child in script.children:
             if last_line is not None:
-                # We preserve line breaks in the input tree to an extent, but allow at
-                # most two consecutive blank lines. This eliminates `blank-lines`
-                # violations. Spacing between commands/comments on the same line is
-                # normalized, although this isn't checked by tclint.
                 if last_line == child.pos[0]:
                     if isinstance(child, Comment):
-                        formatted += "  ;"
+                        formatted[-1] += " ;"
                     else:
-                        formatted += "; "
+                        formatted[-1] += "; "
                 else:
                     newlines = child.pos[0] - last_line
                     newlines = min(newlines, 3)
-                    formatted += "\n" * newlines
-
-            formatted += "\n".join(self.format(child))
+                    formatted.extend([""] * newlines)
             last_line = child.end_pos[0]
+
+            lines = self.format(child)
+            formatted[-1] += lines[0]
+            formatted.extend(lines[1:])
 
         return formatted
 
-    def format_script(self, script) -> List[str]:
-        script_contents = self.format_top(script)
+    def format_script(self, script: Script) -> List[str]:
+        lines = self.format_script_contents(script)
         if script.pos[0] == script.end_pos[0]:
-            return [_STYLE_SPACES_IN_BRACES.join(["{", script_contents, "}"])]
-        return [
-            "\n".join(
-                ["{"]
-                + [_STYLE_INDENT + line for line in script_contents.split("\n")]
-                + ["}"]
-            )
-        ]
+            return [_STYLE_SPACES_IN_BRACES.join(["{", lines[0], "}"])]
+
+        return ["{"] + [_STYLE_INDENT + line for line in lines] + ["}"]
 
     def format_command(self, command) -> List[str]:
         # TODO: enforce in type
@@ -125,7 +120,10 @@ class Formatter:
                 formatted[-1] += " "
                 indent = " " * len(formatted[-1])
                 formatted[-1] += child_lines[0]
-                formatted.extend([indent + line for line in child_lines[1:]])
+                if isinstance(child, (Script, ListNode)):
+                    formatted.extend(child_lines[1:])
+                else:
+                    formatted.extend([indent + line for line in child_lines[1:]])
             else:
                 formatted[-1] += " \\"
                 formatted.extend([_STYLE_INDENT + line for line in child_lines])
@@ -205,18 +203,28 @@ class Formatter:
         return lines
 
     def format_list(self, list_node) -> List[str]:
-        # Similar to Script, but the contents are much more straightforward.
-        # TODO: fix
-        list_contents = " ".join([
-            self.format(child) for child in list_node.children  # type: ignore
-        ])
+        # Similar to Script, but the contents are a bit more straightforward.
+        contents = [""]
+        last_line = None
+        for child in list_node.children:
+            if last_line is not None:
+                if last_line == child.pos[0]:
+                    contents[-1] += " "
+                else:
+                    newlines = child.pos[0] - last_line
+                    newlines = min(newlines, 3)
+                    contents.extend([""] * newlines)
+
+            lines = self.format(child)
+            contents[-1] += lines[0]
+            contents.extend(lines[1:])
+
+            last_line = child.end_pos[0]
 
         if list_node.pos[0] == list_node.end_pos[0]:
-            return [_STYLE_SPACES_IN_BRACES.join(["{", list_contents, "}"])]
+            return [_STYLE_SPACES_IN_BRACES.join(["{", contents[0], "}"])]
 
-        return (
-            ["{"] + [_STYLE_INDENT + line for line in list_contents.split("\n")] + ["}"]
-        )
+        return ["{"] + [_STYLE_INDENT + line for line in contents] + ["}"]
 
     def format_expression(self, expr) -> List[str]:
         # TODO: add \ where needed
@@ -258,6 +266,7 @@ class Formatter:
 
         lines = self.format(expr.children[1])
         lines[0] = op[0] + lines[0]
+        lines[1:] = [" " * len(op[0]) + line for line in lines[1:]]
         return lines
 
     def format_binary_op(self, expr):
