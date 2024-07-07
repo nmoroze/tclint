@@ -73,8 +73,17 @@ foo
 
 
 foo""".strip()
-
     _test(script, expected)
+
+    expected = r"""
+foo
+
+foo
+
+foo
+
+foo""".strip()
+    _test(script, expected, max_blank_lines=1)
 
 
 def test_multiple_cmds_per_line():
@@ -370,3 +379,40 @@ namespace eval my_namespace {
 
     _test(script, expected_no_indent, indent_namespace_eval=False)
     _test(script, expected_indent, indent_namespace_eval=True)
+
+
+def test_indent_script_in_expr():
+    script = r"""
+expr {1 + 5 + [if {1} {
+return 1
+} else {
+return 2
+}]}"""
+
+    expected = r"""
+expr { 1 + 5 + [if { 1 } {
+                  return 1
+                } else {
+                  return 2
+                }] }""".strip()
+
+    _test(script, expected)
+
+
+def test_remove_lines_at_ends_of_script():
+    script = r"""
+
+proc foo {} {
+
+    puts "asdf"
+
+}
+
+"""
+
+    expected = r"""
+proc foo {} {
+  puts "asdf"
+}""".strip()
+
+    _test(script, expected)
