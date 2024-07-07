@@ -6,11 +6,23 @@ from tclint.parser import Parser
 MY_DIR = pathlib.Path(__file__).parent.resolve()
 
 
-def _test(script, expected):
+def _test(
+    script,
+    expected,
+    indent="  ",
+    spaces_in_braces=True,
+    max_blank_lines=2,
+    indent_namespace_eval=True,
+):
     parser = Parser()
     tree = parser.parse(script)
     format = Formatter(
-        FormatterOpts(indent="  ", spaces_in_braces=True, max_blank_lines=2)
+        FormatterOpts(
+            indent=indent,
+            spaces_in_braces=spaces_in_braces,
+            max_blank_lines=max_blank_lines,
+            indent_namespace_eval=indent_namespace_eval,
+        )
     )
     out = format.format_top(tree)
 
@@ -338,3 +350,23 @@ expr { $foo
                       * 3)) }""".strip()
 
     _test(script, expected)
+
+
+def test_indent_namespace_eval():
+    script = r"""
+namespace eval my_namespace {
+    foo
+}"""
+
+    expected_no_indent = r"""
+namespace eval my_namespace {
+foo
+}""".strip()
+
+    expected_indent = r"""
+namespace eval my_namespace {
+  foo
+}""".strip()
+
+    _test(script, expected_no_indent, indent_namespace_eval=False)
+    _test(script, expected_indent, indent_namespace_eval=True)
