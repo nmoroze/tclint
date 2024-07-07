@@ -289,33 +289,7 @@ class Formatter:
         lines[1:] = self._indent(lines[1:], " " * len(op[0]))
         return lines
 
-    def format_binary_op(self, expr):
-        # TODO: enforce in type?
-        assert len(expr.children) == 3
-
-        formatted = self.format(expr.children[0])
-
-        op = self.format(expr.children[1])
-        assert len(op) == 1
-
-        if expr.children[0].end_pos[0] != expr.children[1].pos[0]:
-            formatted.extend(op)
-        else:
-            formatted[-1] += " " + op[0]
-
-        lines = self.format(expr.children[2])
-        if expr.children[1].end_pos[0] != expr.children[2].pos[0]:
-            formatted.extend(lines)
-        else:
-            formatted[-1] += " " + lines[0]
-            formatted.extend(lines[1:])
-
-        return formatted
-
-    def format_ternary_op(self, expr):
-        # TODO: enforce in type?
-        assert len(expr.children) == 5
-
+    def _format_op(self, expr) -> List[str]:
         formatted = self.format(expr.children[0])
 
         last = expr.children[0]
@@ -324,11 +298,26 @@ class Formatter:
             if last.end_pos[0] != next.pos[0]:
                 formatted.extend(lines)
             else:
-                formatted[-1] += " " + lines[0]
-                formatted.extend(lines[1:])
+                formatted[-1] += " "
+                indent = " " * len(formatted[-1])
+                formatted[-1] += lines[0]
+                if isinstance(next, (BinaryOp, TernaryOp)):
+                    formatted.extend(lines[1:])
+                else:
+                    formatted.extend(self._indent(lines[1:], indent))
             last = next
 
         return formatted
+
+    def format_binary_op(self, expr) -> List[str]:
+        # TODO: enforce in type?
+        assert len(expr.children) == 3
+        return self._format_op(expr)
+
+    def format_ternary_op(self, expr) -> List[str]:
+        # TODO: enforce in type?
+        assert len(expr.children) == 5
+        return self._format_op(expr)
 
     def format_function(self, function):
         # TODO: enforce in type?
