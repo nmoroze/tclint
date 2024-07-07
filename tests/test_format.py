@@ -170,12 +170,12 @@ puts \
 
 def test_expr_align():
     script = r"""
-if {$a &&
-$b } { puts "asdf" }"""
+if {$a && $b &&
+$c } { puts "asdf" }"""
 
     expected = r"""
-if { $a &&
-     $b } { puts "asdf" }""".strip()
+if { $a && $b &&
+     $c } { puts "asdf" }""".strip()
 
     _test(script, expected)
 
@@ -257,5 +257,17 @@ if { 1 } {
 
   puts "two"
 }""".strip()
+
+    _test(script, expected)
+
+
+def test_paren_format():
+    script = r"""
+expr { 1 + (2 *
+       3) }"""
+
+    expected = r"""
+expr { 1 + (2 *
+            3) }""".strip()
 
     _test(script, expected)
