@@ -180,6 +180,20 @@ if { $a && $b &&
     _test(script, expected)
 
 
+def test_ternary_op_align():
+    script = r"""
+expr { $foo ? 2
+    + 3 :
+    4 }"""
+
+    expected = r"""
+expr { $foo ? 2
+       + 3 :
+       4 }""".strip()
+
+    _test(script, expected)
+
+
 def test_expr_command_sub_alignment():
     script = r"""
 if { ![command $arg1 \
@@ -269,5 +283,57 @@ expr { 1 + (2 *
     expected = r"""
 expr { 1 + (2 *
             3) }""".strip()
+
+    _test(script, expected)
+
+
+def test_expr_alignment_nested():
+    """Original indentation implementations failed when we had a doubly nested binop
+    before other sub-expression types."""
+    script = r"""
+expr { 1 + 2 && !($foo ||
+$bar) }"""
+
+    expected = r"""
+expr { 1 + 2 && !($foo ||
+                  $bar) }""".strip()
+
+    _test(script, expected)
+
+    script = r"""
+expr { 1 + 2 + min($a,
+    $b,
+    $c) }"""
+
+    expected = r"""
+expr { 1 + 2 + min($a,
+                   $b,
+                   $c) }""".strip()
+
+    _test(script, expected)
+
+    script = r"""
+expr { 1 + 2 * [command \
+    -foo\
+    -bar] }
+"""
+
+    expected = r"""
+expr { 1 + 2 * [command \
+                  -foo \
+                  -bar] }""".strip()
+    _test(script, expected)
+
+    script = r"""
+expr { $foo
+* 5 + (2 * (3 * 4) + 5 + 7
+* 16 + (2
+* 3)) }"""
+
+    expected = r"""
+expr { $foo
+       * 5 + (2 * (3 * 4) + 5 + 7
+              * 16 + (2
+                      * 3)) }""".strip()
 
     _test(script, expected)
