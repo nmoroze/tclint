@@ -11,7 +11,7 @@ import sys
 from tclint.cli.utils import resolve_sources, register_codec_warning
 from tclint.config import get_config, setup_config_cli_args, Config, ConfigError
 from tclint.parser import Parser, TclSyntaxError
-from tclint.format import Formatter
+from tclint.format import Formatter, FormatterOpts
 
 try:
     from tclint._version import __version__  # type: ignore
@@ -34,7 +34,18 @@ def format(script: str, config: Config, debug=False) -> str:
     if debug > 0:
         print(tree.pretty(positions=(debug > 1)))
 
-    formatter = Formatter(config)
+    if config.style_indent == "tab":
+        indent = "\t"
+    elif isinstance(config.style_indent, int):
+        indent = " " * config.style_indent
+    else:
+        raise ValueError(
+            f"unexpected value for config.style_indent: {config.style_indent}"
+        )
+
+    formatter = Formatter(
+        FormatterOpts(indent=indent, spaces_in_braces=config.style_spaces_in_braces)
+    )
     return formatter.format_top(tree)
 
 

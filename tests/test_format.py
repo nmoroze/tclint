@@ -1,8 +1,7 @@
 import pathlib
 
-from tclint.format import Formatter
+from tclint.format import Formatter, FormatterOpts
 from tclint.parser import Parser
-from tclint.config import Config
 
 MY_DIR = pathlib.Path(__file__).parent.resolve()
 
@@ -10,7 +9,7 @@ MY_DIR = pathlib.Path(__file__).parent.resolve()
 def _test(script, expected):
     parser = Parser()
     tree = parser.parse(script)
-    format = Formatter(Config(style_indent=2))
+    format = Formatter(FormatterOpts(indent="  ", spaces_in_braces=True))
     out = format.format_top(tree)
 
     assert out == expected + "\n"
