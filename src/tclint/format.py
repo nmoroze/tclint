@@ -29,6 +29,7 @@ class FormatterOpts:
     indent: str
     spaces_in_braces: bool
     max_blank_lines: int
+    indent_namespace_eval: bool
 
 
 class Formatter:
@@ -121,30 +122,47 @@ class Formatter:
 
         return formatted
 
-    def format_script(self, script: Script) -> List[str]:
+    def format_script(self, script: Script, should_indent=True) -> List[str]:
         lines = self.format_script_contents(script)
         if script.pos[0] == script.end_pos[0]:
             return self._brace(lines)
 
-        return ["{"] + self._indent(lines, self.opts.indent) + ["}"]
+        if should_indent:
+            return ["{"] + self._indent(lines, self.opts.indent) + ["}"]
+        else:
+            return ["{"] + lines + ["}"]
 
     def format_command(self, command) -> List[str]:
         # TODO: enforce in type
         assert len(command.children) > 0
 
+        is_namespace_eval = (
+            command.routine == "namespace"
+            and len(command.args) > 0
+            and command.args[0].contents == "eval"
+        )
+        should_indent = not is_namespace_eval or self.opts.indent_namespace_eval
+
         formatted = self.format(command.children[0])
         last_line = command.children[0].end_pos[0]
         for child in command.children[1:]:
-            child_lines = self.format(child)
             if last_line == child.pos[0]:
                 formatted[-1] += " "
                 indent = " " * len(formatted[-1])
-                formatted[-1] += child_lines[0]
-                if isinstance(child, (Script, ListNode)):
+                if isinstance(child, Script):
+                    child_lines = self.format_script(child, should_indent=should_indent)
+                    formatted[-1] += child_lines[0]
+                    formatted.extend(child_lines[1:])
+                elif isinstance(child, ListNode):
+                    child_lines = self.format_list(child)
+                    formatted[-1] += child_lines[0]
                     formatted.extend(child_lines[1:])
                 else:
+                    child_lines = self.format(child)
+                    formatted[-1] += child_lines[0]
                     formatted.extend(self._indent(child_lines[1:], indent))
             else:
+                child_lines = self.format(child)
                 formatted[-1] += " \\"
                 formatted.extend(self._indent(child_lines, self.opts.indent))
 
