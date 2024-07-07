@@ -28,6 +28,7 @@ from tclint.syntax_tree import List as ListNode
 class FormatterOpts:
     indent: str
     spaces_in_braces: bool
+    max_blank_lines: int
 
 
 class Formatter:
@@ -110,7 +111,7 @@ class Formatter:
                         formatted[-1] += "; "
                 else:
                     newlines = child.pos[0] - last_line
-                    newlines = min(newlines, 3)
+                    newlines = min(newlines, self.opts.max_blank_lines + 1)
                     formatted.extend([""] * newlines)
             last_line = child.end_pos[0]
 

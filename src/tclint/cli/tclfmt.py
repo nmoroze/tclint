@@ -44,7 +44,11 @@ def format(script: str, config: Config, debug=False) -> str:
         )
 
     formatter = Formatter(
-        FormatterOpts(indent=indent, spaces_in_braces=config.style_spaces_in_braces)
+        FormatterOpts(
+            indent=indent,
+            spaces_in_braces=config.style_spaces_in_braces,
+            max_blank_lines=config.style_max_blank_lines,
+        )
     )
     return formatter.format_top(tree)
 
