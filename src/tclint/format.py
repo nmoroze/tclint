@@ -1,3 +1,4 @@
+import dataclasses
 from typing import List
 
 from tclint.syntax_tree import (
@@ -22,19 +23,18 @@ from tclint.syntax_tree import (
 )
 from tclint.syntax_tree import List as ListNode
 
-# TODO: replace with real config
-_STYLE_LINE_LENGTH = 80
-_STYLE_SPACES_IN_BRACES = " "
+
+@dataclasses.dataclass
+class FormatterOpts:
+    indent: str
+    spaces_in_braces: bool
 
 
 class Formatter:
-    def __init__(self, config):
-        if config.style_indent == "tab":
-            self.style_indent = "\t"
-        else:
-            self.style_indent = " " * config.style_indent
+    def __init__(self, opts: FormatterOpts):
+        self.opts = opts
 
-    def _indent(self, lines: List[str], indent: str):
+    def _indent(self, lines: List[str], indent: str) -> List[str]:
         indented = []
         for line in lines:
             if line == "":
@@ -43,6 +43,13 @@ class Formatter:
                 indented.append(indent + line)
 
         return indented
+
+    def _brace(self, lines: List[str]) -> List[str]:
+        spaces_in_braces = " " if self.opts.spaces_in_braces else ""
+        braced_lines = lines[:]
+        braced_lines[0] = "{" + spaces_in_braces + lines[0]
+        braced_lines[-1] += spaces_in_braces + "}"
+        return braced_lines
 
     def format(self, *nodes: Node) -> List[str]:
         formatted = []
@@ -116,9 +123,9 @@ class Formatter:
     def format_script(self, script: Script) -> List[str]:
         lines = self.format_script_contents(script)
         if script.pos[0] == script.end_pos[0]:
-            return [_STYLE_SPACES_IN_BRACES.join(["{", lines[0], "}"])]
+            return self._brace(lines)
 
-        return ["{"] + self._indent(lines, self.style_indent) + ["}"]
+        return ["{"] + self._indent(lines, self.opts.indent) + ["}"]
 
     def format_command(self, command) -> List[str]:
         # TODO: enforce in type
@@ -138,7 +145,7 @@ class Formatter:
                     formatted.extend(self._indent(child_lines[1:], indent))
             else:
                 formatted[-1] += " \\"
-                formatted.extend(self._indent(child_lines, self.style_indent))
+                formatted.extend(self._indent(child_lines, self.opts.indent))
 
             last_line = child.end_pos[0]
 
@@ -242,9 +249,9 @@ class Formatter:
             last_line = child.end_pos[0]
 
         if list_node.pos[0] == list_node.end_pos[0]:
-            return [_STYLE_SPACES_IN_BRACES.join(["{", contents[0], "}"])]
+            return self._brace(contents)
 
-        return ["{"] + self._indent(contents, self.style_indent) + ["}"]
+        return ["{"] + self._indent(contents, self.opts.indent) + ["}"]
 
     def format_expression(self, expr) -> List[str]:
         # TODO: add \ where needed
@@ -257,15 +264,14 @@ class Formatter:
         return formatted
 
     def format_braced_expression(self, expr) -> List[str]:
-        formatted = ["{" + _STYLE_SPACES_IN_BRACES]
-        indent = " " * (1 + len(_STYLE_SPACES_IN_BRACES))
+        formatted = [""]
+        indent = "  " if self.opts.spaces_in_braces else " "
         for child in expr.children:
             lines = self.format(child)
             formatted[-1] += lines[0]
             formatted.extend(self._indent(lines[1:], indent))
-        formatted[-1] += _STYLE_SPACES_IN_BRACES + "}"
 
-        return formatted
+        return self._brace(formatted)
 
     def format_paren_expression(self, expr) -> List[str]:
         formatted = ["("]
