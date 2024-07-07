@@ -9,7 +9,9 @@ MY_DIR = pathlib.Path(__file__).parent.resolve()
 def _test(script, expected):
     parser = Parser()
     tree = parser.parse(script)
-    format = Formatter(FormatterOpts(indent="  ", spaces_in_braces=True))
+    format = Formatter(
+        FormatterOpts(indent="  ", spaces_in_braces=True, max_blank_lines=2)
+    )
     out = format.format_top(tree)
 
     assert out == expected + "\n"
