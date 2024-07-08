@@ -1,5 +1,6 @@
 import dataclasses
-from typing import List
+from typing import List, Tuple, Union
+import sys
 
 from tclint.syntax_tree import (
     Node,
@@ -21,7 +22,15 @@ from tclint.syntax_tree import (
     TernaryOp,
     Function,
 )
+from tclint.parser import Parser
 from tclint.syntax_tree import List as ListNode
+
+
+@dataclasses.dataclass
+class LiteralBlock:
+    block: List[str]
+    pos: Tuple[int, int]
+    end_pos: Tuple[int, int]
 
 
 @dataclasses.dataclass
@@ -53,7 +62,7 @@ class Formatter:
         braced_lines[-1] += spaces_in_braces + "}"
         return braced_lines
 
-    def format(self, *nodes: Node) -> List[str]:
+    def format(self, *nodes: Union[Node, LiteralBlock]) -> List[str]:
         formatted = []
         for node in nodes:
             if isinstance(node, Script):
@@ -92,18 +101,67 @@ class Formatter:
                 formatted += self.format_ternary_op(node)
             elif isinstance(node, Function):
                 formatted += self.format_function(node)
+            elif isinstance(node, LiteralBlock):
+                formatted += node.block
             else:
                 assert False, f"unrecognized node: {type(node)}"
 
         return formatted
 
-    def format_top(self, script: Script) -> str:
-        return "\n".join(self.format_script_contents(script)) + "\n"
+    def format_top(self, script: str, parser: Parser) -> str:
+        tree = parser.parse(script)
+        self.script = script.split("\n")
+        return "\n".join(self.format_script_contents(tree)) + "\n"
 
     def format_script_contents(self, script: Script) -> List[str]:
+        to_format = []
+        skip_formatting_start = None
+        for child in script.children:
+            if skip_formatting_start is None:
+                to_format.append(child)
+
+            if isinstance(child, Comment):
+                if child.value.strip() == "tclfmt-disable":
+                    if skip_formatting_start is not None:
+                        print(
+                            "Warning: encountered 'tclint-disable' while formatting is"
+                            " already disabled, ignoring...",
+                            file=sys.stderr,
+                        )
+                    else:
+                        skip_formatting_start = child.pos[0]
+                elif child.value.strip() == "tclfmt-enable":
+                    if skip_formatting_start is None:
+                        print(
+                            "Warning: encountered 'tclint-enable' while formatting is"
+                            " already disabled, ignoring...",
+                            file=sys.stderr,
+                        )
+                    else:
+                        skip_formatting_end = child.pos[0]
+                        block = self.script[skip_formatting_start:skip_formatting_end]
+                        to_format.append(
+                            LiteralBlock(
+                                block,
+                                pos=(skip_formatting_start + 1, 1),
+                                end_pos=(skip_formatting_end, 1),
+                            )
+                        )
+                        skip_formatting_start = None
+
+        if skip_formatting_start is not None:
+            print("Warning: missing 'tclint-enable'")
+            to_format.append(
+                LiteralBlock(
+                    self.script[skip_formatting_start:],
+                    pos=(skip_formatting_start + 1, 1),
+                    end_pos=script.end_pos,
+                )
+            )
+
         formatted = [""]
         last_line = None
-        for child in script.children:
+        for child in to_format:
             if last_line is not None:
                 if last_line == child.pos[0]:
                     if isinstance(child, Comment):
