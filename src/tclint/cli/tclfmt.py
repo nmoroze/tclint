@@ -29,11 +29,6 @@ def format(script: str, config: Config, debug=False) -> str:
     plugins = [config.commands] if config.commands is not None else []
     parser = Parser(debug=debug, command_plugins=plugins)
 
-    tree = parser.parse(script)
-
-    if debug > 0:
-        print(tree.pretty(positions=(debug > 1)))
-
     if config.style_indent == "tab":
         indent = "\t"
     elif isinstance(config.style_indent, int):
@@ -51,7 +46,7 @@ def format(script: str, config: Config, debug=False) -> str:
             indent_namespace_eval=config.style_indent_namespace_eval,
         )
     )
-    return formatter.format_top(tree)
+    return formatter.format_top(script, parser)
 
 
 def check(path: pathlib.Path, script: str, formatted: str):

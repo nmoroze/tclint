@@ -15,7 +15,6 @@ def _test(
     indent_namespace_eval=True,
 ):
     parser = Parser()
-    tree = parser.parse(script)
     format = Formatter(
         FormatterOpts(
             indent=indent,
@@ -24,7 +23,7 @@ def _test(
             indent_namespace_eval=indent_namespace_eval,
         )
     )
-    out = format.format_top(tree)
+    out = format.format_top(script, parser)
 
     assert out == expected + "\n"
 
@@ -414,5 +413,23 @@ proc foo {} {
 proc foo {} {
   puts "asdf"
 }""".strip()
+
+    _test(script, expected)
+
+
+def test_disable():
+    script = r"""
+command1
+ command2 ; # tclfmt-disable
+  command3
+ command4; # tclfmt-enable
+ command5"""
+
+    expected = r"""
+command1
+command2 ;# tclfmt-disable
+  command3
+ command4; # tclfmt-enable
+command5""".strip()
 
     _test(script, expected)
