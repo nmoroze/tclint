@@ -156,6 +156,9 @@ class Node:
         return self._make_str()
 
     def __eq__(self, other):
+        if type(self) is not type(other):
+            return False
+
         if self.value != other.value:
             return False
 
