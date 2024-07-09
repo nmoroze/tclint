@@ -192,6 +192,22 @@ def test_command_sub():
     )
 
 
+def test_command_sub_eval():
+    script = "[eval command]"
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            CommandSub(Command(BareWord("eval"), Script(Command(BareWord("command")))))
+        )
+    )
+
+
+def test_command_sub_arg_expansion():
+    script = "[{*}asdf]"
+    tree = parse(script)
+    assert tree == Script(Command(CommandSub(Command(ArgExpansion(BareWord("asdf"))))))
+
+
 def test_weird_words():
     script = r"""puts "hello {{}"
     puts h"llo

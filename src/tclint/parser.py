@@ -99,8 +99,6 @@ class Parser:
     def __init__(self, debug=False, command_plugins=None):
         self._debug = debug
         self._debug_indent = 0
-        # self._cmd_sub = True indicates that the script will be terminated by ]"""
-        self._cmd_sub = False
         # TODO: better way to handle this?
         self.violations = []
 
@@ -116,7 +114,7 @@ class Parser:
     def parse(self, script, pos=None):
         lexer = Lexer(pos=pos)
         lexer.input(script)
-        tree = self._parse_script(lexer)
+        tree = self._parse_script(lexer, in_command_sub=False)
 
         return tree
 
@@ -173,12 +171,9 @@ class Parser:
                 " interpreted as script"
             )
 
-        cmd_sub = self._cmd_sub
-        self._cmd_sub = False
         script = self.parse(node.contents, pos=node.contents_pos)
         if isinstance(node, BracedWord):
             script.braced = True
-        self._cmd_sub = cmd_sub
 
         script.line = node.line
         script.col = node.col
@@ -186,12 +181,12 @@ class Parser:
 
         return script
 
-    def _parse_script(self, ts):
+    def _parse_script(self, ts, in_command_sub):
         self.debug(f"parse_script({ts.current})")
         self._debug_indent += 1
         pos = ts.pos()
 
-        if self._cmd_sub:
+        if in_command_sub:
             script = CommandSub(pos=pos)
         else:
             script = Script(pos=pos)
@@ -205,12 +200,12 @@ class Parser:
             if ts.type() == TOK_HASH:
                 script.add(self.parse_comment(ts))
             else:
-                cmd = self.parse_command(ts)
+                cmd = self.parse_command(ts, in_command_sub=in_command_sub)
                 if cmd is not None:
                     script.add(cmd)
 
             # when in command sub mode, a script is terminated by ]
-            if self._cmd_sub and ts.type() == TOK_RBRACKET:
+            if in_command_sub and ts.type() == TOK_RBRACKET:
                 return script
 
             ts.expect(
@@ -221,7 +216,7 @@ class Parser:
                 pos=ts.pos(),
             )
 
-        if self._cmd_sub and ts.type() is TOK_EOF:
+        if in_command_sub and ts.type() is TOK_EOF:
             raise TclSyntaxError(
                 "reached EOF without finding end of command substitution", pos
             )
@@ -245,12 +240,12 @@ class Parser:
 
         return Comment(value, pos=pos, end_pos=ts.pos())
 
-    def parse_command(self, ts):
+    def parse_command(self, ts, in_command_sub):
         self.debug(f"parse_command({ts.current})")
         self._debug_indent += 1
         pos = ts.pos()
 
-        routine = self.parse_word(ts)
+        routine = self.parse_word(ts, in_command_sub)
         if routine is None:
             self._debug_indent -= 1
             return None
@@ -263,7 +258,7 @@ class Parser:
             while ts.type() in {TOK_WS, TOK_BACKSLASH_NEWLINE}:
                 ts.next()
 
-            word = self.parse_word(ts)
+            word = self.parse_word(ts, in_command_sub)
             if word is None:
                 break
 
@@ -283,18 +278,18 @@ class Parser:
         # spaces-in-braces check.
         return Command(*children, pos=pos, end_pos=children[-1].end_pos)
 
-    def parse_word(self, ts):
+    def parse_word(self, ts, in_command_sub):
         self.debug(f"parse_word({ts.current})")
         if ts.type() == TOK_ARG_EXPANSION:
-            return self.parse_arg_expansion(ts)
+            return self.parse_arg_expansion(ts, in_command_sub)
         elif ts.type() == TOK_LBRACE:
             return self.parse_braced_word(ts)
         elif ts.type() == TOK_QUOTE:
             return self.parse_quoted_word(ts)
         else:
-            return self.parse_bare_word(ts)
+            return self.parse_bare_word(ts, in_command_sub)
 
-    def parse_arg_expansion(self, ts):
+    def parse_arg_expansion(self, ts, in_command_sub):
         self.debug(f"parse_arg_expansion({ts.current})")
         pos = ts.pos()
 
@@ -304,7 +299,7 @@ class Parser:
         if ts.type() in {TOK_WS, TOK_BACKSLASH_NEWLINE, TOK_NEWLINE, TOK_EOF}:
             return BracedWord("*", pos=pos, end_pos=ts.pos())
 
-        return ArgExpansion(self.parse_word(ts), pos=pos, end_pos=ts.pos())
+        return ArgExpansion(self.parse_word(ts, in_command_sub), pos=pos, end_pos=ts.pos())
 
     def parse_quoted_word(self, ts):
         self.debug(f"parse_quoted_word({ts.current})")
@@ -377,7 +372,7 @@ class Parser:
         end_pos = ts.pos()
         return BracedWord(word, pos=pos, end_pos=end_pos)
 
-    def parse_bare_word(self, ts):
+    def parse_bare_word(self, ts, in_command_sub):
         self.debug(f"parse_bare_word({ts.current})")
         self._debug_indent += 1
         pos = ts.pos()
@@ -386,8 +381,7 @@ class Parser:
         delimiters = [TOK_WS, TOK_BACKSLASH_NEWLINE, TOK_NEWLINE, TOK_SEMI, TOK_EOF]
 
         # In command sub mode, words are ended by ]
-        # TODO: consider pushing this down via argument to remove it as a member
-        if self._cmd_sub:
+        if in_command_sub:
             delimiters.append(TOK_RBRACKET)
 
         while ts.type() not in delimiters:
@@ -484,10 +478,7 @@ class Parser:
         pos = ts.pos()
         ts.assert_(TOK_LBRACKET)
 
-        saved_cmd_sub = self._cmd_sub
-        self._cmd_sub = True
-        script = self._parse_script(ts)
-        self._cmd_sub = saved_cmd_sub
+        script = self._parse_script(ts, in_command_sub=True)
 
         ts.assert_(TOK_RBRACKET)
         end_pos = ts.pos()
