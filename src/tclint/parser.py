@@ -299,7 +299,9 @@ class Parser:
         if ts.type() in {TOK_WS, TOK_BACKSLASH_NEWLINE, TOK_NEWLINE, TOK_EOF}:
             return BracedWord("*", pos=pos, end_pos=ts.pos())
 
-        return ArgExpansion(self.parse_word(ts, in_command_sub), pos=pos, end_pos=ts.pos())
+        return ArgExpansion(
+            self.parse_word(ts, in_command_sub), pos=pos, end_pos=ts.pos()
+        )
 
     def parse_quoted_word(self, ts):
         self.debug(f"parse_quoted_word({ts.current})")
