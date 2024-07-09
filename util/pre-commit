@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+black --check --preview .
+flake8 .
+pytest
+mypy src/
+
