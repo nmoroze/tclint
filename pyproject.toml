@@ -25,7 +25,8 @@ dev = [
     "black",
     "flake8",
     "pytest",
-    "pytest-timeout"
+    "pytest-timeout",
+    "codespell",
 ]
 
 [project.scripts]
