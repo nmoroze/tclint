@@ -69,7 +69,7 @@ Scripts may not contain too many consecutive blank lines. This number can be con
 
 ### Rationale
 
-Blank lines can be used to visually organize code and enhance readability. However, an excessive number unecessarily increases file length and may result in inconsistent visual organization, decreasing readability.
+Blank lines can be used to visually organize code and enhance readability. However, an excessive number unnecessarily increases file length and may result in inconsistent visual organization, decreasing readability.
 
 ## `command-args`
 

@@ -336,7 +336,7 @@ class SpacingChecker(Visitor):
             self.violations.append(
                 Violation(
                     Rule.EXPR_FORMAT,
-                    "unecessary set of parentheses around expression",
+                    "unnecessary set of parentheses around expression",
                     expression.pos,
                 )
             )
@@ -681,7 +681,7 @@ class SpacesInBracesChecker(Visitor):
         if not script.braced:
             # We tag whether a script is braced using this member. It's a bit of
             # a hack - it would probably be better to have a BracedScript
-            # analagous to BracedExpression, but that change is more invasive.
+            # analogous to BracedExpression, but that change is more invasive.
             #
             # We can distinguish between a braced and bare script using
             # positions, but this extra info is important so we don't check
