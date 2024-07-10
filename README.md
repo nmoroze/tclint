@@ -74,8 +74,7 @@ Please format, lint, and run tests before submitting changes:
 
 ```sh
 $ black --preview .
-$ flake8 .
-$ pytest
+$ ./util/pre-commit
 ```
 
 ## License

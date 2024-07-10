@@ -72,6 +72,11 @@ jobs:
           pip install mypy -c dev-constraints.txt
           mypy src
 
+      - name: Spell check
+        run: |
+          pip install codespell -c dev-constraints.txt
+          git ls-files | xargs codespell
+
   openroad:
     name: Test OR plugin
     runs-on: ubuntu-latest

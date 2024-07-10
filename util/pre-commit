@@ -6,4 +6,4 @@ black --check --preview .
 flake8 .
 pytest
 mypy src/
-
+git ls-files | xargs codespell
