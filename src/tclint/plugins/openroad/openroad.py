@@ -218,7 +218,7 @@ _patches = {
         "-ratio_margin": {"required": False, "value": True, "repeated": False},
     },
     # Need a way to indicate repeated arguments are okay.
-    # TODO: this was unecessary prior to the merge of
+    # TODO: this was unnecessary prior to the merge of
     # https://github.com/The-OpenROAD-Project/OpenROAD/pull/5100, if we add a way to
     # apply these to specific versions, that should be enabled here.
     "remove_buffers": {"": {"min": 0, "max": None}},
