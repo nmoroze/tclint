@@ -338,6 +338,13 @@ class Formatter:
             formatted[-1] += lines[0]
             formatted.extend(lines[1:])
 
+        # Trick: we know there are quotes around the expression if the start of the
+        # expression is a different column than its first child.
+        quoted = expr.pos[1] != expr.children[0].pos[1]
+        if quoted:
+            formatted[0] = '"' + formatted[0]
+            formatted[-1] += '"'
+
         return formatted
 
     def format_braced_expression(self, expr) -> List[str]:
