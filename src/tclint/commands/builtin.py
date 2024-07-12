@@ -200,7 +200,8 @@ def _expr(args, parser):
         # will be caught by a separate lint check.
         return [parser.parse_expression(args[0])]
 
-    # TODO: handle multiple args
+    # TODO: handle multiple args. Once we do this, we need Formatter.parse_expression()
+    # to add \'s
     return None
 
 

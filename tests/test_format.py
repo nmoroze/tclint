@@ -433,3 +433,12 @@ command2 ;# tclfmt-disable
 command5""".strip()
 
     _test(script, expected)
+
+
+def test_quoted_expr():
+    script = r"""
+if "1 + 2 > 0" {
+  puts "foo"
+}""".strip()
+
+    _test(script, script)
