@@ -113,7 +113,7 @@ class Formatter:
         self.script = script.split("\n")
         return "\n".join(self.format_script_contents(tree)) + "\n"
 
-    def format_script_contents(self, script: Script) -> List[str]:
+    def format_script_contents(self, script: Union[Script, CommandSub]) -> List[str]:
         to_format = []
         skip_formatting_start = None
         for child in script.children:
@@ -235,17 +235,13 @@ class Formatter:
         if len(command_sub.children) == 0:
             return ["[]"]
 
-        # TODO: enforce in type?
-        assert len(command_sub.children) == 1
-        assert isinstance(command_sub.children[0], Command)
+        formatted = [""]
+        contents = self.format_script_contents(command_sub)
+        formatted[0] = "[" + contents[0]
+        formatted.extend(self._indent(contents[1:], " "))
+        formatted[-1] += "]"
 
-        child_lines = self.format(command_sub.children[0])
-        lines = ["[" + child_lines[0]]
-        # Add extra space to account for [
-        lines.extend(self._indent(child_lines[1:], " "))
-        lines[-1] += "]"
-
-        return lines
+        return formatted
 
     def format_bare_word(self, word) -> List[str]:
         # Property enforced by parser

@@ -442,3 +442,20 @@ if "1 + 2 > 0" {
 }""".strip()
 
     _test(script, script)
+
+
+def test_multiple_commands_in_command_sub():
+    script = r"""
+[command; command]
+""".strip()
+    _test(script, script)
+
+    # TODO: fix once we remove block indentation
+
+
+#     script = r"""
+# puts [
+#   command1
+#   command2
+# ]""".strip()
+#     _test(script, script)
