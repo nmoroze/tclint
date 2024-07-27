@@ -131,10 +131,12 @@ def main():
             formatted = format(
                 script, config.get_for_path(path), debug=(args.debug > 1)
             )
-            if args.in_place:
+            if args.in_place and path:
                 with open(path, "w") as f:
                     f.write(formatted)
             else:
+                if args.in_place:
+                    print("Warning: --in-place option ignored when reading from stdin")
                 print(formatted)
 
             if args.debug > 0:
