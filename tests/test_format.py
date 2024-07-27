@@ -485,3 +485,10 @@ puts [
   command2
 ]""".strip()
     _test(script, script)
+
+
+def test_preserve_comment_line():
+    script = r"""
+if { 1 } { # tclint-disable-line
+}""".strip()
+    _test(script, script)
