@@ -206,19 +206,14 @@ class Formatter:
         for child in command.children[1:]:
             if last_line == child.pos[0]:
                 formatted[-1] += " "
-                indent = " " * len(formatted[-1])
                 if isinstance(child, Script):
+                    # TODO: do we need to call format_script in the else block too?
                     child_lines = self.format_script(child, should_indent=should_indent)
-                    formatted[-1] += child_lines[0]
-                    formatted.extend(child_lines[1:])
-                elif isinstance(child, ListNode):
-                    child_lines = self.format_list(child)
-                    formatted[-1] += child_lines[0]
-                    formatted.extend(child_lines[1:])
                 else:
                     child_lines = self.format(child)
-                    formatted[-1] += child_lines[0]
-                    formatted.extend(self._indent(child_lines[1:], indent))
+
+                formatted[-1] += child_lines[0]
+                formatted.extend(child_lines[1:])
             else:
                 child_lines = self.format(child)
                 formatted[-1] += " \\"
@@ -235,11 +230,16 @@ class Formatter:
         if len(command_sub.children) == 0:
             return ["[]"]
 
-        formatted = [""]
+        formatted = []
         contents = self.format_script_contents(command_sub)
-        formatted[0] = "[" + contents[0]
-        formatted.extend(self._indent(contents[1:], " "))
-        formatted[-1] += "]"
+        if len(command_sub.children) > 1 and len(contents) > 1:
+            formatted.append("[")
+            formatted.extend(self._indent(contents, self.opts.indent))
+            formatted.append("]")
+        else:
+            formatted.append("[" + contents[0])
+            formatted.extend(contents[1:])
+            formatted[-1] += "]"
 
         return formatted
 
@@ -266,9 +266,8 @@ class Formatter:
         formatted = [""]
         for child in word.children:
             child_lines = self.format(child)
-            indent = " " * len(formatted[-1])
             formatted[-1] += child_lines[0]
-            formatted.extend(self._indent(child_lines[1:], indent))
+            formatted.extend(child_lines[1:])
 
         return formatted
 
@@ -282,12 +281,12 @@ class Formatter:
             formatted = [f"${varsub.value}"]
 
         if varsub.children:
+            # TODO: maybe we want to break out the parens onto multiple lines
             formatted[-1] += "("
             for child in varsub.children:
-                indent = " " * len(formatted[-1])
                 child_lines = self.format(child)
                 formatted[-1] += child_lines[0]
-                formatted.extend(self._indent(child_lines[1:], indent))
+                formatted.extend(child_lines[1:])
             formatted[-1] += ")"
 
         return formatted
@@ -297,8 +296,6 @@ class Formatter:
         assert len(arg_expansion.children) == 1
         lines = self.format(arg_expansion.children[0])
         lines[0] = "{*}" + lines[0]
-        indent = " " * len("{*}")
-        lines[1:] = self._indent(lines[1:], indent)
 
         return lines
 
@@ -345,23 +342,29 @@ class Formatter:
 
     def format_braced_expression(self, expr) -> List[str]:
         formatted = [""]
-        indent = "  " if self.opts.spaces_in_braces else " "
         for child in expr.children:
             lines = self.format(child)
             formatted[-1] += lines[0]
-            formatted.extend(self._indent(lines[1:], indent))
+            formatted.extend(lines[1:])
 
-        return self._brace(formatted)
+        if expr.pos[0] == expr.end_pos[0]:
+            return self._brace(formatted)
+
+        return ["{"] + self._indent(formatted, self.opts.indent) + ["}"]
 
     def format_paren_expression(self, expr) -> List[str]:
-        formatted = ["("]
+        formatted = [""]
         for child in expr.children:
             lines = self.format(child)
             formatted[-1] += lines[0]
-            formatted.extend(self._indent(lines[1:], " "))
-        formatted[-1] += ")"
+            formatted.extend(lines[1:])
 
-        return formatted
+        if expr.pos[0] == expr.end_pos[0]:
+            formatted[0] = "(" + formatted[0]
+            formatted[-1] += ")"
+            return formatted
+
+        return ["("] + self._indent(formatted, self.opts.indent) + [")"]
 
     def format_unary_op(self, expr):
         # TODO: enforce in type?
@@ -372,7 +375,6 @@ class Formatter:
 
         lines = self.format(expr.children[1])
         lines[0] = op[0] + lines[0]
-        lines[1:] = self._indent(lines[1:], " " * len(op[0]))
         return lines
 
     def _flatten_op(self, expr) -> List[Node]:
@@ -399,9 +401,8 @@ class Formatter:
                 formatted.extend(lines)
             else:
                 formatted[-1] += " "
-                indent = " " * len(formatted[-1])
                 formatted[-1] += lines[0]
-                formatted.extend(self._indent(lines[1:], indent))
+                formatted.extend(lines[1:])
             last = next
 
         return formatted
@@ -425,22 +426,27 @@ class Formatter:
         name = name[0]
 
         formatted = [f"{name}("]
-        indent = " " * len(formatted[-1])
 
+        formatted_args = [""]
         last = function.children[0]
         for i, child in enumerate(function.children[1:]):
             if child == BareWord(","):
                 continue
             if i > 0:
-                formatted[-1] += ","
+                formatted_args[-1] += ","
             lines = self.format(child)
             if last.end_pos[0] != child.pos[0]:
-                formatted.extend(self._indent(lines, indent))
+                formatted_args.extend(lines)
             else:
                 if i > 0:
-                    formatted[-1] += " "
-                formatted[-1] += lines[0]
-                formatted.extend(lines[1:])
-        formatted[-1] += ")"
+                    formatted_args[-1] += " "
+                formatted_args[-1] += lines[0]
+                formatted_args.extend(lines[1:])
+
+        if len(formatted_args) == 1:
+            formatted[-1] += formatted_args[0] + ")"
+        else:
+            formatted.extend(self._indent(formatted_args, self.opts.indent))
+            formatted.append(")")
 
         return formatted

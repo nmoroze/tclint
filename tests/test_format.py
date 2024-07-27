@@ -168,7 +168,7 @@ foo]"""
 
     expected = r"""
 puts [command \
-        foo]
+  foo]
 """.strip()
 
     _test(script, expected)
@@ -183,7 +183,7 @@ foo]"""
     expected = r"""
 puts \
   [command \
-     foo]
+    foo]
 """.strip()
 
     _test(script, expected)
@@ -195,8 +195,10 @@ if {$a && $b &&
 $c } { puts "asdf" }"""
 
     expected = r"""
-if { $a && $b &&
-     $c } { puts "asdf" }""".strip()
+if {
+  $a && $b &&
+  $c
+} { puts "asdf" }""".strip()
 
     _test(script, expected)
 
@@ -208,9 +210,11 @@ expr { $foo ? 2
     4 }"""
 
     expected = r"""
-expr { $foo ? 2
-       + 3 :
-       4 }""".strip()
+expr {
+  $foo ? 2
+  + 3 :
+  4
+}""".strip()
 
     _test(script, expected)
 
@@ -224,9 +228,11 @@ if { ![command $arg1 \
 }"""
 
     expected = r"""
-if { ![command $arg1 \
-         $arg2 \
-         $arg3] } {
+if {
+  ![command $arg1 \
+    $arg2 \
+    $arg3]
+} {
   return true
 }""".strip()
 
@@ -240,14 +246,14 @@ puts foo[bar\
 
     expected = r"""
 puts foo[bar \
-           "mootown"]qwerty
+  "mootown"]qwerty
 """.strip()
 
     _test(script, expected)
 
 
 def test_varsub_index_preserve_newline():
-    script = r"""i
+    script = r"""
 puts $foo(asdf \
 asdf)""".strip()
 
@@ -262,8 +268,8 @@ $foo(asdf$asdf[asdf \
 
     expected = r"""
 $foo(asdf$asdf[asdf \
-                 -asdf] [qwerty \
-                           -uiop])""".strip()
+  -asdf] [qwerty \
+  -uiop])""".strip()
 
     _test(script, expected)
 
@@ -302,8 +308,12 @@ expr { 1 + (2 *
        3) }"""
 
     expected = r"""
-expr { 1 + (2 *
-            3) }""".strip()
+expr {
+  1 + (
+    2 *
+    3
+  )
+}""".strip()
 
     _test(script, expected)
 
@@ -316,8 +326,12 @@ expr { 1 + 2 && !($foo ||
 $bar) }"""
 
     expected = r"""
-expr { 1 + 2 && !($foo ||
-                  $bar) }""".strip()
+expr {
+  1 + 2 && !(
+    $foo ||
+    $bar
+  )
+}""".strip()
 
     _test(script, expected)
 
@@ -327,9 +341,13 @@ expr { 1 + 2 + min($a,
     $c) }"""
 
     expected = r"""
-expr { 1 + 2 + min($a,
-                   $b,
-                   $c) }""".strip()
+expr {
+  1 + 2 + min(
+    $a,
+    $b,
+    $c
+  )
+}""".strip()
 
     _test(script, expected)
 
@@ -340,9 +358,11 @@ expr { 1 + 2 * [command \
 """
 
     expected = r"""
-expr { 1 + 2 * [command \
-                  -foo \
-                  -bar] }""".strip()
+expr {
+  1 + 2 * [command \
+    -foo \
+    -bar]
+}""".strip()
     _test(script, expected)
 
     script = r"""
@@ -352,10 +372,16 @@ expr { $foo
 * 3)) }"""
 
     expected = r"""
-expr { $foo
-       * 5 + (2 * (3 * 4) + 5 + 7
-              * 16 + (2
-                      * 3)) }""".strip()
+expr {
+  $foo
+  * 5 + (
+    2 * (3 * 4) + 5 + 7
+    * 16 + (
+      2
+      * 3
+    )
+  )
+}""".strip()
 
     _test(script, expected)
 
@@ -388,12 +414,15 @@ return 1
 return 2
 }]}"""
 
+    # TODO: is this the format we want?
     expected = r"""
-expr { 1 + 5 + [if { 1 } {
-                  return 1
-                } else {
-                  return 2
-                }] }""".strip()
+expr {
+  1 + 5 + [if { 1 } {
+    return 1
+  } else {
+    return 2
+  }]
+}""".strip()
 
     _test(script, expected)
 
@@ -450,12 +479,9 @@ def test_multiple_commands_in_command_sub():
 """.strip()
     _test(script, script)
 
-    # TODO: fix once we remove block indentation
-
-
-#     script = r"""
-# puts [
-#   command1
-#   command2
-# ]""".strip()
-#     _test(script, script)
+    script = r"""
+puts [
+  command1
+  command2
+]""".strip()
+    _test(script, script)
