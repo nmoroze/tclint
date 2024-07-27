@@ -1,9 +1,5 @@
 """CLI utility for formatting Tcl code."""
 
-# TODO: Add modes
-# - --check (status code, doesn't modify files)
-# - Optional: --dif
-
 import argparse
 import pathlib
 import sys
@@ -88,6 +84,14 @@ def main():
         metavar="<path>",
     )
     parser.add_argument("-i", "--in-place", help="update files", action="store_true")
+    parser.add_argument(
+        "--check",
+        help=(
+            "check if files need formatting. If so, list them and set a non-zero exit"
+            " code"
+        ),
+        action="store_true",
+    )
     setup_config_cli_args(parser)
     args = parser.parse_args()
 
@@ -118,6 +122,7 @@ def main():
 
     register_codec_warning("replace_with_warning")
 
+    reformat_count = 0
     for path in sources:
         if path is None:
             script = sys.stdin.read()
@@ -134,6 +139,11 @@ def main():
             if args.in_place and path:
                 with open(path, "w") as f:
                     f.write(formatted)
+            elif args.check:
+                if script != formatted:
+                    print(f"{out_prefix}: needs reformatting")
+                    retcode |= EXIT_FORMAT_VIOLATIONS
+                    reformat_count += 1
             else:
                 if args.in_place:
                     print("Warning: --in-place option ignored when reading from stdin")
@@ -146,6 +156,19 @@ def main():
             print(f"{out_prefix}:{line}:{col}: syntax error: {e}", file=sys.stderr)
             retcode |= EXIT_SYNTAX_ERROR
             continue
+
+    if args.check:
+        messages = []
+        if reformat_count == 0:
+            messages.append("Formatting clean!")
+        elif reformat_count == 1:
+            messages.append("1 file needs reformatting.")
+        else:
+            messages.append(f"{reformat_count} files need reformatting.")
+        messages.append(
+            f"Checked {len(sources)} file{'s' if len(sources) != 1 else ''}."
+        )
+        print(" ".join(messages))
 
     return retcode
 
