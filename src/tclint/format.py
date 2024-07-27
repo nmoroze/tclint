@@ -185,10 +185,23 @@ class Formatter:
         if script.pos[0] == script.end_pos[0]:
             return self._brace(lines)
 
+        # Usually, we enforce that multi-line scripts start on a new line after the open
+        # brace. However, if a comment was originally on the same line as the open brace
+        # we preserve it, since it's probably meant to be associated with this line
+        # (e.g. a tclint-disable-line).
+        open_brace = "{"
+        if (
+            len(script.children) > 0
+            and isinstance(script.children[0], Comment)
+            and script.pos[0] == script.children[0].pos[0]
+        ):
+            open_brace += " " + lines[0]
+            lines = lines[1:]
+
         if should_indent:
-            return ["{"] + self._indent(lines, self.opts.indent) + ["}"]
+            return [open_brace] + self._indent(lines, self.opts.indent) + ["}"]
         else:
-            return ["{"] + lines + ["}"]
+            return [open_brace] + lines + ["}"]
 
     def format_command(self, command) -> List[str]:
         # TODO: enforce in type
