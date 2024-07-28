@@ -45,11 +45,11 @@ class Config:
                 setattr(self, field.name, args_dict[field.name])
 
         # Special arguments that aren't handled automatically
-        if args.extend_exclude is not None:
-            self.exclude.extend(args.extend_exclude)
+        if "extend_exclude" in args_dict and args_dict["extend_exclude"] is not None:
+            self.exclude.extend(args_dict["extend_exclude"])
 
-        if args.extend_ignore is not None:
-            self.ignore.extend(args.extend_ignore)
+        if "extend_ignore" in args_dict and args_dict["extend_ignore"] is not None:
+            self.ignore.extend(args_dict["extend_ignore"])
 
 
 # Validators using `schema` library that check and normalize config inputs.
@@ -154,6 +154,24 @@ def _validate_config(config):
         raise ConfigError(error)
 
 
+def _validator(key):
+    def func(s):
+        try:
+            return Schema(_VALIDATORS[key]).validate(s)
+        except SchemaError as e:
+            error_s = str(e).replace("\n", " ")
+            raise argparse.ArgumentTypeError(error_s)
+
+    return func
+
+
+def _add_bool(group, parser, dest, yes_flag, no_flag):
+    mutex_group = group.add_mutually_exclusive_group(required=False)
+    mutex_group.add_argument(yes_flag, dest=dest, action="store_true")
+    mutex_group.add_argument(no_flag, dest=dest, action="store_false")
+    parser.set_defaults(**{dest: None})
+
+
 def setup_config_cli_args(parser):
     """This method defines config-related CLI arguments.
 
@@ -161,65 +179,66 @@ def setup_config_cli_args(parser):
     """
     config_group = parser.add_argument_group("configuration arguments")
 
-    def validator(key):
-        def func(s):
-            try:
-                return Schema(_VALIDATORS[key]).validate(s)
-            except SchemaError as e:
-                error_s = str(e).replace("\n", " ")
-                raise argparse.ArgumentTypeError(error_s)
-
-        return func
-
-    def add_bool(dest, yes_flag, no_flag):
-        mutex_group = config_group.add_mutually_exclusive_group(required=False)
-        mutex_group.add_argument(yes_flag, dest=dest, action="store_true")
-        mutex_group.add_argument(no_flag, dest=dest, action="store_false")
-        parser.set_defaults(**{dest: None})
-
     config_group.add_argument(
-        "--ignore", type=validator("ignore"), metavar='"rule1, rule2, ..."'
+        "--ignore", type=_validator("ignore"), metavar='"rule1, rule2, ..."'
     )
     config_group.add_argument(
-        "--extend-ignore", type=validator("ignore"), metavar='"rule1, rule2, ..."'
-    )
-    config_group.add_argument(
-        "--exclude", type=validator("exclude"), metavar='"path1, path2, ..."'
-    )
-    config_group.add_argument(
-        "--extend-exclude", type=validator("exclude"), metavar='"path1, path2, ..."'
-    )
-    config_group.add_argument(
-        "--extensions", type=validator("extensions"), metavar='"tcl, xdc, ..."'
-    )
-    config_group.add_argument(
-        "--commands", type=validator("commands"), metavar="<path>"
-    )
-    config_group.add_argument(
-        "--style-indent", type=validator("style_indent"), metavar="<indent>"
+        "--extend-ignore", type=_validator("ignore"), metavar='"rule1, rule2, ..."'
     )
     config_group.add_argument(
         "--style-line-length",
-        type=validator("style_line_length"),
+        type=_validator("style_line_length"),
         metavar="<line_length>",
     )
-    config_group.add_argument(
-        "--style-max-blank-lines",
-        type=validator("style_max_blank_lines"),
-        metavar="<max_blank_lines>",
-    )
-
-    add_bool(
+    _add_bool(
+        config_group,
+        parser,
         "style_allow_aligned_sets",
         "--style-aligned-sets",
         "--style-no-aligned-sets",
     )
-    add_bool(
+    setup_tclfmt_config_cli_args(parser, config_group=config_group)
+
+
+def setup_tclfmt_config_cli_args(parser, config_group=None):
+    """This method defines the subset of config-related CLI arguments used by tclfmt.
+
+    The destvars of these switches should match the fields of Config.
+    """
+    if config_group is None:
+        config_group = parser.add_argument_group("configuration arguments")
+
+    config_group.add_argument(
+        "--exclude", type=_validator("exclude"), metavar='"path1, path2, ..."'
+    )
+    config_group.add_argument(
+        "--extend-exclude", type=_validator("exclude"), metavar='"path1, path2, ..."'
+    )
+    config_group.add_argument(
+        "--extensions", type=_validator("extensions"), metavar='"tcl, xdc, ..."'
+    )
+    config_group.add_argument(
+        "--commands", type=_validator("commands"), metavar="<path>"
+    )
+    config_group.add_argument(
+        "--style-indent", type=_validator("style_indent"), metavar="<indent>"
+    )
+
+    config_group.add_argument(
+        "--style-max-blank-lines",
+        type=_validator("style_max_blank_lines"),
+        metavar="<max_blank_lines>",
+    )
+    _add_bool(
+        config_group,
+        parser,
         "style_indent_namespace_eval",
         "--style-indent-namespace-eval",
         "--style-no-indent-namespace-eval",
     )
-    add_bool(
+    _add_bool(
+        config_group,
+        parser,
         "style_spaces_in_braces",
         "--style-spaces-in-braces",
         "--style-no-spaces-in-braces",
