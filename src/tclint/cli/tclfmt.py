@@ -5,7 +5,7 @@ import pathlib
 import sys
 
 from tclint.cli.utils import resolve_sources, register_codec_warning
-from tclint.config import get_config, setup_config_cli_args, Config, ConfigError
+from tclint.config import get_config, setup_tclfmt_config_cli_args, Config, ConfigError
 from tclint.parser import Parser, TclSyntaxError
 from tclint.format import Formatter, FormatterOpts
 
@@ -62,8 +62,22 @@ def main():
     parser.add_argument(
         "source",
         nargs="+",
-        help="files to format. Provide '-' to read from stdin",
+        help=(
+            "files to format. By default, prints formatted files to stdout. Provide '-'"
+            " to read from stdin"
+        ),
         type=pathlib.Path,
+    )
+
+    mode_group = parser.add_argument_group("mode")
+    mode_mutex = mode_group.add_mutually_exclusive_group(required=False)
+    mode_mutex.add_argument(
+        "--in-place", help="update files that require formatting", action="store_true"
+    )
+    mode_mutex.add_argument(
+        "--check",
+        help="list files that require formatting and set the exit code",
+        action="store_true",
     )
     parser.add_argument(
         "-d",
@@ -83,16 +97,7 @@ def main():
         default=None,
         metavar="<path>",
     )
-    parser.add_argument("-i", "--in-place", help="update files", action="store_true")
-    parser.add_argument(
-        "--check",
-        help=(
-            "check if files need formatting. If so, list them and set a non-zero exit"
-            " code"
-        ),
-        action="store_true",
-    )
-    setup_config_cli_args(parser)
+    setup_tclfmt_config_cli_args(parser)
     args = parser.parse_args()
 
     try:
