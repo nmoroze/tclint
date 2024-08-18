@@ -309,10 +309,8 @@ expr { 1 + (2 *
 
     expected = r"""
 expr {
-  1 + (
-    2 *
-    3
-  )
+  1 + (2 *
+    3)
 }""".strip()
 
     _test(script, expected)
@@ -327,10 +325,8 @@ $bar) }"""
 
     expected = r"""
 expr {
-  1 + 2 && !(
-    $foo ||
-    $bar
-  )
+  1 + 2 && !($foo ||
+    $bar)
 }""".strip()
 
     _test(script, expected)
@@ -372,13 +368,9 @@ expr { $foo
     expected = r"""
 expr {
   $foo
-  * 5 + (
-    2 * (3 * 4) + 5 + 7
-    * 16 + (
-      2
-      * 3
-    )
-  )
+  * 5 + (2 * (3 * 4) + 5 + 7
+    * 16 + (2
+      * 3))
 }""".strip()
 
     _test(script, expected)
@@ -555,6 +547,24 @@ expr {
 expr {
   max(
     $a, $b, $c
+  )
+}""".strip()
+
+    _test(script, expected)
+
+
+def test_paren_line_breaks():
+    script = r"""
+expr {
+  (
+  1 + 2 + 3
+  )
+}""".strip()
+
+    expected = r"""
+expr {
+  (
+    1 + 2 + 3
   )
 }""".strip()
 

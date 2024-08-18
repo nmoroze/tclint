@@ -369,18 +369,26 @@ class Formatter:
         return ["{"] + self._indent(formatted, self.opts.indent) + ["}"]
 
     def format_paren_expression(self, expr) -> List[str]:
-        formatted = [""]
-        for child in expr.children:
-            lines = self.format(child)
+        # TODO: enforce in type?
+        assert len(expr.children) == 1
+        body = expr.children[0]
+
+        formatted = ["("]
+        lines = self.format(body)
+        if expr.pos[0] != body.pos[0]:
+            formatted.extend(lines)
+        else:
             formatted[-1] += lines[0]
             formatted.extend(lines[1:])
 
-        if expr.pos[0] == expr.end_pos[0]:
-            formatted[0] = "(" + formatted[0]
-            formatted[-1] += ")"
-            return formatted
+        formatted = formatted[0:1] + self._indent(formatted[1:], self.opts.indent)
 
-        return ["("] + self._indent(formatted, self.opts.indent) + [")"]
+        if expr.end_pos[0] != body.end_pos[0]:
+            formatted.append(")")
+        else:
+            formatted[-1] += ")"
+
+        return formatted
 
     def format_unary_op(self, expr):
         # TODO: enforce in type?
