@@ -172,6 +172,21 @@ def _add_bool(group, parser, dest, yes_flag, no_flag):
     parser.set_defaults(**{dest: None})
 
 
+def setup_common_config_cli_args(config_group):
+    config_group.add_argument(
+        "--exclude", type=_validator("exclude"), metavar='"path1, path2, ..."'
+    )
+    config_group.add_argument(
+        "--extend-exclude", type=_validator("exclude"), metavar='"path1, path2, ..."'
+    )
+    config_group.add_argument(
+        "--extensions", type=_validator("extensions"), metavar='"tcl, xdc, ..."'
+    )
+    config_group.add_argument(
+        "--commands", type=_validator("commands"), metavar="<path>"
+    )
+
+
 def setup_config_cli_args(parser):
     """This method defines config-related CLI arguments.
 
@@ -185,6 +200,7 @@ def setup_config_cli_args(parser):
     config_group.add_argument(
         "--extend-ignore", type=_validator("ignore"), metavar='"rule1, rule2, ..."'
     )
+    setup_common_config_cli_args(config_group)
     config_group.add_argument(
         "--style-line-length",
         type=_validator("style_line_length"),
@@ -197,33 +213,11 @@ def setup_config_cli_args(parser):
         "--style-aligned-sets",
         "--style-no-aligned-sets",
     )
-    setup_tclfmt_config_cli_args(parser, config_group=config_group)
-
-
-def setup_tclfmt_config_cli_args(parser, config_group=None):
-    """This method defines the subset of config-related CLI arguments used by tclfmt.
-
-    The destvars of these switches should match the fields of Config.
-    """
-    if config_group is None:
-        config_group = parser.add_argument_group("configuration arguments")
-
     config_group.add_argument(
-        "--exclude", type=_validator("exclude"), metavar='"path1, path2, ..."'
+        "--style-indent",
+        type=_validator("style_indent"),
+        metavar="<indent>",
     )
-    config_group.add_argument(
-        "--extend-exclude", type=_validator("exclude"), metavar='"path1, path2, ..."'
-    )
-    config_group.add_argument(
-        "--extensions", type=_validator("extensions"), metavar='"tcl, xdc, ..."'
-    )
-    config_group.add_argument(
-        "--commands", type=_validator("commands"), metavar="<path>"
-    )
-    config_group.add_argument(
-        "--style-indent", type=_validator("style_indent"), metavar="<indent>"
-    )
-
     config_group.add_argument(
         "--style-max-blank-lines",
         type=_validator("style_max_blank_lines"),
@@ -242,6 +236,43 @@ def setup_tclfmt_config_cli_args(parser, config_group=None):
         "style_spaces_in_braces",
         "--style-spaces-in-braces",
         "--style-no-spaces-in-braces",
+    )
+
+
+def setup_tclfmt_config_cli_args(parser):
+    """This method defines the subset of config-related CLI arguments used by tclfmt.
+
+    The destvars of these switches should match the fields of Config.
+    """
+    config_group = parser.add_argument_group("configuration arguments")
+
+    setup_common_config_cli_args(config_group)
+
+    config_group.add_argument(
+        "--indent",
+        type=_validator("style_indent"),
+        metavar="<indent>",
+        dest="style_indent",
+    )
+    config_group.add_argument(
+        "--max-blank-lines",
+        type=_validator("style_max_blank_lines"),
+        metavar="<max_blank_lines>",
+        dest="style_max_blank_lines",
+    )
+    _add_bool(
+        config_group,
+        parser,
+        "style_indent_namespace_eval",
+        "--indent-namespace-eval",
+        "--no-indent-namespace-eval",
+    )
+    _add_bool(
+        config_group,
+        parser,
+        "style_spaces_in_braces",
+        "--spaces-in-braces",
+        "--no-spaces-in-braces",
     )
 
 
