@@ -212,3 +212,23 @@ def test_resolve_sources_extensions(tmp_path):
     assert sources[0] == bar_file
 
     os.chdir(cwd)
+
+
+def test_no_check_style():
+    p = subprocess.run(
+        [
+            "tclint",
+            "--no-check-style",
+            "data/lines.tcl",
+        ],
+        capture_output=True,
+        cwd=MY_DIR,
+    )
+
+    # Trailing whitespace not reported, but line length persists
+    expected = """
+data/lines.tcl:1:81: line length is 83, maximum allowed is 80 [line-length]
+""".lstrip()
+
+    assert p.stdout.decode("utf-8") == expected
+    assert p.returncode == 1
