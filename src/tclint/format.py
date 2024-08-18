@@ -57,6 +57,9 @@ class Formatter:
 
     def _brace(self, lines: List[str]) -> List[str]:
         spaces_in_braces = " " if self.opts.spaces_in_braces else ""
+        if lines == [""]:
+            return ["{" + spaces_in_braces + "}"]
+
         braced_lines = lines[:]
         braced_lines[0] = "{" + spaces_in_braces + lines[0]
         braced_lines[-1] += spaces_in_braces + "}"

@@ -507,3 +507,11 @@ expr {
 }""".strip()
 
     _test(script, expected)
+
+
+def test_empty_braces():
+    script = r"if {1} {}"
+    _test(script, script, spaces_in_braces=False)
+
+    expected = r"if { 1 } { }"
+    _test(script, expected, spaces_in_braces=True)
