@@ -342,11 +342,9 @@ expr { 1 + 2 + min($a,
 
     expected = r"""
 expr {
-  1 + 2 + min(
-    $a,
+  1 + 2 + min($a,
     $b,
-    $c
-  )
+    $c)
 }""".strip()
 
     _test(script, expected)
@@ -515,3 +513,49 @@ def test_empty_braces():
 
     expected = r"if { 1 } { }"
     _test(script, expected, spaces_in_braces=True)
+
+
+def test_function_line_breaks():
+    script = r"""
+expr {
+  max($a,
+  $b, $c)
+}""".strip()
+
+    expected = r"""
+expr {
+  max($a,
+    $b, $c)
+}""".strip()
+
+    _test(script, expected)
+
+    script = r"""
+expr {
+  max(
+  $a, $b, $c)
+}""".strip()
+
+    expected = r"""
+expr {
+  max(
+    $a, $b, $c)
+}""".strip()
+
+    _test(script, expected)
+
+    script = r"""
+expr {
+  max(
+    $a, $b, $c
+    )
+}""".strip()
+
+    expected = r"""
+expr {
+  max(
+    $a, $b, $c
+  )
+}""".strip()
+
+    _test(script, expected)
