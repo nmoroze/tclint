@@ -55,7 +55,11 @@ def filter_violations(
 
 
 def lint(
-    script: str, config: Config, path: Optional[pathlib.Path], debug=0
+    script: str,
+    config: Config,
+    path: Optional[pathlib.Path],
+    no_check_style=False,
+    debug=0,
 ) -> List[Violation]:
     plugins = [config.commands] if config.commands is not None else []
     parser = Parser(debug=(debug > 0), command_plugins=plugins)
@@ -67,7 +71,7 @@ def lint(
     if debug > 0:
         print(tree.pretty(positions=(debug > 1)))
 
-    for checker in get_checkers():
+    for checker in get_checkers(no_check_style):
         violations += checker.check(script, tree, config)
 
     v = CommentVisitor()
@@ -111,6 +115,11 @@ def main():
         help="print category tag for each violation",
         action="store_true",
     )
+    parser.add_argument(
+        "--no-check-style",
+        help="skip style checks (besides line length)",
+        action="store_true",
+    )
     setup_config_cli_args(parser)
     args = parser.parse_args()
 
@@ -151,7 +160,13 @@ def main():
             out_prefix = str(path)
 
         try:
-            violations = lint(script, config.get_for_path(path), path, debug=args.debug)
+            violations = lint(
+                script,
+                config.get_for_path(path),
+                path,
+                no_check_style=args.no_check_style,
+                debug=args.debug,
+            )
         except TclSyntaxError as e:
             line, col = e.pos
             print(f"{out_prefix}:{line}:{col}: syntax error: {e}")

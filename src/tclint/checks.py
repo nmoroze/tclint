@@ -494,10 +494,10 @@ class BackslashNewlineChecker(Visitor):
         self._excluded_ranges.append((word.pos[0], word.end_pos[0]))
 
 
-class LineChecker:
-    """Ensures lines aren't too long and do not include trailing whitespace.
+class LineLengthChecker:
+    """Ensures lines aren't too long.
 
-    Reports 'line-length' and 'trailing-whitespace' violations.
+    Reports 'line-length' violations.
     """
 
     # ref: https://github.com/eslint/eslint/blob/b29a16b22f234f6134475efb6c7be5ac946556ee/lib/rules/max-len.js#L101 # noqa: E501
@@ -522,6 +522,20 @@ class LineChecker:
                         pos,
                     )
                 )
+
+        return violations
+
+
+class TrailingWhitespaceChecker:
+    """Ensures lines don't include trailing whitespace.
+
+    Reports 'trailing-whitespace' violations.
+    """
+
+    def check(self, input, _, config):
+        violations = []
+        for i, line in enumerate(input.split("\n")):
+            lineno = i + 1
 
             if line.endswith((" ", "\t")):
                 pos = (lineno, len(line))
@@ -760,14 +774,23 @@ class UnbracedExprChecker(Visitor):
                 return
 
 
-def get_checkers():
-    return (
+def get_checkers(no_check_style):
+    checkers = (
+        RedefinedBuiltinChecker(),
+        UnbracedExprChecker(),
+        LineLengthChecker(),
+    )
+
+    style_checkers = (
         IndentLevelChecker(),
         SpacingChecker(),
-        LineChecker(),
-        RedefinedBuiltinChecker(),
+        TrailingWhitespaceChecker(),
         BlankLineChecker(),
         BackslashNewlineChecker(),
         SpacesInBracesChecker(),
-        UnbracedExprChecker(),
     )
+
+    if no_check_style:
+        return checkers
+
+    return (*checkers, *style_checkers)
