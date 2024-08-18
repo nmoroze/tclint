@@ -443,26 +443,28 @@ class Formatter:
 
         formatted = [f"{name}("]
 
-        formatted_args = [""]
         last = function.children[0]
         for i, child in enumerate(function.children[1:]):
             if child == BareWord(","):
                 continue
             if i > 0:
-                formatted_args[-1] += ","
+                formatted[-1] += ","
             lines = self.format(child)
             if last.end_pos[0] != child.pos[0]:
-                formatted_args.extend(lines)
+                formatted.extend(lines)
             else:
                 if i > 0:
-                    formatted_args[-1] += " "
-                formatted_args[-1] += lines[0]
-                formatted_args.extend(lines[1:])
+                    formatted[-1] += " "
+                formatted[-1] += lines[0]
+                formatted.extend(lines[1:])
+            last = child
 
-        if len(formatted_args) == 1:
-            formatted[-1] += formatted_args[0] + ")"
-        else:
-            formatted.extend(self._indent(formatted_args, self.opts.indent))
+        # indent any continuation lines, but we leave the closing paren dedented
+        formatted = formatted[0:1] + self._indent(formatted[1:], self.opts.indent)
+
+        if last.end_pos[0] != function.end_pos[0]:
             formatted.append(")")
+        else:
+            formatted[-1] += ")"
 
         return formatted
