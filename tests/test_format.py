@@ -492,3 +492,18 @@ def test_preserve_comment_line():
 if { 1 } { # tclint-disable-line
 }""".strip()
     _test(script, script)
+
+
+def test_add_indent_expr():
+    script = r"""
+expr {
+1
+}
+"""
+
+    expected = r"""
+expr {
+  1
+}""".strip()
+
+    _test(script, expected)
