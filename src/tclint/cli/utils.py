@@ -45,7 +45,7 @@ def resolve_sources(
             relpath = os.path.relpath(abspath, start=exclude_root)
         except ValueError:
             print(
-                "Warning: processing files on different drive from where tclint was"
+                "Warning: processing files on different drive from where command was"
                 " run, 'exclude' config may not behave as expected"
             )
             relpath = abspath

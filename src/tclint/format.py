@@ -153,7 +153,7 @@ class Formatter:
                         skip_formatting_start = None
 
         if skip_formatting_start is not None:
-            print("Warning: missing 'tclint-enable'")
+            print("Warning: missing 'tclint-enable'", file=sys.stderr)
             to_format.append(
                 LiteralBlock(
                     self.script[skip_formatting_start:],
