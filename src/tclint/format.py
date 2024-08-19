@@ -405,21 +405,8 @@ class Formatter:
         lines[0] = op[0] + lines[0]
         return lines
 
-    def _flatten_op(self, expr) -> List[Node]:
-        """Flatening nested BinaryOps and TernaryOps lets us add indents for alignment
-        that affect multi-line ParenExpressions, Functions, and CommandSubs while
-        ensuring that multi-line BinaryOps/TernaryOps are aligned with the opening of
-        the expression itself."""
-        nodes = []
-        for node in expr.children:
-            if isinstance(node, (BinaryOp, TernaryOp)):
-                nodes.extend(self._flatten_op(node))
-            else:
-                nodes.append(node)
-        return nodes
-
     def _format_op(self, expr) -> List[str]:
-        nodes = self._flatten_op(expr)
+        nodes = expr.children
         formatted = self.format(nodes[0])
 
         last = nodes[0]
