@@ -569,3 +569,43 @@ expr {
 }""".strip()
 
     _test(script, expected)
+
+
+def test_if_else_newline_escape_indent():
+    script = r"""
+if { $cond } {
+  puts "true"
+} else \
+{
+  puts "false"
+}"""
+
+    expected = r"""
+if { $cond } {
+  puts "true"
+} else \
+  {
+    puts "false"
+  }""".strip()
+
+    _test(script, expected)
+
+    script = r"""
+if { $cond } {
+  puts "true"
+} \
+else \
+{
+  puts "false"
+}""".strip()
+
+    expected = r"""
+if { $cond } {
+  puts "true"
+} \
+  else \
+  {
+    puts "false"
+  }""".strip()
+
+    _test(script, expected)

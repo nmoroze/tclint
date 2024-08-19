@@ -217,23 +217,27 @@ class Formatter:
         )
         should_indent = not is_namespace_eval or self.opts.indent_namespace_eval
 
+        hanging_indent = False
         formatted = self.format(command.children[0])
         last_line = command.children[0].end_pos[0]
         for child in command.children[1:]:
-            if last_line == child.pos[0]:
-                formatted[-1] += " "
-                if isinstance(child, Script):
-                    # TODO: do we need to call format_script in the else block too?
-                    child_lines = self.format_script(child, should_indent=should_indent)
-                else:
-                    child_lines = self.format(child)
-
-                formatted[-1] += child_lines[0]
-                formatted.extend(child_lines[1:])
+            if isinstance(child, Script):
+                child_lines = self.format_script(child, should_indent=should_indent)
             else:
                 child_lines = self.format(child)
+
+            if last_line == child.pos[0]:
+                formatted[-1] += " "
+                formatted[-1] += child_lines[0]
+            else:
                 formatted[-1] += " \\"
-                formatted.extend(self._indent(child_lines, self.opts.indent))
+                formatted.append(self.opts.indent + child_lines[0])
+                hanging_indent = True
+
+            if hanging_indent:
+                formatted.extend(self._indent(child_lines[1:], self.opts.indent))
+            else:
+                formatted.extend(child_lines[1:])
 
             last_line = child.end_pos[0]
 
