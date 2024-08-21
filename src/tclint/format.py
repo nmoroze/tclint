@@ -301,7 +301,9 @@ class Formatter:
             formatted = [f"${varsub.value}"]
 
         if varsub.children:
-            # TODO: maybe we want to break out the parens onto multiple lines
+            # We just concatenate everything as is, since changes in whitespace are
+            # semantically meaningful in this context. Any newlines are captured by
+            # BareWords.
             formatted[-1] += "("
             for child in varsub.children:
                 child_lines = self.format(child)

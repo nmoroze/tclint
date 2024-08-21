@@ -92,10 +92,10 @@ def test_multiple_cmds_per_line():
 
 
 def test_comments():
-    """Formatter preserves comments and normalizes spacing (indent, spaces between
-    command and inline comment)."""
+    """Formatter preserves comments, but will update indentation and enforce a single
+    space between command and inline comment."""
     script = r"""
-# this is foo
+  # this is foo
 foo;     # foo"""
 
     expected = r"""
