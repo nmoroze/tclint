@@ -55,6 +55,20 @@ skipping the redundant checks will reduce output noise. `tclfmt` is the recommen
 approach for enforcing style going forward, and `tclint`'s style checks will eventually
 be deprecated.
 
+## Guarantees
+
+`tclfmt` only formats code; it does not modify code in any that changes its meaning. If
+`tclfmt` has modified the functionality of your code, this is a bug. Please [open an
+issue][issue] with a reproducible test case if you believe this has happened.
+
+`tclfmt` was released recently, so we recommend careful review of code that's been
+modified directly by the tool. Another way to check `tclfmt`'s work is to run it in
+debug mode by providing `-d`. In debug mode, `tclfmt` will parse code again after
+formatting and ensure that its syntax tree matches the original.
+
+`tclfmt`'s output is stable. That means if you run `tclfmt` on code already formatted by
+`tclfmt`, it will stay the same.
+
 ## Style
 
 This section describes major aspects of the style used by `tclfmt`. It also gives
@@ -189,8 +203,9 @@ to change to fix alignment when other lines are updated.
 
 ### Spurious whitespace
 
-`tclfmt` trims down sets of blank lines to no more than two. In most instances, it
-removes trailing whitespace at the end of lines.
+`tclfmt` trims down sets of blank lines to no more than two. It also removes blank lines
+at the beginning and end of script bodies. In most instances, `tclfmt` removes trailing
+whitespace at the end of lines.
 
 Note that in some cases trailing whitespace may be semantically meaningful, in which
 case `tclfmt` won't remove it. However, this whitespace is often unintentional and may
@@ -207,3 +222,5 @@ hash and emits one space before the comment. For example:
 ```tcl
 command ;# This comment documents that command
 ```
+
+[issue]: https://github.com/nmoroze/tclint/issues/new
