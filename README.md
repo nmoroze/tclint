@@ -4,7 +4,7 @@
 
 ### Features
 
-- Configurable style checks
+- Checks for common Tcl errors
 - Companion formatting utility, [`tclfmt`](docs/tclfmt.md)
 - Usage checks for built-in commands
 - [Plugin system](docs/plugins.md) for usage checks of EDA tool-specific commands, including [OpenROAD][openroad]
