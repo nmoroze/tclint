@@ -152,7 +152,7 @@ def main():
             else:
                 if args.in_place:
                     print("Warning: --in-place option ignored when reading from stdin")
-                print(formatted)
+                print(formatted, end="")
 
             if args.debug > 0:
                 check(path, script, formatted)
