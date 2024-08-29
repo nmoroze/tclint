@@ -779,12 +779,12 @@ def get_checkers(no_check_style):
         RedefinedBuiltinChecker(),
         UnbracedExprChecker(),
         LineLengthChecker(),
+        TrailingWhitespaceChecker(),
     )
 
     style_checkers = (
         IndentLevelChecker(),
         SpacingChecker(),
-        TrailingWhitespaceChecker(),
         BlankLineChecker(),
         BackslashNewlineChecker(),
         SpacesInBracesChecker(),

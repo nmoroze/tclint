@@ -189,8 +189,14 @@ to change to fix alignment when other lines are updated.
 
 ### Spurious whitespace
 
-`tclfmt` trims down sets of blank lines to no more than two, and removes
-trailing whitespace at the end of lines.
+`tclfmt` trims down sets of blank lines to no more than two. In most instances, it
+removes trailing whitespace at the end of lines.
+
+Note that in some cases trailing whitespace may be semantically meaningful, in which
+case `tclfmt` won't remove it. However, this whitespace is often unintentional and may
+even cause bugs (for example, whitespace that comes after a `\` that was meant to be a
+newline escape). In order to catch this, `tclint` will flag violations on trailing
+whitespace even when provided `--no-check-style`.
 
 ### Command separators and comments
 
