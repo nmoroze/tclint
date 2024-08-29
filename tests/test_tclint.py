@@ -11,7 +11,7 @@ MY_DIR = pathlib.Path(__file__).parent.resolve()
 tests = []
 test_case_dir = MY_DIR / "data"
 for path in test_case_dir.iterdir():
-    if path.suffix == ".tcl":
+    if path.suffix == ".tcl" and path.with_suffix(".txt").exists():
         tests.append(str(path.relative_to(MY_DIR)))
 
 
@@ -219,7 +219,7 @@ def test_no_check_style():
         [
             "tclint",
             "--no-check-style",
-            "data/lines.tcl",
+            "data/no-check-style.tcl",
         ],
         capture_output=True,
         cwd=MY_DIR,
@@ -227,7 +227,8 @@ def test_no_check_style():
 
     # Trailing whitespace not reported, but line length persists
     expected = """
-data/lines.tcl:1:81: line length is 83, maximum allowed is 80 [line-length]
+data/no-check-style.tcl:1:81: line length is 83, maximum allowed is 80 [line-length]
+data/no-check-style.tcl:2:28: line has trailing whitespace [trailing-whitespace]
 """.lstrip()
 
     assert p.stdout.decode("utf-8") == expected
