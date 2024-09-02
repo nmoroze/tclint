@@ -29,7 +29,7 @@ class TclSyntaxError(Exception):
         self.pos = pos
 
 
-class Lexer:
+class _LexTable:
     tokens = (
         TOK_BACKSLASH_NEWLINE,
         TOK_BACKSLASH_SUB,
@@ -54,13 +54,13 @@ class Lexer:
     )
 
     def _tok(self, t):
-        pos = (t.lexer.lineno, self.colno)
+        pos = (t.lexer.lineno, t.lexer.colno)
         if "\n" in t.value:
             t.lexer.lineno += t.value.count("\n")
             assert t.value[-1] == "\n"
-            self.colno = 1
+            t.lexer.colno = 1
         else:
-            self.colno += len(t.value)
+            t.lexer.colno += len(t.value)
         t.value = (t.value, pos)
         return t
 
@@ -160,17 +160,34 @@ class Lexer:
         print("Illegal character '%s'" % t.value[0])
         t.lexer.skip(1)
 
-    def __init__(self, pos=None):
+    def __init__(self):
         self.lexer = lex.lex(object=self)
-        self.current = None
-        self.colno = 1
+        self.lexer.lineno = 1
+        self.lexer.colno = 1
+
+    def new_lexer(self, pos=None):
+        lexer = self.lexer.clone()
+        lexer.lineno = 1
+        lexer.colno = 1
 
         if pos is not None:
             line, col = pos
-            # use built-in lineno since it aids debugging, must store colno
-            # separately since lex doesn't track it
-            self.lexer.lineno = line
-            self.colno = col
+            lexer.lineno = line
+            lexer.colno = col
+
+        return lexer
+
+
+# Calling `lex.lex()` performs an expensive reflection process to generate the lexer.
+# This singleton class holds a preinitialized lexer that can then be cloned to create
+# individual instances.
+LexTable = _LexTable()
+
+
+class Lexer:
+    def __init__(self, pos=None):
+        self.lexer = LexTable.new_lexer(pos)
+        self.current = None
 
     def input(self, text):
         self.lexer.input(text)
@@ -188,7 +205,7 @@ class Lexer:
 
     def pos(self):
         if self.current is None:
-            return (self.lexer.lineno, self.colno)
+            return (self.lexer.lineno, self.lexer.colno)
         return self.current.value[1]
 
     def next(self):
