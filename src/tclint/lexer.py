@@ -20,7 +20,10 @@ TOK_ALPHA_CHARS = "ALPHA_CHARS"
 TOK_NUM_CHARS = "NUM_CHARS"
 TOK_NAMESPACE_SEP = "NAMESPACE_SEP"
 TOK_CHAR = "CHAR"
+TOK_CONTENTS = "CONTENTS"
 TOK_EOF = None
+
+STATE_BRACEDWORD = "bracedword"
 
 
 class TclSyntaxError(Exception):
@@ -51,26 +54,37 @@ class _LexTable:
         TOK_NUM_CHARS,
         TOK_NAMESPACE_SEP,
         TOK_CHAR,
+        TOK_CONTENTS,
     )
+
+    # This defines a conditional lexing state for parsing braced words. This is a
+    # performance optimization; since there are few special characters in this context,
+    # we can use a smaller set of tokens to parse them faster. This has a large impact
+    # since most Tcl programs have a large number of braced words. Any token with
+    # `bracedword` in its name is included in this state. Tokens that are included in
+    # this state and the default state also include `INITIAL` in their name.
+    states = ((STATE_BRACEDWORD, "exclusive"),)
 
     def _tok(self, t):
         pos = (t.lexer.lineno, t.lexer.colno)
-        if "\n" in t.value:
-            t.lexer.lineno += t.value.count("\n")
-            assert t.value[-1] == "\n"
-            t.lexer.colno = 1
-        else:
+        t.lexer.lineno += t.value.count("\n")
+        index = t.value.rfind("\n")
+        if index == -1:
             t.lexer.colno += len(t.value)
+        else:
+            remaining = t.value[index + 1 :]
+            t.lexer.colno = len(remaining) + 1
+
         t.value = (t.value, pos)
         return t
 
     # Priority important
-    def t_BACKSLASH_NEWLINE(self, t):
+    def t_bracedword_INITIAL_BACKSLASH_NEWLINE(self, t):
         r"\\\n"
         return self._tok(t)
 
     # Priority important
-    def t_BACKSLASH_SUB(self, t):
+    def t_bracedword_INITIAL_BACKSLASH_SUB(self, t):
         r"\\."
         return self._tok(t)
 
@@ -96,11 +110,11 @@ class _LexTable:
         r"\{\*\}"
         return self._tok(t)
 
-    def t_LBRACE(self, t):
+    def t_bracedword_INITIAL_LBRACE(self, t):
         r"\{"
         return self._tok(t)
 
-    def t_RBRACE(self, t):
+    def t_bracedword_INITIAL_RBRACE(self, t):
         r"\}"
         return self._tok(t)
 
@@ -148,6 +162,10 @@ class _LexTable:
         r"::+"
         return self._tok(t)
 
+    def t_bracedword_CONTENTS(self, t):
+        r"[^{}\\]+"
+        return self._tok(t)
+
     # Catch-all. TODO: inefficient, should probably munch multiple chars
     def t_CHAR(self, t):
         r"."
@@ -156,7 +174,7 @@ class _LexTable:
     # Error handling rule
     # TODO: do we need this? since we have a catch-all...
     # there is a warning
-    def t_error(self, t):
+    def t_bracedword_INITIAL_error(self, t):
         print("Illegal character '%s'" % t.value[0])
         t.lexer.skip(1)
 

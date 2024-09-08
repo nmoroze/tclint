@@ -4,6 +4,7 @@ import re
 from tclint.lexer import (
     Lexer,
     TclSyntaxError,
+    STATE_BRACEDWORD,
     TOK_BACKSLASH_NEWLINE,
     TOK_NEWLINE,
     TOK_SEMI,
@@ -343,6 +344,8 @@ class Parser:
         self.debug(f"parse_braced_word({ts.current})")
         pos = ts.pos()
 
+        ts.lexer.push_state(STATE_BRACEDWORD)
+
         ts.assert_(TOK_LBRACE)
 
         word = ""
@@ -350,14 +353,15 @@ class Parser:
         # error messages
         expected_braces = [pos]
         while True:
-            if ts.type() == TOK_EOF:
+            toktype = ts.type()
+            if toktype == TOK_EOF:
                 raise TclSyntaxError(
                     "reached EOF without finding match for brace", expected_braces[-1]
                 )
 
-            if ts.type() == TOK_LBRACE:
+            if toktype == TOK_LBRACE:
                 expected_braces.append(ts.pos())
-            elif ts.type() == TOK_RBRACE:
+            elif toktype == TOK_RBRACE:
                 try:
                     expected_braces.pop()
                 except IndexError:
@@ -366,6 +370,7 @@ class Parser:
                     )
 
                 if len(expected_braces) == 0:
+                    ts.lexer.pop_state()
                     ts.next()
                     break
             word += ts.value()
