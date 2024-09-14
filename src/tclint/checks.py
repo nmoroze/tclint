@@ -3,7 +3,16 @@ import re
 from tclint.commands import get_commands
 from tclint.violations import Rule, Violation
 
-from tclint.syntax_tree import Visitor, Script, List, ParenExpression, BracedExpression
+from tclint.syntax_tree import (
+    Visitor,
+    Script,
+    List,
+    ParenExpression,
+    BracedExpression,
+    Expression,
+    BracedWord,
+    QuotedWord,
+)
 
 
 class IndentLevelChecker(Visitor):
@@ -759,8 +768,13 @@ class UnbracedExprChecker(Visitor):
         if command.routine != "expr":
             return
 
-        if len(command.args) == 1 and isinstance(command.args[0], BracedExpression):
+        if len(command.args) == 1 and isinstance(
+            command.args[0], (BracedExpression, Expression)
+        ):
             return
+
+        # If we got here, tclint had trouble parsing the expression due to one of the
+        # two following cases.
 
         for child in command.args:
             if child.contents is None:
@@ -772,6 +786,24 @@ class UnbracedExprChecker(Visitor):
                     )
                 )
                 return
+
+        for child in command.args:
+            if isinstance(child, (BracedWord, QuotedWord)):
+                self._violations.append(
+                    Violation(
+                        Rule.UNBRACED_EXPR,
+                        "expression containing braced or quoted words should be"
+                        " enclosed by braces",
+                        child.pos,
+                    )
+                )
+                return
+
+        # If we reach here, there's probably a bug in expr parsing logic.
+        assert False, (
+            "Children of expr node were different than expected, please file a bug"
+            " report"
+        )
 
 
 def get_checkers(no_check_style):

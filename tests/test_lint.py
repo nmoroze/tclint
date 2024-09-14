@@ -117,3 +117,17 @@ def test_no_indent_violation_after_close_brace():
 
     violations = lint(script, Config(), Path())
     assert len(violations) == 0
+
+
+def test_unbraced_expr_with_braced_word():
+    script = r"expr 1 + {2}"
+    violations = lint(script, Config(), Path())
+    assert len(violations) == 1
+    assert violations[0].id == Rule.UNBRACED_EXPR
+    assert violations[0].pos == (1, 10)
+
+    script = r'expr 1 + "2"'
+    violations = lint(script, Config(), Path())
+    assert len(violations) == 1
+    assert violations[0].id == Rule.UNBRACED_EXPR
+    assert violations[0].pos == (1, 10)

@@ -138,9 +138,12 @@ Consistent formatting enhances readability.
 
 ## `unbraced-expr`
 
-Expressions that contain substitutions should be enclosed by braces.
+- Expressions that contain substitutions should be enclosed by braces.
+- Expressions that contain braced or quoted words should be enclosed by braces.
 
 ### Rationale
+
+#### Expressions containing substitutions
 
 Without braces, the Tcl parser will perform substitutions before interpreting
 the expression. This is not actually the desired behavior in most cases, and may
@@ -148,3 +151,12 @@ impact functionality in some edge cases. In addition, this can reduce
 performance.
 
 See "Performance Considerations" in the [Tcl docs for `expr`](https://www.tcl.tk/man/tcl/TclCmd/expr.html).
+
+#### Expressions containing braced or quoted words
+
+The contents of braced or quoted words will be "un-quoted" and interpreted directly as
+part of the expression, which is different from how they'd be interpreted if the entire
+expression was braced. In most cases, this is not the author's intent.
+
+Note that both of the above cases also limit `tclint` and `tclfmt`'s ability to properly
+parse, lint, and format code.
