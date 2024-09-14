@@ -36,6 +36,7 @@ from tclint.commands.utils import (
     subcommands,
     eval,
 )
+from tclint.syntax_tree import BareWord
 
 
 def _check_code(arg):
@@ -194,15 +195,32 @@ def _expr(args, parser):
     if len(args) == 0:
         raise CommandArgError("not enough args to 'expr': got 0, expected at least 1")
 
+    # Handle single argument consisting of BareWord, BracedWord, or concrete QuotedWord.
     if len(args) == 1 and args[0].contents is not None:
         # this method will handle the `node.contents is None` case fine, but
         # will throw an error. We'll instead pass thru silently, since that error
         # will be caught by a separate lint check.
         return [parser.parse_expression(args[0])]
 
-    # TODO: handle multiple args. Once we do this, we need Formatter.parse_expression()
-    # to add \'s
-    return None
+    # Handle multiple BareWord arguments. Non-BareWords are hard to handle in this case,
+    # since we need to pop the contents out of quoted or braced words, but then we have
+    # no way of storing the original info about these words in the syntax tree.
+    contents = ""
+    last_pos = args[0].pos
+    for arg in args:
+        if not isinstance(arg, BareWord):
+            return None
+
+        if arg.pos[0] != last_pos[0]:
+            contents += "\n" * (arg.pos[0] - last_pos[0])
+            contents += " " * (arg.pos[1] - 1)
+        else:
+            contents += " " * (arg.pos[1] - last_pos[1])
+        contents += arg.contents
+        last_pos = arg.end_pos
+
+    node = BareWord(contents, pos=args[0].pos, end_pos=args[-1].end_pos)
+    return [parser.parse_expression(node)]
 
 
 def _fileevent(args, parser):

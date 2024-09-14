@@ -346,12 +346,13 @@ class Formatter:
         return ["{"] + self._indent(contents, self.opts.indent) + ["}"]
 
     def format_expression(self, expr) -> List[str]:
-        # TODO: add \ where needed
         formatted = [""]
         for child in expr.children:
             lines = self.format(child)
             formatted[-1] += lines[0]
-            formatted.extend(lines[1:])
+            for line in lines[1:]:
+                formatted[-1] += " \\"
+                formatted += self._indent([line], self.opts.indent)
 
         # Trick: we know there are quotes around the expression if the start of the
         # expression is a different column than its first child.

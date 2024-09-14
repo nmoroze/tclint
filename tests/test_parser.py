@@ -17,6 +17,7 @@ from tclint.parser import (
     List,
     BracedExpression,
     Expression,
+    ParenExpression,
     BinaryOp,
     TernaryOp,
     Function,
@@ -702,3 +703,36 @@ if 1 {
     if1_body = if1.args[1]
     if1_body_inner = if1_body.children[0]
     assert if1_body_inner.pos == (3, 5)
+
+
+def test_unbraced_multi_arg_concrete_expr():
+    script = r"""expr (  1 + 2 )"""
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("expr"),
+            Expression(
+                ParenExpression(
+                    BinaryOp(
+                        BareWord("1"),
+                        BareWord("+"),
+                        BareWord("2"),
+                    )
+                )
+            ),
+        )
+    )
+
+    expr_command = tree.children[0]
+    expr = expr_command.args[0]
+    paren_expr = expr.children[0]
+    binop = paren_expr.children[0]
+    op1 = binop.children[0]
+    operator = binop.children[1]
+    op2 = binop.children[2]
+
+    assert paren_expr.pos == (1, 6)
+    assert paren_expr.end_pos == (1, 16)
+    assert op1.pos == (1, 9)
+    assert operator.pos == (1, 11)
+    assert op2.pos == (1, 13)

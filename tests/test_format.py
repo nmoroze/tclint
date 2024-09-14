@@ -609,3 +609,22 @@ if { $cond } {
   }""".strip()
 
     _test(script, expected)
+
+
+def test_multiline_unbraced_expr():
+    script = r"""
+expr 1 \
++ 2""".strip()
+
+    expected = r"""
+expr 1 \
+  + 2""".strip()
+
+    _test(script, expected)
+
+
+def test_preserve_braces_in_unbraced_expr():
+    """Test ensures that braces aren't stripped in this case. Removing them changes the
+    semantic meaning of the command."""
+    script = r"expr {$foo} + 2"
+    _test(script, script)
