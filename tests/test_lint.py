@@ -131,3 +131,25 @@ def test_unbraced_expr_with_braced_word():
     assert len(violations) == 1
     assert violations[0].id == Rule.UNBRACED_EXPR
     assert violations[0].pos == (1, 10)
+
+
+def test_redundant_expr_check():
+    script = r"""
+expr {[expr 1]}
+expr {([expr 1] + [expr 2])}
+expr {[expr 1] ? [expr 2] : [expr 3]}
+expr {max([expr 1], [expr 2])}
+""".strip()
+
+    violations = lint(script, Config(), Path())
+    assert len(violations) == 8
+    assert all(v.id == Rule.REDUNDANT_EXPR for v in violations)
+
+    assert violations[0].pos == (1, 7)
+    assert violations[1].pos == (2, 8)
+    assert violations[2].pos == (2, 19)
+    assert violations[3].pos == (3, 7)
+    assert violations[4].pos == (3, 18)
+    assert violations[5].pos == (3, 29)
+    assert violations[6].pos == (4, 11)
+    assert violations[7].pos == (4, 21)

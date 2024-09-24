@@ -13,6 +13,7 @@ This page lists all lint violations that may be reported by `tclint`.
 - [`expr-format`](#expr-format)
 - [`spaces-in-braces`](#spaces-in-braces)
 - [`unbraced-expr`](#unbraced-expr)
+- [`redundant-expr`](#redundant-expr)
 
 Each of these violations is sorted into one of two coarse categories, which can
 be displayed using the `--show-categories` CLI option.
@@ -160,3 +161,25 @@ expression was braced. In most cases, this is not the author's intent.
 
 Note that both of the above cases also limit `tclint` and `tclfmt`'s ability to properly
 parse, lint, and format code.
+
+## `redundant-expr`
+
+`expr` command substitutions shouldn't be used in contexts that are already interpreted as
+an expression, for example:
+
+```tcl
+# BAD: inner [expr ...] is unnecessary!
+if {[expr $foo % 2] == 0} {
+    # ...
+}
+
+# GOOD
+if {$foo % 2 == 0} {
+    # ...
+}
+```
+
+### Rationale
+
+These command substitutions are redundant, which inhibits readability and may negatively
+impact performance.

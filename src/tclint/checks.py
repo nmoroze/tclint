@@ -12,6 +12,7 @@ from tclint.syntax_tree import (
     Expression,
     BracedWord,
     QuotedWord,
+    CommandSub,
 )
 
 
@@ -806,10 +807,56 @@ class UnbracedExprChecker(Visitor):
         )
 
 
+class RedundantExprChecker(Visitor):
+    def check(self, _, tree, __):
+        self._violations = []
+        tree.accept(self, recurse=True)
+        return self._violations
+
+    def _check_operand(self, operand):
+        if not isinstance(operand, CommandSub) or len(operand.children) != 1:
+            return
+
+        command = operand.children[0]
+        if command.routine == "expr":
+            self._violations.append(
+                Violation(
+                    Rule.REDUNDANT_EXPR,
+                    "unnecessary command substitution within expression",
+                    operand.pos,
+                )
+            )
+
+    def visit_braced_expression(self, expression):
+        if len(expression.children) == 1:
+            self._check_operand(expression.children[0])
+
+    def visit_expression(self, expression):
+        if len(expression.children) == 1:
+            self._check_operand(expression.children[0])
+
+    def visit_unary_op(self, expr):
+        self._check_operand(expr.children[1])
+
+    def visit_binary_op(self, expr):
+        self._check_operand(expr.children[0])
+        self._check_operand(expr.children[2])
+
+    def visit_ternary_op(self, expr):
+        self._check_operand(expr.children[0])
+        self._check_operand(expr.children[2])
+        self._check_operand(expr.children[4])
+
+    def visit_function(self, function):
+        for arg in function.children[1:]:
+            self._check_operand(arg)
+
+
 def get_checkers(no_check_style):
     checkers = (
         RedefinedBuiltinChecker(),
         UnbracedExprChecker(),
+        RedundantExprChecker(),
         LineLengthChecker(),
         TrailingWhitespaceChecker(),
     )

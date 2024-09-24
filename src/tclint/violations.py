@@ -21,6 +21,7 @@ class Rule(Enum):
     EXPR_FORMAT = "expr-format"
     SPACES_IN_BRACES = "spaces-in-braces"
     UNBRACED_EXPR = "unbraced-expr"
+    REDUNDANT_EXPR = "redundant-expr"
 
     def __str__(self):
         return self.value
@@ -49,6 +50,7 @@ _CATEGORY_MAP = {
     Rule.REDEFINED_BUILTIN: Category.FUNC,
     Rule.COMMAND_ARGS: Category.FUNC,
     Rule.UNBRACED_EXPR: Category.FUNC,
+    Rule.REDUNDANT_EXPR: Category.FUNC,
 }
 
 
