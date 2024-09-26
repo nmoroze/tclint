@@ -36,7 +36,7 @@ from tclint.commands.utils import (
     subcommands,
     eval,
 )
-from tclint.syntax_tree import BareWord
+from tclint.syntax_tree import BareWord, List as ListNode
 
 
 def _check_code(arg):
@@ -342,7 +342,25 @@ def _proc(args, parser):
     if len(args) != 3:
         raise CommandArgError(f"wrong # of args to proc: got {len(args)}, expected 3")
 
-    return args[0:2] + [parser.parse_script(args[2])]
+    # Parse args as list, then iterate over each item to parse arg specifier lists and
+    # do some validation. We don't store non-defaulted arguments as Lists so that they
+    # don't get formatted inside braces.
+    arg_list = ListNode(pos=args[1].pos, end_pos=args[1].end_pos)
+    for arg in parser.parse_list(args[1]).children:
+        arg_specifier = parser.parse_list(arg)
+
+        arg_specifier_len = len(arg_specifier.children)
+        if arg_specifier_len < 2:
+            arg_list.add(arg)
+        elif arg_specifier_len == 2:
+            arg_list.add(arg_specifier)
+        else:
+            raise CommandArgError(
+                f"too many fields in argument specifier: got {arg_specifier_len},"
+                " expected no more than 2"
+            )
+
+    return args[0:1] + [arg_list, parser.parse_script(args[2])]
 
 
 def _return(args, parser):

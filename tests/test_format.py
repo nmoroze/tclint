@@ -420,7 +420,7 @@ expr {
 def test_remove_lines_at_ends_of_script():
     script = r"""
 
-proc foo {} {
+proc foo { } {
 
     puts "asdf"
 
@@ -429,7 +429,7 @@ proc foo {} {
 """
 
     expected = r"""
-proc foo {} {
+proc foo { } {
   puts "asdf"
 }""".strip()
 

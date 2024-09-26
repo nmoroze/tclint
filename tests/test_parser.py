@@ -78,12 +78,12 @@ def test_proc_in_proc():
         Command(
             BareWord("proc"),
             BareWord("proc_in_proc"),
-            BracedWord(""),
+            List(),
             Script(
                 Command(
                     BareWord("proc"),
                     BareWord("asdf"),
-                    BracedWord(""),
+                    List(),
                     Script(
                         Command(BareWord("puts"), QuotedWord(BareWord("Hello world"))),
                     ),
@@ -124,7 +124,7 @@ def test_weird_code_block():
         Command(
             BareWord("proc"),
             BareWord("foo"),
-            BracedWord(""),
+            List(),
             Script(Comment(" bar ")),
         ),
         Command(BareWord("puts"), BareWord("baz")),
@@ -736,3 +736,16 @@ def test_unbraced_multi_arg_concrete_expr():
     assert op1.pos == (1, 9)
     assert operator.pos == (1, 11)
     assert op2.pos == (1, 13)
+
+
+def test_proc_args():
+    script = r"proc foo { i { j 1 } } { }"
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("proc"),
+            BareWord("foo"),
+            List(BareWord("i"), List(BareWord("j"), BareWord("1"))),
+            Script(),
+        )
+    )

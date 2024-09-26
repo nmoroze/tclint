@@ -153,3 +153,9 @@ expr {max([expr 1], [expr 2])}
     assert violations[5].pos == (3, 29)
     assert violations[6].pos == (4, 11)
     assert violations[7].pos == (4, 21)
+
+
+def test_proc_args_bad():
+    script = r"proc foo { { i 1 2 } } { }"
+    violations = lint(script, Config(), Path())
+    assert violations[0].id == Rule("command-args")
