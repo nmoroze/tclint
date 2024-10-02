@@ -1,6 +1,6 @@
 # tclint &nbsp; [![CI](https://github.com/nmoroze/tclint/actions/workflows/ci.yml/badge.svg)](https://github.com/nmoroze/tclint/actions/workflows/ci.yml)
 
-`tclint` is a lint tool for Tcl. It analyzes Tcl source files and reports stylistic and functional errors that may inhibit readability or correctness.
+`tclint` is a lint tool for Tcl. It analyzes Tcl source files and reports issues that may cause bugs, inhibit readability, or affect performance.
 
 ### Features
 
@@ -36,13 +36,12 @@ If the file contains any lint violations, they will be printed and `tclint` will
 
 ```console
 $ cat example.tcl
-puts too many arguments !
-  puts "unexpected indent"
-puts   "too many spaces after command"
+if { [expr {$input > 10}] } {
+  puts $input is greater than 10!
+}
 $ tclint example.tcl
-example.tcl:1:1: too many args for puts: got 4, expected no more than 3 [command-args]
-example.tcl:2:1: expected indent of 0 spaces, got 2 [indent]
-example.tcl:3:5: expected 1 space between words, got 3 [spacing]
+data/example.tcl:1:6: unnecessary command substitution within expression [redundant-expr]
+data/example.tcl:2:3: too many args for puts: got 5, expected no more than 3 [command-args]
 ```
 
 ## Usage

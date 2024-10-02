@@ -57,7 +57,6 @@ def lint(
     script: str,
     config: Config,
     path: Optional[pathlib.Path],
-    no_check_style=False,
     debug=0,
 ) -> List[Violation]:
     plugins = [config.commands] if config.commands is not None else []
@@ -70,7 +69,7 @@ def lint(
     if debug > 0:
         print(tree.pretty(positions=(debug > 1)))
 
-    for checker in get_checkers(no_check_style):
+    for checker in get_checkers():
         violations += checker.check(script, tree, config)
 
     v = CommentVisitor()
@@ -108,16 +107,6 @@ def main():
         type=pathlib.Path,
         default=None,
         metavar="<path>",
-    )
-    parser.add_argument(
-        "--show-categories",
-        help="print category tag for each violation",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--no-check-style",
-        help="skip style checks (besides line length)",
-        action="store_true",
     )
     setup_config_cli_args(parser)
     args = parser.parse_args()
@@ -163,7 +152,6 @@ def main():
                 script,
                 config.get_for_path(path),
                 path,
-                no_check_style=args.no_check_style,
                 debug=args.debug,
             )
         except TclSyntaxError as e:
@@ -173,7 +161,7 @@ def main():
             continue
 
         for violation in sorted(violations):
-            print(f"{out_prefix}:{violation.str(show_category=args.show_categories)}")
+            print(f"{out_prefix}:{violation.str()}")
 
         if len(violations) > 0:
             retcode |= EXIT_LINT_VIOLATIONS
