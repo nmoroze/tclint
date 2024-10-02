@@ -769,6 +769,11 @@ class UnbracedExprChecker(Visitor):
         if command.routine != "expr":
             return
 
+        if len(command.args) == 0:
+            # This is a syntax error, but should already be caught as a command-args
+            # error by the parser's `expr` command handling.
+            return
+
         if len(command.args) == 1 and isinstance(
             command.args[0], (BracedExpression, Expression)
         ):

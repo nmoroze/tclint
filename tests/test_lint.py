@@ -159,3 +159,10 @@ def test_proc_args_bad():
     script = r"proc foo { { i 1 2 } } { }"
     violations = lint(script, Config(), Path())
     assert violations[0].id == Rule("command-args")
+
+
+def test_expr_no_args():
+    script = "expr"
+    violations = lint(script, Config(), Path())
+    assert len(violations) == 1
+    assert violations[0].id == Rule("command-args")
