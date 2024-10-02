@@ -34,7 +34,6 @@ following fields, which are ignored by `tclfmt`:
 
 - `ignore`
 - `style.line-length`
-- `style.allow-aligned-sets`
 
 ### Enforcing style in CI
 
@@ -162,14 +161,13 @@ set foo [
 `tclfmt` does not (yet) reformat lines to stay under a certain length. However, it
 respects existing line breaks in the code, adjusting indentation as needed.
 
-`tclint` reports a `line-length` violation on lines that are too long. Since `tclfmt`
-can't fix these violations, they're still reported even when `tclint` is run with
-`--no-check-style`. When it makes sense, consider reducing line length by factoring out
-subcomponents of complicated expressions or commands rather than just adding line
-breaks. For example:
+Since `tclfmt` doesn't break lines, `tclint` reports a `line-length` violation on lines
+that are longer than a certain threshold (as they hurt the code's readability). When
+it makes sense, consider reducing line length by factoring out subcomponents of
+complicated expressions or commands rather than just adding line breaks. For example:
 
 ```tcl
-puts "Here is the result of a really long command: [really_long_command arg1 arg2]""
+puts "Here is the result of a really long command: [really_long_command arg1 arg2]"
 ```
 
 could be refactored to
@@ -211,7 +209,7 @@ Note that in some cases trailing whitespace may be semantically meaningful, in w
 case `tclfmt` won't remove it. However, this whitespace is often unintentional and may
 even cause bugs (for example, whitespace that comes after a `\` that was meant to be a
 newline escape). In order to catch this, `tclint` will flag violations on trailing
-whitespace even when provided `--no-check-style`.
+whitespace.
 
 ### Command separators and comments
 

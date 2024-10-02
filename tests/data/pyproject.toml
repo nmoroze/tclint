@@ -6,7 +6,7 @@ requires = ["setuptools"]
 # other tables/keys...
 
 [tool.tclint]
-ignore = ["spacing"]
+ignore = ["unbraced-expr"]
 
 [tool.tclint.style]
 indent = 2

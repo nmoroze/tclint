@@ -1,12 +1,12 @@
-# tclint-disable spacing
-puts  "illegal"
-# tclint-enable spacing
+# tclint-disable unbraced-expr
+expr $foo
+# tclint-enable unbraced-expr
 
-# tclint-disable-next-line indent, spacing
-  puts  "also illegal"
+# tclint-disable-next-line unbraced-expr, redundant-expr
+expr { [expr $foo] }
 
 puts too many arguments ! ;# tclint-disable-line command-args
 
 # tclint-disable
- puts  "illegal"
+expr { [expr $foo] }
 # tclint-enable

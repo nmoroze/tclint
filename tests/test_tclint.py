@@ -34,31 +34,11 @@ def test_tclint(test):
     assert p.returncode == 0 if not expected else 1
 
 
-def test_tclint_show_categories():
-    test = (test_case_dir / "example.tcl").relative_to(MY_DIR)
-
-    p = subprocess.run(
-        [
-            "tclint",
-            "--show-categories",
-            test,
-        ],
-        capture_output=True,
-        cwd=MY_DIR,
-    )
-    expected = """
-data/example.tcl:1:1: too many args for puts: got 4, expected no more than 3 [func:command-args]
-data/example.tcl:2:1: expected indent of 0 spaces, got 2 [style:indent]
-data/example.tcl:3:5: expected 1 space between words, got 3 [style:spacing]
-""".lstrip()  # noqa E501
-
-    assert p.stdout.decode("utf-8") == expected
-    assert p.returncode == 1
-
-
-def test_switches():
+def test_switches(tmp_path):
     test = (test_case_dir / "dirty.tcl").relative_to(MY_DIR)
-    config_file = test_case_dir / "tclint.toml"
+    config_file = tmp_path / "tclint.toml"
+    with open(config_file, "w") as f:
+        f.write("ignore = ['unbraced-expr']")
 
     p = subprocess.run(
         [
@@ -76,22 +56,9 @@ def test_switches():
     )
 
     expected = """
-data/dirty.tcl:1:14: expected 1 space between words, got 2 [spacing]
 data/dirty.tcl:1:36: line length is 36, maximum allowed is 35 [line-length]
-data/dirty.tcl:2:1: expected indent of 2 spaces, got 0 [indent]
-data/dirty.tcl:3:1: expected indent of 4 spaces, got 0 [indent]
-data/dirty.tcl:4:1: expected indent of 2 spaces, got 0 [indent]
-data/dirty.tcl:4:2: expected 1 space between words, got 3 [spacing]
-data/dirty.tcl:5:1: expected indent of 4 spaces, got 8 [indent]
-data/dirty.tcl:6:1: expected indent of 2 spaces, got 0 [indent]
 data/dirty.tcl:6:11: unnecessary command substitution within expression [redundant-expr]
 data/dirty.tcl:6:17: expression with substitutions should be enclosed by braces [unbraced-expr]
-data/dirty.tcl:7:1: expected indent of 4 spaces, got 8 [indent]
-data/dirty.tcl:7:13: expected 1 space between words, got 3 [spacing]
-data/dirty.tcl:8:1: expected indent of 2 spaces, got 4 [indent]
-data/dirty.tcl:9:1: expected indent of 4 spaces, got 8 [indent]
-data/dirty.tcl:9:13: expected 1 space between words, got 5 [spacing]
-data/dirty.tcl:10:1: expected indent of 2 spaces, got 4 [indent]
 """.lstrip()  # noqa E501
 
     assert p.stdout.decode("utf-8") == expected
@@ -110,10 +77,14 @@ def test_read_stdin():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    stdout, stderr = p.communicate(input=' puts "hello world"'.encode("utf-8"))
+    stdout, stderr = p.communicate(input="expr $foo".encode("utf-8"))
 
     output = stdout.decode("utf-8").strip()
-    assert output == "(stdin):1:1: expected indent of 0 spaces, got 1 [indent]"
+    assert (
+        output
+        == "(stdin):1:6: expression with substitutions should be enclosed by braces"
+        " [unbraced-expr]"
+    )
     assert stderr == b""
 
 
@@ -213,24 +184,3 @@ def test_resolve_sources_extensions(tmp_path):
     assert sources[0] == bar_file
 
     os.chdir(cwd)
-
-
-def test_no_check_style():
-    p = subprocess.run(
-        [
-            "tclint",
-            "--no-check-style",
-            "data/no-check-style.tcl",
-        ],
-        capture_output=True,
-        cwd=MY_DIR,
-    )
-
-    # Trailing whitespace not reported, but line length persists
-    expected = """
-data/no-check-style.tcl:1:81: line length is 83, maximum allowed is 80 [line-length]
-data/no-check-style.tcl:2:28: line has trailing whitespace [trailing-whitespace]
-""".lstrip()
-
-    assert p.stdout.decode("utf-8") == expected
-    assert p.returncode == 1

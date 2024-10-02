@@ -32,7 +32,6 @@ class Config:
     )
     style_indent: Union[str, int] = dataclasses.field(default=4)
     style_line_length: int = dataclasses.field(default=80)
-    style_allow_aligned_sets: bool = dataclasses.field(default=False)
     style_max_blank_lines: int = dataclasses.field(default=2)
     style_indent_namespace_eval: bool = dataclasses.field(default=True)
     style_spaces_in_braces: bool = dataclasses.field(default=False)
@@ -100,7 +99,6 @@ _VALIDATORS = {
         lambda v: v == "tab", Use(int), error="indent must be integer or 'tab'"
     ),
     "style_line_length": Use(int, error="line-length must be integer"),
-    "style_allow_aligned_sets": Use(bool, error="allow-aligned-sets must be a bool"),
     "style_max_blank_lines": And(
         Use(int),
         # we could technically support i >= 0, but I think 0 would be a weird
@@ -126,7 +124,6 @@ def _validate_config(config):
         Optional("style"): {
             Optional("indent"): _VALIDATORS["style_indent"],
             Optional("line-length"): _VALIDATORS["style_line_length"],
-            Optional("allow-aligned-sets"): _VALIDATORS["style_allow_aligned_sets"],
             Optional("max-blank-lines"): _VALIDATORS["style_max_blank_lines"],
             Optional("indent-namespace-eval"): _VALIDATORS[
                 "style_indent_namespace_eval"
@@ -204,37 +201,6 @@ def setup_config_cli_args(parser):
         "--style-line-length",
         type=_validator("style_line_length"),
         metavar="<line_length>",
-    )
-    _add_bool(
-        config_group,
-        parser,
-        "style_allow_aligned_sets",
-        "--style-aligned-sets",
-        "--style-no-aligned-sets",
-    )
-    config_group.add_argument(
-        "--style-indent",
-        type=_validator("style_indent"),
-        metavar="<indent>",
-    )
-    config_group.add_argument(
-        "--style-max-blank-lines",
-        type=_validator("style_max_blank_lines"),
-        metavar="<max_blank_lines>",
-    )
-    _add_bool(
-        config_group,
-        parser,
-        "style_indent_namespace_eval",
-        "--style-indent-namespace-eval",
-        "--style-no-indent-namespace-eval",
-    )
-    _add_bool(
-        config_group,
-        parser,
-        "style_spaces_in_braces",
-        "--style-spaces-in-braces",
-        "--style-no-spaces-in-braces",
     )
 
 

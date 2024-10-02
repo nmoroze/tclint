@@ -12,8 +12,8 @@ exclude = ["ignore_me/", "ignore*.tcl", "/ignore_from_here"]
 # lint violations to ignore. defaults to empty list.
 # can also supply an inline table with a path and a list of violations to ignore under that path.
 ignore = [
-    "spacing",
-    { path = "files_with_bad_indent/", rules = ["indent"] }
+    "unbraced-expr",
+    { path = "files_with_long_lines/", rules = ["line-length"] }
 ]
 # extensions of files to lint when searching directories. defaults to tcl, sdc,
 # xdc, and upf.
@@ -22,6 +22,8 @@ extensions = ["tcl"]
 # `tclint-plugins make-spec`.
 commands = "~/.tclint/openroad.json"
 
+# with the exception of line-length, the [style] settings affect tclfmt rather than tclint.
+
 [style]
 # number of spaces to indent. can also be set to "tab". defaults to 4.
 indent = 2
@@ -29,8 +31,6 @@ indent = 2
 line-length = 100
 # maximum allowed number of consecutive blank lines. defaults to 2.
 max-blank-lines = 1
-# whether to allow values of set blocks to be aligned. defaults to false.
-allow-aligned-sets = true
 # whether to require indenting of "namespace eval" blocks. defaults to true.
 indent-namespace-eval = false
 # whether to expect a single space (true) or no spaces (false) surrounding the contents of a braced expression or script argument.
@@ -56,7 +56,7 @@ indent = 3
 paths = ["other_file_group2/"]
 
 [fileset.style]
-allow-aligned-sets = false
+spaces-in-braces = false
 ```
 
 At the moment, if a file being linted matches more than one fileset, `tclint` will use the configuration in the first fileset that applies.
@@ -73,15 +73,7 @@ configuration arguments:
   --extend-exclude "pattern1, pattern2, ..."
   --extensions "tcl, xdc, ..."
   --commands <path>
-  --style-indent <indent>
   --style-line-length <line_length>
-  --style-max-blank-lines <max_blank_lines>
-  --style-aligned-sets
-  --style-no-aligned-sets
-  --style-indent-namespace-eval
-  --style-no-indent-namespace-eval
-  --style-spaces-in-braces
-  --style-no-spaces-in-braces
 ```
 
 ## Ignore violations with inline comments
@@ -102,17 +94,17 @@ The following lists supported keywords. These keywords were inspired by [ESLint]
 ### Example
 
 ```tcl
-# tclint-disable spacing
-puts  "illegal"
-# tclint-enable spacing
+# tclint-disable unbraced-expr
+expr $foo
+# tclint-enable unbraced-expr
 
-# tclint-disable-next-line indent, spacing
-  puts  "also illegal"
+# tclint-disable-next-line unbraced-expr, redundant-expr
+expr { [expr $foo] }
 
 puts too many arguments ! ;# tclint-disable-line command-args
 
 # tclint-disable
- puts  "illegal"
+expr { [expr $foo] }
 # tclint-enable
 ```
 
@@ -128,7 +120,7 @@ requires = ["setuptools"]
 # other tables/keys...
 
 [tool.tclint]
-ignore = ["spacing"]
+ignore = ["unbraced-expr"]
 
 [tool.tclint.style]
 indent = 2
