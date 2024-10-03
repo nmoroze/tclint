@@ -46,6 +46,8 @@ def test_redefined_builtin():
     violations = lint(script, Config(), Path())
     assert len(violations) == 1
     assert violations[0].id == Rule("redefined-builtin")
+    assert violations[0].start == (1, 1)
+    assert violations[0].end == (1, 13)
 
 
 def test_no_violation_multiline_expr():
@@ -56,18 +58,36 @@ if {1 && \
     assert len(violations) == 0
 
 
+def test_unbraced_expr_varsub():
+    script = r"expr $foo"
+    violations = lint(script, Config(), Path())
+    assert len(violations) == 1
+    assert violations[0].id == Rule.UNBRACED_EXPR
+    assert violations[0].start == (1, 6)
+    assert violations[0].end == (1, 10)
+
+
 def test_unbraced_expr_with_braced_word():
     script = r"expr 1 + {2}"
     violations = lint(script, Config(), Path())
     assert len(violations) == 1
     assert violations[0].id == Rule.UNBRACED_EXPR
-    assert violations[0].pos == (1, 10)
+    assert violations[0].start == (1, 6)
+    assert violations[0].end == (1, 13)
 
     script = r'expr 1 + "2"'
     violations = lint(script, Config(), Path())
     assert len(violations) == 1
     assert violations[0].id == Rule.UNBRACED_EXPR
-    assert violations[0].pos == (1, 10)
+    assert violations[0].start == (1, 6)
+    assert violations[0].end == (1, 13)
+
+    script = r"expr {1} + {2}"
+    violations = lint(script, Config(), Path())
+    assert len(violations) == 1
+    assert violations[0].id == Rule.UNBRACED_EXPR
+    assert violations[0].start == (1, 6)
+    assert violations[0].end == (1, 15)
 
 
 def test_redundant_expr_check():
@@ -82,14 +102,22 @@ expr {max([expr 1], [expr 2])}
     assert len(violations) == 8
     assert all(v.id == Rule.REDUNDANT_EXPR for v in violations)
 
-    assert violations[0].pos == (1, 7)
-    assert violations[1].pos == (2, 8)
-    assert violations[2].pos == (2, 19)
-    assert violations[3].pos == (3, 7)
-    assert violations[4].pos == (3, 18)
-    assert violations[5].pos == (3, 29)
-    assert violations[6].pos == (4, 11)
-    assert violations[7].pos == (4, 21)
+    assert violations[0].start == (1, 7)
+    assert violations[0].end == (1, 15)
+    assert violations[1].start == (2, 8)
+    assert violations[1].end == (2, 16)
+    assert violations[2].start == (2, 19)
+    assert violations[2].end == (2, 27)
+    assert violations[3].start == (3, 7)
+    assert violations[3].end == (3, 15)
+    assert violations[4].start == (3, 18)
+    assert violations[4].end == (3, 26)
+    assert violations[5].start == (3, 29)
+    assert violations[5].end == (3, 37)
+    assert violations[6].start == (4, 11)
+    assert violations[6].end == (4, 19)
+    assert violations[7].start == (4, 21)
+    assert violations[7].end == (4, 29)
 
 
 def test_proc_args_bad():

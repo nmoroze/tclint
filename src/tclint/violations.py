@@ -25,23 +25,26 @@ ALL_RULES = [rule for rule in Rule]
 
 
 class Violation:
-    def __init__(self, id: Rule, message: str, pos: Tuple[int, int]):
+    def __init__(
+        self, id: Rule, message: str, start: Tuple[int, int], end: Tuple[int, int]
+    ):
         self.id = id
         self.message = message
-        self.pos = pos
+        self.start = start
+        self.end = end
 
     def __lt__(self, other):
-        return self.pos < other.pos
+        return self.start < other.start
 
     def str(self):
-        line, col = self.pos
+        line, col = self.start
         rule = str(self.id)
 
         return f"{line}:{col}: {self.message} [{rule}]"
 
     @classmethod
     def create(cls, id):
-        def func(message: str, pos: Tuple[int, int]):
-            return cls(id, message, pos)
+        def func(message: str, start: Tuple[int, int], end: Tuple[int, int]):
+            return cls(id, message, start, end)
 
         return func

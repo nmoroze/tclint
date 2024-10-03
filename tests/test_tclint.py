@@ -56,7 +56,7 @@ def test_switches(tmp_path):
     )
 
     expected = """
-data/dirty.tcl:1:36: line length is 36, maximum allowed is 35 [line-length]
+data/dirty.tcl:1:1: line length is 36, maximum allowed is 35 [line-length]
 data/dirty.tcl:6:11: unnecessary command substitution within expression [redundant-expr]
 data/dirty.tcl:6:17: expression with substitutions should be enclosed by braces [unbraced-expr]
 """.lstrip()  # noqa E501
