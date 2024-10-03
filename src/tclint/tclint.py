@@ -44,7 +44,7 @@ def filter_violations(
     for violation in violations:
         if violation.id in global_ignore:
             continue
-        line = violation.pos[0]
+        line = violation.start[0]
         if line in inline_ignore and violation.id in inline_ignore[line]:
             continue
 

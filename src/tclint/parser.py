@@ -275,7 +275,7 @@ class Parser:
         try:
             parsed_args = self._parse_command_args(routine.contents, args)
         except CommandArgError as e:
-            self.violations.append(Violation(Rule.COMMAND_ARGS, str(e), pos))
+            self.violations.append(Violation(Rule.COMMAND_ARGS, str(e), pos, ts.pos()))
             parsed_args = args
 
         children = [routine, *parsed_args]

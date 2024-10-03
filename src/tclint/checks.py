@@ -32,13 +32,15 @@ class LineLengthChecker:
 
             lineno = i + 1
             if len(line) > config.style_line_length:
-                pos = (lineno, config.style_line_length + 1)
+                start = (lineno, 1)
+                end = (lineno, len(line) + 1)
                 violations.append(
                     Violation(
                         Rule.LINE_LENGTH,
                         f"line length is {len(line)}, maximum allowed is"
                         f" {config.style_line_length}",
-                        pos,
+                        start,
+                        end,
                     )
                 )
 
@@ -56,11 +58,17 @@ class TrailingWhitespaceChecker:
         for i, line in enumerate(input.split("\n")):
             lineno = i + 1
 
-            if line.endswith((" ", "\t")):
-                pos = (lineno, len(line))
+            WHITESPACE = (" ", "\t")
+            if line.endswith(WHITESPACE):
+                start_col = len(line.rstrip("".join(WHITESPACE)))
+                start = (lineno, start_col + 1)
+                end = (lineno, len(line) + 1)
                 violations.append(
                     Violation(
-                        Rule.TRAILING_WHITESPACE, "line has trailing whitespace", pos
+                        Rule.TRAILING_WHITESPACE,
+                        "line has trailing whitespace",
+                        start,
+                        end,
                     )
                 )
 
@@ -101,6 +109,7 @@ class RedefinedBuiltinChecker(Visitor):
                     Rule.REDEFINED_BUILTIN,
                     f"redefinition of built-in command '{name}'",
                     command.pos,
+                    command.args[1].end_pos,
                 )
             )
 
@@ -135,6 +144,7 @@ class UnbracedExprChecker(Visitor):
                         Rule.UNBRACED_EXPR,
                         "expression with substitutions should be enclosed by braces",
                         command.args[0].pos,
+                        command.args[-1].end_pos,
                     )
                 )
                 return
@@ -146,7 +156,8 @@ class UnbracedExprChecker(Visitor):
                         Rule.UNBRACED_EXPR,
                         "expression containing braced or quoted words should be"
                         " enclosed by braces",
-                        child.pos,
+                        command.args[0].pos,
+                        command.args[-1].end_pos,
                     )
                 )
                 return
@@ -175,6 +186,7 @@ class RedundantExprChecker(Visitor):
                     Rule.REDUNDANT_EXPR,
                     "unnecessary command substitution within expression",
                     operand.pos,
+                    operand.end_pos,
                 )
             )
 
