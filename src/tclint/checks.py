@@ -579,6 +579,11 @@ class RedefinedBuiltinChecker(Visitor):
         if command.routine != "proc":
             return
 
+        if len(command.args) == 0:
+            # This is a syntax error, but should already be caught as a command-args
+            # error by the parser's `proc` command handling.
+            return
+
         name = command.args[0].contents
 
         if name in self._commands:
