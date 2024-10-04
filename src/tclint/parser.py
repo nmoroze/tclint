@@ -151,10 +151,12 @@ class Parser:
 
         try:
             new_args = func(args, self)
+        except TclSyntaxError as e:
+            raise e
         except CommandArgError as e:
             raise e
         except Exception:
-            if self.debug:
+            if self._debug:
                 raise
             raise CommandArgError(
                 f"error parsing command arguments, possibly malformed {routine} command"

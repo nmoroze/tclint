@@ -23,12 +23,13 @@ from tclint.parser import (
     Function,
     TclSyntaxError,
 )
+from tclint.violations import Rule
 
 MY_DIR = pathlib.Path(__file__).parent.resolve()
 
 
-def parse(input):
-    parser = Parser(debug=True)
+def parse(input, debug=True):
+    parser = Parser(debug=debug)
     return parser.parse(input)
 
 
@@ -361,6 +362,14 @@ def test_syntax_error():
     script = 'puts "hello'
     with pytest.raises(TclSyntaxError):
         parse(script)
+
+
+def test_syntax_error_in_command_body():
+    script = r'if {1} {puts "}'
+    with pytest.raises(TclSyntaxError):
+        # debug=False to regression test a case where this flag affects whether the
+        # syntax error is properly flagged
+        parse(script, debug=False)
 
 
 def test_switch():
@@ -749,3 +758,24 @@ def test_proc_args():
             Script(),
         )
     )
+
+
+def test_broken_command():
+    def bad_command_parser(*args):
+        raise RuntimeError("oops")
+
+    # Graceful handling if debug=False
+    parser = Parser(debug=False)
+    # bit of a hack, would prefer this to work with the public API
+    parser._commands = {"broken": bad_command_parser}
+    parser.parse("broken")
+
+    assert len(parser.violations) == 1
+    assert parser.violations[0].id == Rule("command-args")
+
+    # Raise error if debug=True
+    parser = Parser(debug=True)
+    # bit of a hack, would prefer this to work with the public API
+    parser._commands = {"broken": bad_command_parser}
+    with pytest.raises(RuntimeError):
+        parser.parse("broken")
