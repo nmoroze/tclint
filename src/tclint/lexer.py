@@ -1,4 +1,5 @@
 import ply.lex as lex
+from typing import Tuple
 
 TOK_BACKSLASH_NEWLINE = "BACKSLASH_NEWLINE"
 TOK_BACKSLASH_SUB = "BACKSLASH_SUB"
@@ -27,9 +28,10 @@ STATE_BRACEDWORD = "bracedword"
 
 
 class TclSyntaxError(Exception):
-    def __init__(self, message, pos):
+    def __init__(self, message, start: Tuple[int, int], end: Tuple[int, int]):
         super().__init__(message)
-        self.pos = pos
+        self.start = start
+        self.end = end
 
 
 class _LexTable:
@@ -231,7 +233,8 @@ class Lexer:
 
     def expect(self, *tokens, message, pos):
         if self.type() not in tokens:
-            raise TclSyntaxError(message, pos)
+            self.next()  # munch another token to update position
+            raise TclSyntaxError(message, pos, self.pos())
 
         self.next()
 
