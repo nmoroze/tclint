@@ -155,7 +155,7 @@ def main():
                 debug=args.debug,
             )
         except TclSyntaxError as e:
-            line, col = e.pos
+            line, col = e.start
             print(f"{out_prefix}:{line}:{col}: syntax error: {e}")
             retcode |= EXIT_SYNTAX_ERROR
             continue

@@ -360,16 +360,23 @@ def test_line_numbers():
 
 def test_syntax_error():
     script = 'puts "hello'
-    with pytest.raises(TclSyntaxError):
+    with pytest.raises(TclSyntaxError) as exc_info:
         parse(script)
+    e = exc_info.value
+    assert e.start == (1, 6)
+    assert e.end == (1, 12)
 
 
 def test_syntax_error_in_command_body():
     script = r'if {1} {puts "}'
-    with pytest.raises(TclSyntaxError):
+    with pytest.raises(TclSyntaxError) as exc_info:
         # debug=False to regression test a case where this flag affects whether the
         # syntax error is properly flagged
         parse(script, debug=False)
+
+    e = exc_info.value
+    assert e.start == (1, 14)
+    assert e.end == (1, 15)
 
 
 def test_switch():
@@ -798,8 +805,11 @@ def test_broken_command():
 def test_expr_unbalanced_close_paren():
     # Regression test for case where the error was ignored (and any content after the
     # close paren was silently dropped).
-    with pytest.raises(TclSyntaxError):
+    with pytest.raises(TclSyntaxError) as exc_info:
         parse("expr {$foo )}")
+    e = exc_info.value
+    assert e.start == (1, 12)
+    assert e.end == (1, 13)
 
 
 def test_unbraced_list():

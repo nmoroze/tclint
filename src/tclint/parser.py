@@ -224,7 +224,7 @@ class Parser:
 
         if in_command_sub and ts.type() is TOK_EOF:
             raise TclSyntaxError(
-                "reached EOF without finding end of command substitution", pos
+                "reached EOF without finding end of command substitution", pos, ts.pos()
             )
 
         self._debug_indent -= 1
@@ -361,7 +361,9 @@ class Parser:
             toktype = ts.type()
             if toktype == TOK_EOF:
                 raise TclSyntaxError(
-                    "reached EOF without finding match for brace", expected_braces[-1]
+                    "reached EOF without finding match for brace",
+                    expected_braces[-1],
+                    ts.pos(),
                 )
 
             if toktype == TOK_LBRACE:
@@ -370,8 +372,11 @@ class Parser:
                 try:
                     expected_braces.pop()
                 except IndexError:
+                    start = ts.pos()
+                    ts.next()
+                    end = ts.pos()
                     raise TclSyntaxError(
-                        "found closing brace without matching open brace", ts.pos()
+                        "found closing brace without matching open brace", start, end
                     )
 
                 if len(expected_braces) == 0:
@@ -434,7 +439,9 @@ class Parser:
             while ts.type() != TOK_RBRACE:
                 if ts.type() is TOK_EOF:
                     raise TclSyntaxError(
-                        "reached EOF without finding match for brace", brace_pos
+                        "reached EOF without finding match for brace",
+                        brace_pos,
+                        ts.pos(),
                     )
                 var += ts.value()
                 ts.next()
@@ -457,7 +464,9 @@ class Parser:
             while ts.type() != TOK_RPAREN:
                 if ts.type() == TOK_EOF:
                     raise TclSyntaxError(
-                        "reached EOF without finding match for paren", paren_pos
+                        "reached EOF without finding match for paren",
+                        paren_pos,
+                        ts.pos(),
                     )
                 if ts.type() == TOK_DOLLAR:
                     dollar_tok = ts.current
@@ -597,8 +606,11 @@ class Parser:
                 op2 = self._parse_expression(ts)
                 expr.add(op2)
                 if ts.value() != ":":
+                    start = ts.pos()
+                    ts.next()
+                    end = ts.pos()
                     raise TclSyntaxError(
-                        "expected ':' to continue ternary expression", ts.pos()
+                        "expected ':' to continue ternary expression", start, end
                     )
 
                 # weird hack again
@@ -703,7 +715,7 @@ class Parser:
             or is_func
         ):
             raise TclSyntaxError(
-                f"invalid bareword in expression: {operand}", operand_pos
+                f"invalid bareword in expression: {operand}", operand_pos, ts.pos()
             )
 
         node = BareWord(operand, pos=operand_pos, end_pos=ts.pos())
@@ -735,14 +747,18 @@ class Parser:
             operator = ts.value()
             ts.next()
             if ts.value() != "=":
-                raise TclSyntaxError(f"invalid operator in expression: {operator}", pos)
+                raise TclSyntaxError(
+                    f"invalid operator in expression: {operator}", pos, ts.pos()
+                )
             operator += ts.value()
             ts.next()
         elif ts.value() in {"*", "/", "%", "+", "-", "^", "eq", "ne", "in", "ni"}:
             operator = ts.value()
             ts.next()
         else:
-            raise TclSyntaxError(f"invalid operator in expression: {ts.value()}", pos)
+            raise TclSyntaxError(
+                f"invalid operator in expression: {ts.value()}", pos, ts.pos()
+            )
 
         return BareWord(operator, pos=pos, end_pos=ts.pos())
 
@@ -768,8 +784,11 @@ class Parser:
 
         while ts.type() not in delims:
             if ts.value() != ",":
+                start = ts.pos()
+                ts.next()
+                end = ts.pos()
                 raise TclSyntaxError(
-                    "expected comma between function arguments", ts.pos()
+                    "expected comma between function arguments", start, end
                 )
 
             # adding comma may seem a little weird since it's non-functional,
