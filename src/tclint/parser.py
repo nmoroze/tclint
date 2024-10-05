@@ -116,6 +116,9 @@ class Parser:
         lexer = Lexer(pos=pos)
         lexer.input(script)
         tree = self._parse_script(lexer, in_command_sub=False)
+        assert (
+            lexer.type() == TOK_EOF
+        ), "Didn't reach EOF parsing script, please file a bug report."
 
         return tree
 
@@ -565,6 +568,11 @@ class Parser:
         ts.input(node.contents)
 
         contents = self._parse_expression(ts)
+        ts.expect(
+            TOK_EOF,
+            message=f"expected end of expression, got {ts.value()}",
+            pos=ts.pos(),
+        )
         if isinstance(node, BracedWord):
             return BracedExpression(contents, pos=node.pos, end_pos=node.end_pos)
 

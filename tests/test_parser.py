@@ -779,3 +779,10 @@ def test_broken_command():
     parser._commands = {"broken": bad_command_parser}
     with pytest.raises(RuntimeError):
         parser.parse("broken")
+
+
+def test_expr_unbalanced_close_paren():
+    # Regression test for case where the error was ignored (and any content after the
+    # close paren was silently dropped).
+    with pytest.raises(TclSyntaxError):
+        parse("expr {$foo )}")
