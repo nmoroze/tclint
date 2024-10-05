@@ -759,6 +759,20 @@ def test_proc_args():
         )
     )
 
+    command = tree.children[0]
+    args_list = command.args[1]
+    assert args_list.pos == (1, 10)
+    assert args_list.end_pos == (1, 23)
+    arg1 = args_list.children[0]
+    assert arg1.pos == (1, 12)
+    arg2 = args_list.children[1]
+    assert arg2.pos == (1, 14)
+    assert arg2.end_pos == (1, 21)
+    arg2_name = arg2.children[0]
+    assert arg2_name.pos == (1, 16)
+    arg2_default = arg2.children[1]
+    assert arg2_default.pos == (1, 18)
+
 
 def test_broken_command():
     def bad_command_parser(*args):
@@ -786,3 +800,15 @@ def test_expr_unbalanced_close_paren():
     # close paren was silently dropped).
     with pytest.raises(TclSyntaxError):
         parse("expr {$foo )}")
+
+
+def test_unbraced_list():
+    script = "proc foo foo {}"
+    tree = parse(script)
+    assert tree == Script(
+        Command(BareWord("proc"), BareWord("foo"), List(BareWord("foo")), Script())
+    )
+    command = tree.children[0]
+    args_list_node = command.args[1]
+    assert args_list_node.pos == (1, 10)
+    assert args_list_node.children[0].pos == (1, 10)

@@ -510,8 +510,7 @@ class Parser:
         if node.contents is None:
             return None
 
-        # Hack: we know contents start 1 col over, since first char denotes the list
-        ts = Lexer(pos=(node.line, node.col + 1))
+        ts = Lexer(pos=node.contents_pos)
         ts.input(node.contents)
 
         DELIMITERS = {TOK_WS, TOK_BACKSLASH_NEWLINE, TOK_NEWLINE}
