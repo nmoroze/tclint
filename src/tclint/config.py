@@ -370,9 +370,12 @@ class ConfigError(Exception):
     pass
 
 
-def get_config(config_path) -> RunConfig:
-    DEFAULT_CONFIGS = ("tclint.toml", ".tclint")
+DEFAULT_CONFIGS = ("tclint.toml", ".tclint")
 
+
+def get_config(
+    config_path: OptionalType[pathlib.Path], root: pathlib.Path
+) -> OptionalType[RunConfig]:
     # user-supplied
     if config_path is not None:
         try:
@@ -382,16 +385,16 @@ def get_config(config_path) -> RunConfig:
 
     for path in DEFAULT_CONFIGS:
         try:
-            return RunConfig.from_path(path)
+            return RunConfig.from_path(root / path)
         except FileNotFoundError:
             pass
 
     try:
-        return RunConfig.from_pyproject()
+        return RunConfig.from_pyproject(directory=root)
     except ConfigError as e:
         raise e
     except (FileNotFoundError, tomllib.TOMLDecodeError, KeyError):
         # just skip if file doesn't exist, contains TOML errors, or tclint key not found
         pass
 
-    return RunConfig()
+    return None
