@@ -6,7 +6,13 @@ import sys
 from typing import List, Optional
 
 
-from tclint.config import get_config, setup_config_cli_args, Config, ConfigError
+from tclint.config import (
+    get_config,
+    setup_config_cli_args,
+    Config,
+    ConfigError,
+    RunConfig,
+)
 from tclint.parser import Parser, TclSyntaxError
 from tclint.checks import get_checkers
 from tclint.violations import Violation, Rule
@@ -112,10 +118,13 @@ def main():
     args = parser.parse_args()
 
     try:
-        config = get_config(args.config)
+        config = get_config(args.config, pathlib.Path())
     except ConfigError as e:
         print(f"Invalid config file: {e}")
         return EXIT_INPUT_ERROR
+
+    if config is None:
+        config = RunConfig()
 
     config.apply_cli_args(args)
 

@@ -10,7 +10,7 @@ MY_DIR = pathlib.Path(__file__).parent.resolve()
 
 def test_example_config():
     config_path = MY_DIR / "data" / "tclint.toml"
-    config = get_config(config_path)
+    config = get_config(config_path, pathlib.Path.cwd())
 
     global_ = config.get_for_path(pathlib.Path())
 
