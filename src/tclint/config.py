@@ -283,7 +283,7 @@ class RunConfig:
         return self._global_config.extensions
 
     @classmethod
-    def from_dict(cls, config_dict: dict):
+    def from_dict(cls, config_dict: dict, root: pathlib.Path):
         config_dict = _validate_config(config_dict)
         try:
             fileset_config_dicts = config_dict.pop("fileset")
@@ -295,9 +295,12 @@ class RunConfig:
 
         fileset_configs = []
         for fileset_config in fileset_config_dicts:
-            paths = fileset_config.pop("paths")
+            paths = []
+            for path in fileset_config.pop("paths"):
+                if not path.is_absolute():
+                    path = root / path
+                paths.append(path.resolve())
 
-            paths = tuple([path.resolve() for path in paths])
             fileset_config = _flatten(fileset_config)
 
             # pull in default values from global config
@@ -309,7 +312,7 @@ class RunConfig:
         return cls(global_config, fileset_configs)
 
     @classmethod
-    def from_path(cls, path: Union[str, pathlib.Path]):
+    def from_path(cls, path: Union[str, pathlib.Path], root: pathlib.Path):
         path = pathlib.Path(path)
 
         if not path.exists():
@@ -322,7 +325,7 @@ class RunConfig:
                 raise ConfigError(f"{path}: {e}")
 
         try:
-            return cls.from_dict(data)
+            return cls.from_dict(data, root)
         except ConfigError as e:
             raise ConfigError(f"{path}: {e}")
 
@@ -344,7 +347,7 @@ class RunConfig:
         tclint_config = data.get("tool", {})["tclint"]
 
         try:
-            return cls.from_dict(tclint_config)
+            return cls.from_dict(tclint_config, directory)
         except ConfigError as e:
             raise ConfigError(f"pyproject.toml: {e}")
 
@@ -379,13 +382,13 @@ def get_config(
     # user-supplied
     if config_path is not None:
         try:
-            return RunConfig.from_path(config_path)
+            return RunConfig.from_path(config_path, pathlib.Path.cwd())
         except FileNotFoundError:
             raise ConfigError(f"path {config_path} doesn't exist")
 
     for path in DEFAULT_CONFIGS:
         try:
-            return RunConfig.from_path(root / path)
+            return RunConfig.from_path(root / path, root)
         except FileNotFoundError:
             pass
 

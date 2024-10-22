@@ -42,7 +42,7 @@ def test_example_config():
 
 def test_invalid_rule():
     with pytest.raises(ConfigError):
-        RunConfig.from_dict({"ignore": ["asdf"]})
+        RunConfig.from_dict({"ignore": ["asdf"]}, pathlib.Path.cwd())
 
 
 def test_pyproject():
