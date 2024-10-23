@@ -13,7 +13,6 @@ else:
 from schema import Schema, Optional, Or, Use, SchemaError, And
 
 from tclint.violations import Rule
-from tclint import utils
 
 
 @dataclasses.dataclass
@@ -390,7 +389,7 @@ class RunConfig:
         path = path.resolve()
         for fileset_paths, config in self._fileset_configs:
             for fileset_path in fileset_paths:
-                if utils.is_relative_to(path, fileset_path):
+                if path.is_relative_to(fileset_path):
                     return config
 
         return self._global_config

@@ -12,7 +12,6 @@ from tclint.checks import get_checkers
 from tclint.violations import Violation, Rule
 from tclint.comments import CommentVisitor
 from tclint.cli.utils import resolve_sources, register_codec_warning
-from tclint import utils
 
 try:
     from tclint._version import __version__  # type: ignore
@@ -37,7 +36,7 @@ def filter_violations(
             global_ignore.append(entry)
         elif path is not None:
             ignore_path = entry["path"].resolve()
-            if utils.is_relative_to(path, ignore_path):
+            if path.is_relative_to(ignore_path):
                 global_ignore.extend(entry["rules"])
 
     filtered_violations = []
