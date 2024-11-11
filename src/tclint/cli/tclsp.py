@@ -11,7 +11,7 @@ from pygls.workspace import TextDocument
 from pygls.uris import to_fs_path
 
 from tclint import tclint
-from tclint.config import get_config, DEFAULT_CONFIGS, Config
+from tclint.config import get_config, DEFAULT_CONFIGS, Config, ConfigError
 from tclint.lexer import TclSyntaxError
 
 try:
@@ -95,11 +95,21 @@ class TclspServer(LanguageServer):
     def load_configs(self):
         self.configs = {}
         for root in self.get_roots():
-            # TODO: gracefully handle error in config file
-            config = get_config(None, root)
+            config = None
+            try:
+                config = get_config(None, root)
+            except ConfigError as e:
+                self.show_message(f"Error loading config file: {e}")
+
             if config is not None:
+                for other in self.configs.keys():
+                    if root.is_relative_to(other) or other.is_relative_to(root):
+                        self.show_message(
+                            f"Warning: found configs in overlapping workspaces: {root},"
+                            f" {other}. It's undefined which will apply."
+                        )
+
                 self.configs[root] = config
-        # TODO: warn if overlap
 
     def parse(self, document: TextDocument):
         path = Path(document.path)
