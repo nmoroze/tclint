@@ -28,6 +28,7 @@ dev = [
     "pytest",
     "pytest-timeout",
     "codespell",
+    "pytest-lsp",
 ]
 
 [project.scripts]
@@ -42,6 +43,10 @@ openroad = "tclint.plugins.openroad.openroad"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 timeout = 10
+
+# Silences a warning from pytest-lsp
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.setuptools_scm]
 version_file = "src/tclint/_version.py"

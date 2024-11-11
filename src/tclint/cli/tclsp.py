@@ -75,6 +75,7 @@ class TclspServer(LanguageServer):
         self.diagnostics = {}
         # maps root path -> RunConfig, since there may be more than one workspace.
         self.configs = {}
+        self.disable_client_features = False
 
     def get_roots(self) -> List[Path]:
         roots = []
@@ -177,7 +178,8 @@ def change_watched_files(ls: TclspServer, params: lsp.DidChangeWatchedFilesParam
     ls.diagnostics = {}
 
     ls.load_configs()
-    ls.lsp.send_request(lsp.WORKSPACE_DIAGNOSTIC_REFRESH, None)
+    if not ls.disable_client_features:
+        ls.lsp.send_request(lsp.WORKSPACE_DIAGNOSTIC_REFRESH, None)
 
 
 @server.feature(lsp.INITIALIZED)
@@ -193,19 +195,21 @@ def init(ls: TclspServer, params):
         pattern = f"**/{filename}"
         watchers.append(lsp.FileSystemWatcher(glob_pattern=pattern))
 
-    ls.register_capability(
-        lsp.RegistrationParams(
-            registrations=[
-                lsp.Registration(
-                    id=str(uuid.uuid4()),
-                    method=lsp.WORKSPACE_DID_CHANGE_WATCHED_FILES,
-                    register_options=lsp.DidChangeWatchedFilesRegistrationOptions(
-                        watchers=watchers
-                    ),
-                )
-            ]
+    if not ls.disable_client_features:
+        ls.register_capability(
+            lsp.RegistrationParams(
+                registrations=[
+                    lsp.Registration(
+                        id=str(uuid.uuid4()),
+                        method=lsp.WORKSPACE_DID_CHANGE_WATCHED_FILES,
+                        register_options=lsp.DidChangeWatchedFilesRegistrationOptions(
+                            watchers=watchers
+                        ),
+                    )
+                ]
+            )
         )
-    )
+
     ls.load_configs()
 
 
@@ -225,9 +229,23 @@ def main():
         help="set the log level. defaults to info",
         choices=log_levels.keys(),
     )
+
+    # pytest-lsp doesn't support the 'client/registerCapability' and
+    # 'workspace/diagnostic/refresh' commands that we use. This flag is a hack for
+    # disabling them for testing.
+    parser.add_argument(
+        "--disable-client-features",
+        action="store_true",
+        help=(
+            "disable use of advanced client features. Note this flag will prevent "
+            "diagnostics from being refreshed when config files are updated, it's "
+            "meant for testing only"
+        ),
+    )
     args = parser.parse_args()
     logging.basicConfig(level=log_levels[args.log_level], format="%(message)s")
 
+    server.disable_client_features = args.disable_client_features
     server.start_io()
 
 
