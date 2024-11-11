@@ -125,3 +125,58 @@ async def test_config(client: pytest_lsp.LanguageClient, tmp_path_factory):
         )
     )
     assert results.items == []
+
+
+@pytest.mark.asyncio
+async def test_invalid_config(client: pytest_lsp.LanguageClient, tmp_path_factory):
+    # Set up workspace
+    ws = tmp_path_factory.mktemp("ws")
+    config = ws / "tclint.toml"
+    # Invalid config
+    with open(config, "w") as f:
+        f.write("asdf")
+
+    # Initialize client
+    params = lsp.InitializeParams(
+        capabilities=pytest_lsp.client_capabilities("visual-studio-code"),
+        workspace_folders=[
+            lsp.WorkspaceFolder(uri=ws.as_uri(), name=ws.name),
+        ],
+    )
+    await client.initialize_session(params)
+    await client.wait_for_notification(lsp.WINDOW_SHOW_MESSAGE)
+    assert len(client.messages) == 1
+    assert (
+        client.messages[0].message
+        == f"Error loading config file: {config}: Expected '=' after a key in a"
+        " key/value pair (at end of document)"
+    )
+
+
+@pytest.mark.asyncio
+async def test_nested_configs(client: pytest_lsp.LanguageClient, tmp_path_factory):
+    # Set up workspaces
+    parent_ws = tmp_path_factory.mktemp("ws")
+    with open(parent_ws / "tclint.toml", "w") as f:
+        f.write("")
+    child_ws = parent_ws / "child"
+    child_ws.mkdir()
+    with open(child_ws / "tclint.toml", "w") as f:
+        f.write("")
+
+    # Initialize client
+    params = lsp.InitializeParams(
+        capabilities=pytest_lsp.client_capabilities("visual-studio-code"),
+        workspace_folders=[
+            lsp.WorkspaceFolder(uri=parent_ws.as_uri(), name=parent_ws.name),
+            lsp.WorkspaceFolder(uri=child_ws.as_uri(), name=child_ws.name),
+        ],
+    )
+    await client.initialize_session(params)
+    await client.wait_for_notification(lsp.WINDOW_SHOW_MESSAGE)
+    assert len(client.messages) == 1
+    assert (
+        client.messages[0].message
+        == f"Warning: found configs in overlapping workspaces: {child_ws},"
+        f" {parent_ws}. It's undefined which will apply."
+    )
