@@ -10,10 +10,22 @@ MY_DIR = Path(__file__).parent.resolve()
 LSP_BIN = MY_DIR / ".." / "src" / "tclint" / "cli" / "tclsp.py"
 
 
+def get_capabilities(client: str) -> lsp.ClientCapabilities:
+    capabilities = pytest_lsp.client_capabilities(client)
+    # Need to nullify these capabilities, since pytest_lsp doesn't support them
+    try:
+        capabilities.workspace.diagnostics.refresh_support = False
+    except AttributeError:
+        pass
+    try:
+        capabilities.workspace.did_change_watched_files.dynamic_registration = False
+    except AttributeError:
+        pass
+    return capabilities
+
+
 @pytest_lsp.fixture(
-    config=pytest_lsp.ClientServerConfig(
-        server_command=[sys.executable, str(LSP_BIN), "--disable-client-features"]
-    )
+    config=pytest_lsp.ClientServerConfig(server_command=[sys.executable, str(LSP_BIN)])
 )
 async def client(lsp_client: pytest_lsp.LanguageClient, request):
     yield
@@ -25,9 +37,7 @@ async def client(lsp_client: pytest_lsp.LanguageClient, request):
 @pytest.mark.asyncio
 async def test_diagnostics(client: pytest_lsp.LanguageClient):
     """Basic diagnostics test."""
-    params = lsp.InitializeParams(
-        capabilities=pytest_lsp.client_capabilities("visual-studio-code"),
-    )
+    params = lsp.InitializeParams(capabilities=get_capabilities("visual-studio-code"))
     await client.initialize_session(params)
 
     document = MY_DIR / "data" / "dirty.tcl"
@@ -83,7 +93,7 @@ async def test_config(client: pytest_lsp.LanguageClient, tmp_path_factory):
 
     # Initialize client
     params = lsp.InitializeParams(
-        capabilities=pytest_lsp.client_capabilities("visual-studio-code"),
+        capabilities=get_capabilities("visual-studio-code"),
         workspace_folders=[
             lsp.WorkspaceFolder(uri=ws_foo.as_uri(), name=ws_foo.name),
             lsp.WorkspaceFolder(uri=ws_bar.as_uri(), name=ws_bar.name),
@@ -138,7 +148,7 @@ async def test_invalid_config(client: pytest_lsp.LanguageClient, tmp_path_factor
 
     # Initialize client
     params = lsp.InitializeParams(
-        capabilities=pytest_lsp.client_capabilities("visual-studio-code"),
+        capabilities=get_capabilities("visual-studio-code"),
         workspace_folders=[
             lsp.WorkspaceFolder(uri=ws.as_uri(), name=ws.name),
         ],
@@ -166,7 +176,7 @@ async def test_nested_configs(client: pytest_lsp.LanguageClient, tmp_path_factor
 
     # Initialize client
     params = lsp.InitializeParams(
-        capabilities=pytest_lsp.client_capabilities("visual-studio-code"),
+        capabilities=get_capabilities("visual-studio-code"),
         workspace_folders=[
             lsp.WorkspaceFolder(uri=parent_ws.as_uri(), name=parent_ws.name),
             lsp.WorkspaceFolder(uri=child_ws.as_uri(), name=child_ws.name),
