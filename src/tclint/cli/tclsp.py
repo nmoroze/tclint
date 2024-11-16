@@ -12,7 +12,9 @@ from pygls.uris import to_fs_path
 
 from tclint import tclint
 from tclint.config import get_config, DEFAULT_CONFIGS, Config, ConfigError
+from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
+from tclint.parser import Parser
 
 try:
     from tclint._version import __version__  # type: ignore
@@ -111,23 +113,47 @@ class TclspServer(LanguageServer):
 
                 self.configs[root] = config
 
-    def parse(self, document: TextDocument):
-        path = Path(document.path)
-
+    def get_config(self, path: Path) -> Config:
         matching_config = Config()
         for root, config in self.configs.items():
             if path.is_relative_to(root):
                 matching_config = config.get_for_path(path)
                 break
+        return matching_config
+
+    def parse(self, document: TextDocument):
+        path = Path(document.path)
+        config = self.get_config(path)
 
         # `None` sentinel ensures that `diagnostics` gets updated if the URI is not
         # present.
         _, previous = self.diagnostics.get(document.uri, (0, None))
-        diagnostics = lint(document.source, matching_config, path)
+        diagnostics = lint(document.source, config, path)
 
         # Only update if the list has changed
         if previous != diagnostics:
             self.diagnostics[document.uri] = (document.version, diagnostics)
+
+    def format(self, document: TextDocument, options: lsp.FormattingOptions):
+        path = Path(document.path)
+        config = self.get_config(path)
+
+        parser = Parser()
+
+        if config.style_indent is None:
+            indent = "\t" if not options.insert_spaces else " " * options.tab_size
+        else:
+            indent = config.get_indent()
+
+        formatter = Formatter(
+            FormatterOpts(
+                indent=indent,
+                spaces_in_braces=config.style_spaces_in_braces,
+                max_blank_lines=config.style_max_blank_lines,
+                indent_namespace_eval=config.style_indent_namespace_eval,
+            )
+        )
+        return formatter.format_top(document.source, parser)
 
 
 server = TclspServer("tclsp", __version__)
@@ -190,6 +216,22 @@ def change_watched_files(ls: TclspServer, params: lsp.DidChangeWatchedFilesParam
     ls.load_configs()
     if ls.client_supports_refresh:
         ls.lsp.send_request(lsp.WORKSPACE_DIAGNOSTIC_REFRESH, None)
+
+
+@server.feature(lsp.TEXT_DOCUMENT_FORMATTING)
+def format_document(ls: TclspServer, params: lsp.DocumentFormattingParams):
+    """Format the entire document"""
+    doc = ls.workspace.get_text_document(params.text_document.uri)
+    formatted = ls.format(doc, params.options)
+    return [
+        lsp.TextEdit(
+            range=lsp.Range(
+                start=lsp.Position(line=0, character=0),
+                end=lsp.Position(line=len(formatted.split("\n")) + 1, character=0),
+            ),
+            new_text=formatted,
+        )
+    ]
 
 
 @server.feature(lsp.INITIALIZED)

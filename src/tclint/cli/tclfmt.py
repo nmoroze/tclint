@@ -31,18 +31,9 @@ def format(script: str, config: Config, debug=False) -> str:
     plugins = [config.commands] if config.commands is not None else []
     parser = Parser(debug=debug, command_plugins=plugins)
 
-    if config.style_indent == "tab":
-        indent = "\t"
-    elif isinstance(config.style_indent, int):
-        indent = " " * config.style_indent
-    else:
-        raise ValueError(
-            f"unexpected value for config.style_indent: {config.style_indent}"
-        )
-
     formatter = Formatter(
         FormatterOpts(
-            indent=indent,
+            indent=config.get_indent(),
             spaces_in_braces=config.style_spaces_in_braces,
             max_blank_lines=config.style_max_blank_lines,
             indent_namespace_eval=config.style_indent_namespace_eval,

@@ -30,7 +30,7 @@ class Config:
     extensions: List[str] = dataclasses.field(
         default_factory=lambda: ["tcl", "sdc", "xdc", "upf"]
     )
-    style_indent: Union[str, int] = dataclasses.field(default=4)
+    style_indent: OptionalType[Union[str, int]] = dataclasses.field(default=None)
     style_line_length: int = dataclasses.field(default=80)
     style_max_blank_lines: int = dataclasses.field(default=2)
     style_indent_namespace_eval: bool = dataclasses.field(default=True)
@@ -48,6 +48,26 @@ class Config:
 
         if "extend_ignore" in args_dict and args_dict["extend_ignore"] is not None:
             self.ignore.extend(args_dict["extend_ignore"])
+
+    def get_indent(self) -> str:
+        """Get indent setting as string.
+
+        This helper does two things. One, it's a helpful utility to factor out the logic
+        required for calculating the indent. Two, it lets us ergonomically store if the
+        indentation is not set in style_indent, which the LSP relies on.
+        """
+        if self.style_indent is None:
+            # Default indent
+            return " " * 4
+        elif self.style_indent == "tab":
+            return "\t"
+        elif isinstance(self.style_indent, int):
+            return " " * self.style_indent
+
+        # Should be unreachable, validated on ingestion of config
+        raise ValueError(
+            f"unexpected value for config.style_indent: {self.style_indent}"
+        )
 
 
 # Validators using `schema` library that check and normalize config inputs.

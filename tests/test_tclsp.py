@@ -70,6 +70,67 @@ async def test_diagnostics(client: pytest_lsp.LanguageClient):
 
 
 @pytest.mark.asyncio
+async def test_format(client: pytest_lsp.LanguageClient, tmp_path):
+    """Formatting test."""
+    params = lsp.InitializeParams(
+        capabilities=get_capabilities("visual-studio-code"),
+        workspace_folders=[
+            lsp.WorkspaceFolder(uri=tmp_path.as_uri(), name=tmp_path.name)
+        ],
+    )
+    await client.initialize_session(params)
+
+    document = tmp_path / "source.tcl"
+    source = """if {{1}} {{
+{}puts "hello"
+}}"""
+
+    with open(document, "w") as f:
+        f.write(source.format(""))
+
+    def make_callback(expected):
+        def callback(result):
+            assert len(result) == 1
+            result = result[0]
+
+            assert result.new_text == expected
+            assert result.range.start.line == 0
+            assert result.range.start.character == 0
+            assert result.range.end.line == len(source.splitlines())
+            assert result.range.end.character == len(source.splitlines()[-1])
+
+        return callback
+
+    # Initial check: format doc based on FormattingOptions
+    client.text_document_formatting(
+        params=lsp.DocumentFormattingParams(
+            text_document=lsp.TextDocumentIdentifier(uri=document.as_uri()),
+            options=lsp.FormattingOptions(tab_size=3, insert_spaces=True),
+        ),
+        callback=make_callback(source.format("   ")),
+    )
+
+    # Check that tclint config overrides client config
+    config = tmp_path / "tclint.toml"
+    with open(config, "w") as f:
+        f.write("""[style]
+indent = tab""")
+
+    client.workspace_did_change_watched_files(
+        # `changes` isn't used by our server impl, so we can cheat and keep this empty
+        params=lsp.DidChangeWatchedFilesParams(changes=[])
+    )
+
+    client.text_document_formatting(
+        params=lsp.DocumentFormattingParams(
+            text_document=lsp.TextDocumentIdentifier(uri=document.as_uri()),
+            options=lsp.FormattingOptions(tab_size=3, insert_spaces=True),
+        ),
+        callback=make_callback(source.format("\t")),
+    )
+
+
+@pytest.mark.asyncio
 async def test_config(client: pytest_lsp.LanguageClient, tmp_path_factory):
     """Tests configuration reading, specifically:
     1) That configs for multiple workspaces are found and applied correctly.
