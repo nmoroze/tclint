@@ -3,7 +3,15 @@
 The `tclint` project includes a language server, `tclsp`, which integrates diagnostics
 and formatting into editors.
 
-This language server has been tested with the following editors:
+## Configuration
+
+`tclsp` searches for `tclint` configuration files in the root of open workspaces.
+`tclsp` defaults to the client-provided setting for indentation, but this will be overridden by an explicit setting in a config file.
+
+## Supported Editors
+
+This language server should be compatible with any editor that supports the Language
+Server Protocol. It has been tested with the following editors:
 - Visual Studio Code
 - Neovim
 - Emacs
@@ -12,13 +20,13 @@ The following sections document the basics required to get `tclsp` working with 
 editors. Advanced Neovim and Emacs users will likely want to tweak their configurations
 to taste.
 
-## Visual Studio Code
+### Visual Studio Code
 
 VS Code Extension coming soon! Sign up for the
 [`tclint-users`](https://groups.google.com/g/tclint-users) Google Group to be notified
 when it's released.
 
-## Neovim
+### Neovim
 
 To enable `tclsp` in Neovim, add the following Lua configuration:
 
@@ -43,14 +51,14 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 ```
 
-### Compatibility
+#### Compatibility
 
 `tclsp` requires Neovim version 0.10 or newer.
 
 Due to an unsupported LSP feature, Neovim will not automatically refresh diagnostics
 when the `tclint` configuration file is updated.
 
-## Emacs
+### Emacs
 
 Using `tclsp` in Emacs requires `lsp-mode`. Follow these
 [instructions](https://emacs-lsp.github.io/lsp-mode/page/installation/) to install it.
@@ -75,7 +83,7 @@ supported filetypes:
 
 To activate `lsp-mode` in your current buffer, call `M-x lsp`.
 
-### Compatibility
+#### Compatibility
 
 Due to an unsupported LSP feature, Emacs will not automatically refresh diagnostics when
 the `tclint` configuration file is updated.
