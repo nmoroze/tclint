@@ -80,7 +80,7 @@ $ ./util/pre-commit
 
 ## License
 
-This project is copyright 2024 Noah Moroze, released under the [MIT license](LICENSE).
+This project is copyright Noah Moroze, released under the [MIT license](LICENSE).
 
 [openroad]: https://github.com/The-OpenROAD-Project/OpenROAD
 [vscode]: https://marketplace.visualstudio.com/items?itemName=nmoroze.tclint
