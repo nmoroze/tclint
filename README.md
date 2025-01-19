@@ -7,6 +7,7 @@
 - Checks for common Tcl errors
 - Companion formatting utility, [`tclfmt`](docs/tclfmt.md)
 - Usage checks for built-in commands
+- Visual Studio Code [extension][vscode]
 - [Plugin system](docs/plugins.md) for usage checks of EDA tool-specific commands, including [OpenROAD][openroad]
 - More coming soon!
 
@@ -82,3 +83,4 @@ $ ./util/pre-commit
 This project is copyright 2024 Noah Moroze, released under the [MIT license](LICENSE).
 
 [openroad]: https://github.com/The-OpenROAD-Project/OpenROAD
+[vscode]: https://marketplace.visualstudio.com/items?itemName=nmoroze.tclint

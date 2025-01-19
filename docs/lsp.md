@@ -22,9 +22,7 @@ to taste.
 
 ### Visual Studio Code
 
-VS Code Extension coming soon! Sign up for the
-[`tclint-users`](https://groups.google.com/g/tclint-users) Google Group to be notified
-when it's released.
+Download the Visual Studio Code extension from the [Extension Marketplace][vscode].
 
 ### Neovim
 
@@ -87,3 +85,5 @@ To activate `lsp-mode` in your current buffer, call `M-x lsp`.
 
 Due to an unsupported LSP feature, Emacs will not automatically refresh diagnostics when
 the `tclint` configuration file is updated.
+
+[vscode]: https://marketplace.visualstudio.com/items?itemName=nmoroze.tclint
