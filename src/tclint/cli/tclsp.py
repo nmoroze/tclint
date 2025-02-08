@@ -10,7 +10,7 @@ from pygls.server import LanguageServer
 from pygls.workspace import TextDocument
 from pygls.uris import to_fs_path
 
-from tclint import tclint
+from tclint import main as tclint
 from tclint.config import get_config, DEFAULT_CONFIGS, Config, ConfigError
 from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError

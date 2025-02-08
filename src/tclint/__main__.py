@@ -1,4 +1,4 @@
 import sys
-from tclint.tclint import main
+from tclint.main import main
 
 sys.exit(main())

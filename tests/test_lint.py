@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from tclint.tclint import lint
+from tclint.main import lint
 from tclint.config import Config
 from tclint.violations import Rule
 

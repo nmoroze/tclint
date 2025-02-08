@@ -4,7 +4,7 @@ import subprocess
 
 import pytest
 
-from tclint import tclint
+from tclint import main
 
 MY_DIR = pathlib.Path(__file__).parent.resolve()
 
@@ -103,7 +103,7 @@ def test_resolve_sources(tmp_path_factory):
 
     extensions = ["tcl"]
 
-    sources = tclint.resolve_sources(
+    sources = main.resolve_sources(
         [pathlib.Path(".")],
         exclude_patterns=[
             # test bare pattern matches anywhere in tree
@@ -125,7 +125,7 @@ def test_resolve_sources(tmp_path_factory):
     other_dir = tmp_path_factory.mktemp("b")
     in_path = other_dir / "foo.tcl"
     in_path.touch()
-    sources = tclint.resolve_sources(
+    sources = main.resolve_sources(
         [in_path],
         exclude_patterns=[str(in_path)],
         exclude_root=tmp_path,
@@ -137,7 +137,7 @@ def test_resolve_sources(tmp_path_factory):
     # test that we can match outside of exclude root with explicit relative path
     top_src = tmp_path / "top.tcl"
     top_src.touch()
-    sources = tclint.resolve_sources(
+    sources = main.resolve_sources(
         [top_src],
         exclude_patterns=["../top.tcl"],
         exclude_root=tmp_path / "src",
@@ -150,7 +150,7 @@ def test_resolve_sources(tmp_path_factory):
     hash_srcs = [other_other_dir / "#foo.tcl", other_other_dir / "#bar.tcl"]
     for src in hash_srcs:
         src.touch()
-    sources = tclint.resolve_sources(
+    sources = main.resolve_sources(
         hash_srcs,
         # extra space before #bar.tcl is important to make sure we don't just match ^#
         exclude_patterns=["#foo.tcl", " #bar.tcl"],
@@ -171,13 +171,13 @@ def test_resolve_sources_extensions(tmp_path):
     cwd = os.getcwd()
     os.chdir(tmp_path)
 
-    sources = tclint.resolve_sources(
+    sources = main.resolve_sources(
         [tmp_path], exclude_patterns=[], exclude_root=tmp_path, extensions=["foo"]
     )
     assert len(sources) == 1
     assert sources[0] == foo_file
 
-    sources = tclint.resolve_sources(
+    sources = main.resolve_sources(
         [tmp_path], exclude_patterns=[], exclude_root=tmp_path, extensions=["bar"]
     )
     assert len(sources) == 1
