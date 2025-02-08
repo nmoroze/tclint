@@ -30,6 +30,7 @@ dev = [
     "pytest-timeout",
     "codespell",
     "pytest-lsp",
+    "types-jsonschema",
 ]
 
 [project.scripts]
