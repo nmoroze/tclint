@@ -516,8 +516,13 @@ class Parser:
         that doesn't get used when generating the main syntax tree, but is used
         in command-specific argument parsing.
         """
+        if isinstance(node, List):
+            return node
+
         if node.contents is None:
-            return None
+            raise CommandArgError(
+                "Can't find content of argument to parse it as a list"
+            )
 
         ts = Lexer(pos=node.contents_pos)
         ts.input(node.contents)
