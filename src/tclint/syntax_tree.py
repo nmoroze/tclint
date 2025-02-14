@@ -1,4 +1,4 @@
-"""Classes for representing and interacting with Tcl syntax trees. """
+"""Classes for representing and interacting with Tcl syntax trees."""
 
 
 class Visitor:
@@ -88,6 +88,9 @@ class Node:
 
     def add(self, node):
         self.children.append(node)
+
+    def set(self, pos, node):
+        self.children[pos] = node
 
     @property
     def contents(self):
@@ -188,12 +191,12 @@ class Node:
             return lines
 
         if len(self.children) != len(other.children):
-            my_children = ",".join([
-                child.__class__.__name__ for child in self.children
-            ])
-            other_children = ",".join([
-                child.__class__.__name__ for child in other.children
-            ])
+            my_children = ",".join(
+                [child.__class__.__name__ for child in self.children]
+            )
+            other_children = ",".join(
+                [child.__class__.__name__ for child in other.children]
+            )
 
             lines += [f"{indent}-{my_cls}({my_children})"]
             lines += [f"{indent}+{other_cls}({other_children})"]
