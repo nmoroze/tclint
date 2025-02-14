@@ -152,13 +152,17 @@ def _validate_config(config):
         },
     }
 
-    schema = Schema({
-        # exclude and extensions can only be used in global context
-        Optional("exclude"): _VALIDATORS["exclude"],
-        Optional("extensions"): _VALIDATORS["extensions"],
-        **base_config,
-        Optional("fileset"): Schema([{"paths": [Use(pathlib.Path)], **base_config}]),
-    })
+    schema = Schema(
+        {
+            # exclude and extensions can only be used in global context
+            Optional("exclude"): _VALIDATORS["exclude"],
+            Optional("extensions"): _VALIDATORS["extensions"],
+            **base_config,
+            Optional("fileset"): Schema(
+                [{"paths": [Use(pathlib.Path)], **base_config}]
+            ),
+        }
+    )
 
     try:
         return schema.validate(config)

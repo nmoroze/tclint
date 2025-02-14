@@ -31,10 +31,12 @@ def test_exclusive():
     expected = Command(
         "estimate_parasitics",
         [
-            ExclusiveArgs([
-                Switch("-placement"),
-                Switch("-global_routing"),
-            ])
+            ExclusiveArgs(
+                [
+                    Switch("-placement"),
+                    Switch("-global_routing"),
+                ]
+            )
         ],
     )
     assert tree == expected, f"{tree} != {expected}"
@@ -46,11 +48,13 @@ def test_exclusive_mixed_keys():
         "command",
         [
             OptionalArg(
-                ExclusiveArgs([
-                    Switch("-foo", AnyVal("foo")),
-                    Switch("-bar"),
-                    Switch("-baz", AnyVal("baz")),
-                ])
+                ExclusiveArgs(
+                    [
+                        Switch("-foo", AnyVal("foo")),
+                        Switch("-bar"),
+                        Switch("-baz", AnyVal("baz")),
+                    ]
+                )
             )
         ],
     )

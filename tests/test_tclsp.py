@@ -113,8 +113,10 @@ async def test_format(client: pytest_lsp.LanguageClient, tmp_path):
     # Check that tclint config overrides client config
     config = tmp_path / "tclint.toml"
     with open(config, "w") as f:
-        f.write("""[style]
-indent = tab""")
+        f.write(
+            """[style]
+indent = tab"""
+        )
 
     client.workspace_did_change_watched_files(
         # `changes` isn't used by our server impl, so we can cheat and keep this empty
