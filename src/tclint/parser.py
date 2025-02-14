@@ -522,8 +522,14 @@ class Parser:
         that doesn't get used when generating the main syntax tree, but is used
         in command-specific argument parsing.
         """
+        if isinstance(node, List):
+            return node
+
         if node.contents is None:
-            return None
+            raise CommandArgError(
+                "expected braced word or word without substitutions in argument"
+                " interpreted as list"
+            )
 
         ts = Lexer(pos=node.contents_pos)
         ts.input(node.contents)

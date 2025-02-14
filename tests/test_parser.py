@@ -2,6 +2,7 @@ import pathlib
 
 import pytest
 
+from tclint.commands import CommandArgError
 from tclint.parser import (
     Parser,
     Script,
@@ -31,6 +32,11 @@ MY_DIR = pathlib.Path(__file__).parent.resolve()
 def parse(input, debug=True):
     parser = Parser(debug=debug)
     return parser.parse(input)
+
+
+def parse_list(input, debug=True):
+    parser = Parser(debug=debug)
+    return parser.parse_list(input)
 
 
 def test_null():
@@ -579,6 +585,33 @@ def test_parse_list():
     ]
 
 
+def test_parse_list_into_list():
+    """Must just return input node if it is a list."""
+    node = List(BareWord("arg1"), BareWord("arg2"))
+    assert parse_list(node) == node
+
+
+def test_parse_list_failed_to_convert_into_list():
+    """Raises an error if we can't parse input node as list."""
+    command_sub = CommandSub(
+        Command(
+            BareWord("list"),
+            BareWord("arg1"),
+            BareWord("arg2"),
+        )
+    )
+    var_sub = QuotedWord(BareWord("arg2"), VarSub("arg2"))
+
+    for node in command_sub, var_sub:
+        with pytest.raises(CommandArgError) as exc_info:
+            parse_list(node)
+        assert (
+            str(exc_info.value)
+            == "expected braced word or word without substitutions in argument"
+            " interpreted as list"
+        )
+
+
 def test_expr_simple():
     """A single word without substitution should parse properly as an expression
     even without braces."""
@@ -797,6 +830,27 @@ def test_proc_args():
     assert arg2_name.pos == (1, 16)
     arg2_default = arg2.children[1]
     assert arg2_default.pos == (1, 18)
+
+
+def test_proc_args_cant_be_converted_into_list():
+    """Tests that the parser adds a violation if it can't convert the proc args into a
+    list node."""
+    test_cases = (
+        (r"proc foo [list arg1 arg2] {}", (1, 1), (1, 29)),
+        (r'proc foo "arg1 $arg2" {}', (1, 1), (1, 25)),
+    )
+    for script, start, end in test_cases:
+        parser = Parser(debug=True)
+        parser.parse(script)
+        assert len(parser.violations) == 1
+        assert parser.violations[0].id == Rule("command-args")
+        assert (
+            parser.violations[0].message
+            == "expected braced word or word without substitutions in argument"
+            " interpreted as list"
+        )
+        assert parser.violations[0].start == start
+        assert parser.violations[0].end == end
 
 
 def test_broken_command():
