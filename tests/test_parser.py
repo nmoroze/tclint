@@ -33,6 +33,11 @@ def parse(input, debug=True):
     return parser.parse(input)
 
 
+def parse_list(input, debug=True):
+    parser = Parser(debug=debug)
+    return parser.parse_list(input)
+
+
 def test_null():
     script = ""
     tree = parse(script)
@@ -561,6 +566,34 @@ def test_parse_list():
     ]
 
 
+def test_parse_list_into_list():
+    """Must just return input node if it is a list"""
+    node = List(BareWord("arg1"), BareWord("arg2"))
+    assert parse_list(node) == node
+
+
+def assert_parse_list_failed_to_convert_into_list(node):
+    with pytest.raises(Exception) as exc_info:
+        parse_list(node)
+    assert str(exc_info.value) == "Failed to convert node into list"
+
+
+def test_parse_list_failed_to_convert_into_list():
+    """Raises an error in case can't cast input node into list"""
+    assert_parse_list_failed_to_convert_into_list(
+        CommandSub(
+            Command(
+                BareWord("list"),
+                BareWord("arg1"),
+                BareWord("arg2"),
+            )
+        )
+    )
+    assert_parse_list_failed_to_convert_into_list(
+        QuotedWord(BareWord("arg2"), VarSub("arg2"))
+    )
+
+
 def test_expr_simple():
     """A single word without substitution should parse properly as an expression
     even without braces."""
@@ -779,6 +812,27 @@ def test_proc_args():
     assert arg2_name.pos == (1, 16)
     arg2_default = arg2.children[1]
     assert arg2_default.pos == (1, 18)
+
+
+def assert_proc_args_cant_be_converted_into_list(script, start, end):
+    parser = Parser(debug=True)
+    parser.parse(script)
+    assert len(parser.violations) == 1
+    assert parser.violations[0].id == Rule("command-args")
+    assert parser.violations[0].message == "Failed to convert node into list"
+    assert parser.violations[0].start == start
+    assert parser.violations[0].end == end
+
+
+def test_proc_args_cant_cobe_nvert_iednto_list():
+    """The parser add a violation can't convert
+    the node of the proc args into a list node"""
+    assert_proc_args_cant_be_converted_into_list(
+        "proc foo [list arg1 arg2] {}", (1, 1), (1, 29)
+    )
+    assert_proc_args_cant_be_converted_into_list(
+        'proc foo "arg1 $arg2" {}', (1, 1), (1, 25)
+    )
 
 
 def test_broken_command():
