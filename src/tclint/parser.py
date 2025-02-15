@@ -520,9 +520,7 @@ class Parser:
             return node
 
         if node.contents is None:
-            raise CommandArgError(
-                "Can't find content of argument to parse it as a list"
-            )
+            raise CommandArgError("Failed to convert node into list")
 
         ts = Lexer(pos=node.contents_pos)
         ts.input(node.contents)
