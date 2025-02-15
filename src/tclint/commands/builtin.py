@@ -343,6 +343,8 @@ def _proc(args, parser):
         raise CommandArgError(f"wrong # of args to proc: got {len(args)}, expected 3")
 
     arg_list = parser.parse_list(args[1])
+    # Parse arguments with value and default value into list. Raise error if any
+    # argument has more than two values
     currArg = 0
     for arg in arg_list.children:
         if isinstance(arg, BareWord):
