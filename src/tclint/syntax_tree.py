@@ -337,6 +337,10 @@ class VarSub(Node):
 
 
 class ArgExpansion(Node):
+    def __init__(self, list, pos=None, end_pos=None):
+        self.list = list
+        super().__init__(list, pos=pos, end_pos=end_pos)
+
     def accept(self, visitor, recurse=False):
         if recurse:
             self._recurse(visitor)

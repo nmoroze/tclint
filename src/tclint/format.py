@@ -311,9 +311,7 @@ class Formatter:
         return formatted
 
     def format_arg_expansion(self, arg_expansion) -> List[str]:
-        # TODO: enforce in type?
-        assert len(arg_expansion.children) == 1
-        lines = self.format(arg_expansion.children[0])
+        lines = self.format(arg_expansion.list)
         lines[0] = "{*}" + lines[0]
 
         return lines
