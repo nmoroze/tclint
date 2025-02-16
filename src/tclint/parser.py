@@ -605,22 +605,17 @@ class Parser:
     @_strip_ws
     def _parse_expression(self, ts):
         op1 = self._parse_operand(ts)
-        expr = None
+        expr = op1
 
         # last condition is hack to break out of expression in case we're in ternary op
         if ts.type() not in {TOK_EOF, TOK_RPAREN} and ts.value() not in {":", ","}:
             if ts.value() == "?":
-                expr = TernaryOp(pos=op1.pos)
-                expr.add(op1)
-
                 # weird hack to record operator
-                n = BareWord("?", pos=ts.pos())
+                start = ts.pos()
                 ts.next()
-                n.end_pos = ts.pos()
-                expr.add(n)
+                q = BareWord("?", pos=start, end_pos=ts.pos())
 
                 op2 = self._parse_expression(ts)
-                expr.add(op2)
                 if ts.value() != ":":
                     start = ts.pos()
                     ts.next()
@@ -630,13 +625,14 @@ class Parser:
                     )
 
                 # weird hack again
-                n = BareWord(":", pos=ts.pos())
+                start = ts.pos()
                 ts.next()
-                n.end_pos = ts.pos()
-                expr.add(n)
+                colon = BareWord(":", pos=start, end_pos=ts.pos())
 
                 op3 = self._parse_expression(ts)
-                expr.add(op3)
+                expr = TernaryOp(
+                    op1, q, op2, colon, op3, pos=op1.pos, end_pos=op3.end_pos
+                )
             else:
                 operator = self._parse_operator(ts)
                 op2 = self._parse_expression(ts)
@@ -645,10 +641,6 @@ class Parser:
             if ts.type() != TOK_RPAREN and ts.value() not in {":", ","}:
                 ts.expect(TOK_EOF, message="expected end of expression", pos=ts.pos())
 
-        if expr is None:
-            return op1
-
-        expr.end_pos = expr.children[-1].end_pos
         return expr
 
     @_strip_ws
@@ -771,25 +763,21 @@ class Parser:
 
         return BareWord(operator, pos=pos, end_pos=ts.pos())
 
-    def _parse_function(self, ts, name_node):
-        func = Function(pos=name_node.pos)
-
-        func.add(name_node)
-
+    def _parse_function(self, ts, name):
         while ts.type() in {TOK_WS, TOK_BACKSLASH_NEWLINE}:
             ts.next()
 
         ts.expect(
             TOK_LPAREN,
             message="expected open paren after function name",
-            pos=name_node.pos,
+            pos=name.pos,
         )
 
         delims = {TOK_RPAREN, TOK_EOF}
 
+        arguments = []
         if ts.type() not in delims:
-            arg = self._parse_expression(ts)
-            func.add(arg)
+            arguments.append(self._parse_expression(ts))
 
         while ts.type() not in delims:
             if ts.value() != ",":
@@ -799,25 +787,16 @@ class Parser:
                 raise TclSyntaxError(
                     "expected comma between function arguments", start, end
                 )
-
-            # adding comma may seem a little weird since it's non-functional,
-            # but this lets us store comma position for style checks
-            comma = BareWord(",", pos=ts.pos())
             ts.next()
-            comma.end_pos = ts.pos()
-            func.add(comma)
 
-            arg = self._parse_expression(ts)
-            func.add(arg)
+            arguments.append(self._parse_expression(ts))
 
         ts.expect(
             TOK_RPAREN,
             message="expected close paren after function arguments",
-            pos=name_node.pos,
+            pos=name.pos,
         )
-        func.end_pos = ts.pos()
-
-        return func
+        return Function(name, *arguments, pos=name.pos, end_pos=ts.pos())
 
 
 def _all(_list, non_empty=False):

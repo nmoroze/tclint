@@ -419,24 +419,17 @@ class Formatter:
         return self._format_op(expr)
 
     def format_ternary_op(self, expr) -> List[str]:
-        # TODO: enforce in type?
-        assert len(expr.children) == 5
         return self._format_op(expr)
 
     def format_function(self, function):
-        # TODO: enforce in type?
-        assert len(function.children) >= 1
-
-        name = self.format(function.children[0])
+        name = self.format(function.name)
         assert len(name) == 1
         name = name[0]
 
         formatted = [f"{name}("]
 
-        last = function.children[0]
-        for i, child in enumerate(function.children[1:]):
-            if child == BareWord(","):
-                continue
+        last = function.name
+        for i, child in enumerate(function.args):
             if i > 0:
                 formatted[-1] += ","
             lines = self.format(child)

@@ -409,6 +409,17 @@ class BinaryOp(Node):
 
 
 class TernaryOp(Node):
+    def __init__(self, condition, question, true, colon, false, pos=None, end_pos=None):
+        self.condition = condition
+        self.question = question
+        self.true = true
+        self.colon = colon
+        self.false = false
+
+        super().__init__(
+            condition, question, true, colon, false, pos=pos, end_pos=end_pos
+        )
+
     def accept(self, visitor, recurse=False):
         if recurse:
             self._recurse(visitor)
@@ -416,6 +427,11 @@ class TernaryOp(Node):
 
 
 class Function(Node):
+    def __init__(self, name, *args, pos=None, end_pos=None):
+        self.name = name
+        self.args = args
+        super().__init__(name, *args, pos=pos, end_pos=end_pos)
+
     def accept(self, visitor, recurse=False):
         if recurse:
             self._recurse(visitor)
