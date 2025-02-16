@@ -342,27 +342,24 @@ def _proc(args, parser):
     if len(args) != 3:
         raise CommandArgError(f"wrong # of args to proc: got {len(args)}, expected 3")
 
+    # Parse args as list, then iterate over each item to parse arg specifier lists and
+    # do some validation. We don't store non-defaulted arguments as Lists so that they
+    # don't get formatted inside braces.
     arg_list = parser.parse_list(args[1])
-    # Parse arguments with value and default value into list. Raise error if any
-    # argument has more than two values
-    currArg = 0
-    for arg in arg_list.children:
+    for i, arg in enumerate(arg_list.children):
         if isinstance(arg, BareWord):
-            currArg += 1
             continue
 
         arg_specifier = parser.parse_list(arg)
         arg_specifier_len = len(arg_specifier.children)
 
         if arg_specifier_len == 2:
-            arg_list.set(currArg, arg_specifier)
+            arg_list.set(i, arg_specifier)
         elif arg_specifier_len != 1:
             raise CommandArgError(
                 f"too many fields in argument specifier: got {arg_specifier_len},"
                 " expected no more than 2"
             )
-
-        currArg += 1
 
     return args[0:1] + [arg_list, parser.parse_script(args[2])]
 
