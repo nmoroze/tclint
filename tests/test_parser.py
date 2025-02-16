@@ -575,7 +575,11 @@ def test_parse_list_into_list():
 def assert_parse_list_failed_to_convert_into_list(node):
     with pytest.raises(Exception) as exc_info:
         parse_list(node)
-    assert str(exc_info.value) == "Failed to convert node into list"
+    assert (
+        str(exc_info.value)
+        == "expected braced word or word without substitutions in argument"
+        " interpreted as list"
+    )
 
 
 def test_parse_list_failed_to_convert_into_list():
@@ -819,7 +823,11 @@ def assert_proc_args_cant_be_converted_into_list(script, start, end):
     parser.parse(script)
     assert len(parser.violations) == 1
     assert parser.violations[0].id == Rule("command-args")
-    assert parser.violations[0].message == "Failed to convert node into list"
+    assert (
+        parser.violations[0].message
+        == "expected braced word or word without substitutions in argument"
+        " interpreted as list"
+    )
     assert parser.violations[0].start == start
     assert parser.violations[0].end == end
 
