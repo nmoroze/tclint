@@ -89,9 +89,6 @@ class Node:
     def add(self, node):
         self.children.append(node)
 
-    def set(self, pos, node):
-        self.children[pos] = node
-
     @property
     def contents(self):
         """This is overloaded by word Nodes that may have concrete contents.

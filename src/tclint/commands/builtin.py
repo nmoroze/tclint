@@ -354,7 +354,7 @@ def _proc(args, parser):
         arg_specifier_len = len(arg_specifier.children)
 
         if arg_specifier_len == 2:
-            arg_list.set(i, arg_specifier)
+            arg_list.children[i] = arg_specifier
         elif arg_specifier_len != 1:
             raise CommandArgError(
                 f"too many fields in argument specifier: got {arg_specifier_len},"
