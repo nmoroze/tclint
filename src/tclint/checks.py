@@ -93,7 +93,7 @@ class RedefinedBuiltinChecker(Visitor):
         return self._violations
 
     def visit_command(self, command):
-        if command.routine != "proc":
+        if command.routine.contents != "proc":
             return
 
         if len(command.args) == 0:
@@ -121,7 +121,7 @@ class UnbracedExprChecker(Visitor):
         return self._violations
 
     def visit_command(self, command):
-        if command.routine != "expr":
+        if command.routine.contents != "expr":
             return
 
         if len(command.args) == 0:
@@ -180,7 +180,7 @@ class RedundantExprChecker(Visitor):
             return
 
         command = operand.children[0]
-        if command.routine == "expr":
+        if command.routine.contents == "expr":
             self._violations.append(
                 Violation(
                     Rule.REDUNDANT_EXPR,

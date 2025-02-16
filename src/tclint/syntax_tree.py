@@ -243,22 +243,15 @@ class Comment(Node):
 
 
 class Command(Node):
+    def __init__(self, routine, *args, pos=None, end_pos=None):
+        self.routine = routine
+        self.args = args
+        super().__init__(routine, *args, pos=pos, end_pos=end_pos)
+
     def accept(self, visitor, recurse=False):
         if recurse:
             self._recurse(visitor)
         visitor.visit_command(self)
-
-    @property
-    def routine(self):
-        if len(self.children) == 0:
-            return None
-        return self.children[0].contents
-
-    @property
-    def args(self):
-        if len(self.children) < 2:
-            return []
-        return self.children[1:]
 
 
 class CommandSub(Node):

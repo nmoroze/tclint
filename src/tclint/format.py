@@ -206,21 +206,18 @@ class Formatter:
         else:
             return [open_brace] + lines + ["}"]
 
-    def format_command(self, command) -> List[str]:
-        # TODO: enforce in type
-        assert len(command.children) > 0
-
+    def format_command(self, command: Command) -> List[str]:
         is_namespace_eval = (
-            command.routine == "namespace"
+            command.routine.contents == "namespace"
             and len(command.args) > 0
             and command.args[0].contents == "eval"
         )
         should_indent = not is_namespace_eval or self.opts.indent_namespace_eval
 
         hanging_indent = False
-        formatted = self.format(command.children[0])
-        last_line = command.children[0].end_pos[0]
-        for child in command.children[1:]:
+        formatted = self.format(command.routine)
+        last_line = command.routine.end_pos[0]
+        for child in command.args:
             if isinstance(child, Script):
                 child_lines = self.format_script(child, should_indent=should_indent)
             else:
