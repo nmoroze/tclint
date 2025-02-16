@@ -2,6 +2,7 @@ import pathlib
 
 import pytest
 
+from tclint.commands import CommandArgError
 from tclint.parser import (
     Parser,
     Script,
@@ -573,7 +574,7 @@ def test_parse_list_into_list():
 
 
 def assert_parse_list_failed_to_convert_into_list(node):
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(CommandArgError) as exc_info:
         parse_list(node)
     assert (
         str(exc_info.value)
