@@ -384,6 +384,11 @@ class ParenExpression(Node):
 
 
 class UnaryOp(Node):
+    def __init__(self, operator, operand, pos=None, end_pos=None):
+        self.operator = operator
+        self.operand = operand
+        super().__init__(operator, operand, pos=pos, end_pos=end_pos)
+
     def accept(self, visitor, recurse=False):
         if recurse:
             self._recurse(visitor)
@@ -391,6 +396,12 @@ class UnaryOp(Node):
 
 
 class BinaryOp(Node):
+    def __init__(self, operator1, operand, operator2, pos=None, end_pos=None):
+        self.operator1 = operator1
+        self.operand = operand
+        self.operator2 = operator2
+        super().__init__(operator1, operand, operator2, pos=pos, end_pos=end_pos)
+
     def accept(self, visitor, recurse=False):
         if recurse:
             self._recurse(visitor)

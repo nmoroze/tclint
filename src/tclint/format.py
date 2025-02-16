@@ -391,13 +391,10 @@ class Formatter:
         return formatted
 
     def format_unary_op(self, expr):
-        # TODO: enforce in type?
-        assert len(expr.children) == 2
-
-        op = self.format(expr.children[0])
+        op = self.format(expr.operator)
         assert len(op) == 1
 
-        lines = self.format(expr.children[1])
+        lines = self.format(expr.operand)
         lines[0] = op[0] + lines[0]
         return lines
 
@@ -419,8 +416,6 @@ class Formatter:
         return formatted
 
     def format_binary_op(self, expr) -> List[str]:
-        # TODO: enforce in type?
-        assert len(expr.children) == 3
         return self._format_op(expr)
 
     def format_ternary_op(self, expr) -> List[str]:

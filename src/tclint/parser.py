@@ -638,14 +638,9 @@ class Parser:
                 op3 = self._parse_expression(ts)
                 expr.add(op3)
             else:
-                expr = BinaryOp(pos=op1.pos)
-                expr.add(op1)
-
                 operator = self._parse_operator(ts)
-                expr.add(operator)
-
                 op2 = self._parse_expression(ts)
-                expr.add(op2)
+                expr = BinaryOp(op1, operator, op2, pos=op1.pos, end_pos=op2.end_pos)
 
             if ts.type() != TOK_RPAREN and ts.value() not in {":", ","}:
                 ts.expect(TOK_EOF, message="expected end of expression", pos=ts.pos())
@@ -678,18 +673,16 @@ class Parser:
             end = ts.pos()
             return ParenExpression(expr, start, end)
         if ts.value() in {"-", "+", "~", "!"}:
-            operator = ts.value()
+            operator_val = ts.value()
             operator_pos = ts.pos()
             ts.next()
-            op = UnaryOp(pos=operator_pos)
-            op.add(BareWord(operator, pos=operator_pos, end_pos=ts.pos())),
-            op.add(self._parse_operand(ts))
+            operator = BareWord(operator_val, pos=operator_pos, end_pos=ts.pos())
+            operand = self._parse_operand(ts)
             # Since _parse_operand() munches whitespace after the operand, we
             # set the end of the UnaryOp to the end of the operand rather than
             # ts.pos(). Otherwise, the bounds of the UnaryOp would include all
             # that whitespace.
-            op.end_pos = op.children[-1].end_pos
-            return op
+            return UnaryOp(operator, operand, pos=operator_pos, end_pos=operand.end_pos)
 
         # If none of these, collect tokens that may comprise an operand
         operand = ""
