@@ -111,6 +111,24 @@ def test_arg_expansion():
     )
 
 
+def test_no_arg_expansion_before_semicolon():
+    script = "puts {*};"
+    tree = parse(script)
+    assert tree == Script(Command(BareWord("puts"), BracedWord("*")))
+
+
+def test_no_arg_expansion_in_command_sub():
+    script = "set any [list {*}]"
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("set"),
+            BareWord("any"),
+            CommandSub(Command(BareWord("list"), BracedWord("*"))),
+        )
+    )
+
+
 def test_weird_code_block():
     """Test that } that appears to be in comment actually terminates body of
     proc."""

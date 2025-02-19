@@ -301,8 +301,14 @@ class Parser:
 
         ts.assert_(TOK_ARG_EXPANSION)
 
-        # Arg expansion is just a regular braced word if followed by whitespace
-        if ts.type() in {TOK_WS, TOK_BACKSLASH_NEWLINE, TOK_NEWLINE, TOK_EOF}:
+        delimiters = [TOK_WS, TOK_BACKSLASH_NEWLINE, TOK_NEWLINE, TOK_SEMI, TOK_EOF]
+        if in_command_sub:
+            delimiters.append(TOK_RBRACKET)
+
+        # Arg expansion is just a regular braced word if followed by whitespace,
+        # or other word boundaries such as semicolon or right bracket
+        # (in command substitution)
+        if ts.type() in delimiters:
             return BracedWord("*", pos=pos, end_pos=ts.pos())
 
         return ArgExpansion(
