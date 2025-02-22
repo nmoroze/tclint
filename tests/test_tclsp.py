@@ -81,32 +81,33 @@ async def test_format(client: pytest_lsp.LanguageClient, tmp_path):
     await client.initialize_session(params)
 
     document = tmp_path / "source.tcl"
-    source = """if {{1}} {{
+
+    INDENT_TEST = """if {{1}} {{
 {}puts "hello"
 }}
 """
+    for source, expected, end in (
+        ("foo", "foo\n", (0, 3)),
+        ("foo\n\n\n\n\nbar\n", "foo\n\n\nbar\n", (6, 0)),
+        (INDENT_TEST.format(""), INDENT_TEST.format("   "), (3, 0)),
+    ):
+        with open(document, "w") as f:
+            f.write(source)
 
-    with open(document, "w") as f:
-        f.write(source.format(""))
-
-    def check_result(result, expected):
+        result = await client.text_document_formatting_async(
+            params=lsp.DocumentFormattingParams(
+                text_document=lsp.TextDocumentIdentifier(uri=document.as_uri()),
+                options=lsp.FormattingOptions(tab_size=3, insert_spaces=True),
+            ),
+        )
         assert len(result) == 1
         result = result[0]
 
         assert result.new_text == expected
         assert result.range.start.line == 0
         assert result.range.start.character == 0
-        assert result.range.end.line == 3
-        assert result.range.end.character == 0
-
-    # Initial check: format doc based on FormattingOptions
-    result = await client.text_document_formatting_async(
-        params=lsp.DocumentFormattingParams(
-            text_document=lsp.TextDocumentIdentifier(uri=document.as_uri()),
-            options=lsp.FormattingOptions(tab_size=3, insert_spaces=True),
-        ),
-    )
-    check_result(result, source.format("   "))
+        assert result.range.end.line == end[0]
+        assert result.range.end.character == end[1]
 
     # Check that tclint config overrides client config
     config = tmp_path / "tclint.toml"
@@ -125,7 +126,14 @@ indent = 'tab'""")
             options=lsp.FormattingOptions(tab_size=3, insert_spaces=True),
         ),
     )
-    check_result(result, source.format("\t")),
+    assert len(result) == 1
+    result = result[0]
+
+    assert result.new_text == INDENT_TEST.format("\t")
+    assert result.range.start.line == 0
+    assert result.range.start.character == 0
+    assert result.range.end.line == 3
+    assert result.range.end.character == 0
 
 
 @pytest.mark.asyncio
