@@ -222,13 +222,16 @@ def change_watched_files(ls: TclspServer, params: lsp.DidChangeWatchedFilesParam
 def format_document(ls: TclspServer, params: lsp.DocumentFormattingParams):
     """Format the entire document"""
     doc = ls.workspace.get_text_document(params.text_document.uri)
+
+    source = doc.source
+    start = lsp.Position(line=0, character=0)
+    last_line = source.rsplit("\n", 1)[-1]
+    end = lsp.Position(line=source.count("\n"), character=len(last_line))
+
     formatted = ls.format(doc, params.options)
     return [
         lsp.TextEdit(
-            range=lsp.Range(
-                start=lsp.Position(line=0, character=0),
-                end=lsp.Position(line=len(formatted.split("\n")) + 1, character=0),
-            ),
+            range=lsp.Range(start=start, end=end),
             new_text=formatted,
         )
     ]
