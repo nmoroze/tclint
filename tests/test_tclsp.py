@@ -83,51 +83,49 @@ async def test_format(client: pytest_lsp.LanguageClient, tmp_path):
     document = tmp_path / "source.tcl"
     source = """if {{1}} {{
 {}puts "hello"
-}}"""
+}}
+"""
 
     with open(document, "w") as f:
         f.write(source.format(""))
 
-    def make_callback(expected):
-        def callback(result):
-            assert len(result) == 1
-            result = result[0]
+    def check_result(result, expected):
+        assert len(result) == 1
+        result = result[0]
 
-            assert result.new_text == expected
-            assert result.range.start.line == 0
-            assert result.range.start.character == 0
-            assert result.range.end.line == len(source.splitlines())
-            assert result.range.end.character == len(source.splitlines()[-1])
-
-        return callback
+        assert result.new_text == expected
+        assert result.range.start.line == 0
+        assert result.range.start.character == 0
+        assert result.range.end.line == 3
+        assert result.range.end.character == 0
 
     # Initial check: format doc based on FormattingOptions
-    client.text_document_formatting(
+    result = await client.text_document_formatting_async(
         params=lsp.DocumentFormattingParams(
             text_document=lsp.TextDocumentIdentifier(uri=document.as_uri()),
             options=lsp.FormattingOptions(tab_size=3, insert_spaces=True),
         ),
-        callback=make_callback(source.format("   ")),
     )
+    check_result(result, source.format("   "))
 
     # Check that tclint config overrides client config
     config = tmp_path / "tclint.toml"
     with open(config, "w") as f:
         f.write("""[style]
-indent = tab""")
+indent = 'tab'""")
 
     client.workspace_did_change_watched_files(
         # `changes` isn't used by our server impl, so we can cheat and keep this empty
         params=lsp.DidChangeWatchedFilesParams(changes=[])
     )
 
-    client.text_document_formatting(
+    result = await client.text_document_formatting_async(
         params=lsp.DocumentFormattingParams(
             text_document=lsp.TextDocumentIdentifier(uri=document.as_uri()),
             options=lsp.FormattingOptions(tab_size=3, insert_spaces=True),
         ),
-        callback=make_callback(source.format("\t")),
     )
+    check_result(result, source.format("\t")),
 
 
 @pytest.mark.asyncio
