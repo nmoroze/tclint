@@ -31,7 +31,7 @@ class Config:
         default_factory=lambda: ["tcl", "sdc", "xdc", "upf"]
     )
     style_indent: OptionalType[Union[str, int]] = dataclasses.field(default=None)
-    style_line_length: int = dataclasses.field(default=80)
+    style_line_length: int = dataclasses.field(default=100)
     style_max_blank_lines: int = dataclasses.field(default=2)
     style_indent_namespace_eval: bool = dataclasses.field(default=True)
     style_spaces_in_braces: bool = dataclasses.field(default=False)

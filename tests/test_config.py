@@ -26,14 +26,14 @@ def test_example_config():
     assert global_.commands == pathlib.Path("~/.tclint/openroad.json")
 
     assert global_.style_indent == 2
-    assert global_.style_line_length == 100
+    assert global_.style_line_length == 80
     assert global_.style_indent_namespace_eval is False
     assert global_.style_spaces_in_braces is True
 
     group1 = config.get_for_path(pathlib.Path("other_file_group1/file.tcl"))
     assert group1.style_indent == 3
     assert group1.ignore == [Rule("command-args")]
-    assert group1.style_line_length == 100
+    assert group1.style_line_length == 80
 
     group2 = config.get_for_path(pathlib.Path("other_file_group2/foo/file.tcl"))
     assert group2.style_indent == 2

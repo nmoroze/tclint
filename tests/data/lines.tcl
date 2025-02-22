@@ -1,2 +1,2 @@
-puts "wayyyyyyyyyyyyyyyyy toooooooooooooooooooo longgggggggggggggggggggggggggggggg"
+puts "wayyyyyyyyyyyyyyyyyyyyyyyy tooooooooooooooooooooooooooo longgggggggggggggggggggggggggggggggggggg"
 puts "trailing whitespace"    

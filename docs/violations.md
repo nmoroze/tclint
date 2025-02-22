@@ -11,7 +11,7 @@ This page lists all lint violations that may be reported by `tclint`.
 
 ## `line-length`
 
-Lines must not exceed a maximum line length, configurable by `style.line-length`. The default is 80 characters.
+Lines must not exceed a maximum line length, configurable by `style.line-length`. The default is 100 characters.
 
 Lines that contain URLs are ignored, since these can't be broken nicely.
 

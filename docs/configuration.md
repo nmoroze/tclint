@@ -27,8 +27,8 @@ commands = "~/.tclint/openroad.json"
 [style]
 # number of spaces to indent. can also be set to "tab". defaults to 4.
 indent = 2
-# maximum allowed line length. defaults to 80.
-line-length = 100
+# maximum allowed line length. defaults to 100.
+line-length = 80
 # maximum allowed number of consecutive blank lines. defaults to 2.
 max-blank-lines = 1
 # whether to require indenting of "namespace eval" blocks. defaults to true.
