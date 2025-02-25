@@ -69,7 +69,7 @@ jobs:
       - name: Typecheck
         run: |
           pip install . # need to install package to ensure we get type stubs for deps
-          pip install mypy types-jsonschema -c dev-constraints.txt
+          pip install mypy -c dev-constraints.txt
           mypy src
 
       - name: Spell check

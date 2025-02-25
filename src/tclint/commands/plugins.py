@@ -4,10 +4,6 @@ import pathlib
 from typing import Dict, Optional, List
 from types import ModuleType
 
-import jsonschema
-
-from tclint.commands.schema import schema as command_schema
-
 
 class _PluginManager:
     def __init__(self):
@@ -45,15 +41,19 @@ class _PluginManager:
             return None
 
         try:
-            jsonschema.validate(instance=spec, schema=command_schema)
-        except jsonschema.exceptions.ValidationError as e:
-            print(f"Warning: invalid command spec {path}: {e.message} at {e.json_path}")
+            plugin_name = spec["plugin"]
+        except KeyError:
+            print(f"Warning: invalid command spec {path}, missing key 'plugin'")
             return None
-
-        plugin_name = spec["plugin"]
 
         module = self.get_mod(plugin_name)
         if module is None:
+            return None
+
+        try:
+            command_spec = spec["spec"]
+        except KeyError:
+            print(f"Warning: invalid command spec {path}, missing key 'spec'")
             return None
 
         if not hasattr(module, "commands_from_spec"):
@@ -64,7 +64,7 @@ class _PluginManager:
             return None
 
         commands_from_spec = getattr(module, "commands_from_spec")
-        return commands_from_spec(spec["spec"])
+        return commands_from_spec(command_spec)
 
     def get_mod(self, name: str) -> Optional[ModuleType]:
         if name not in self._installed:

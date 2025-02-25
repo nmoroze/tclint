@@ -8,4 +8,3 @@ pytest-timeout == 2.2.0
 mypy == 1.9.0
 codespell==2.3.0
 pytest-lsp==0.4.3
-types-jsonschema == 4.23.0.20241208
