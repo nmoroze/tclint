@@ -399,10 +399,20 @@ DEFAULT_CONFIGS = ("tclint.toml", ".tclint")
 def get_config(
     config_path: OptionalType[pathlib.Path], root: pathlib.Path
 ) -> OptionalType[RunConfig]:
+    """Loads a config file.
+
+    If `config_path` is supplied, attempts to read config file from this path. If the
+    path can't be found, raises a ConfigError.
+
+    Otherwise, attempts to read config from `root`/{tclint.toml, .tclint,
+    pyproject.toml} (in that order). If none of these files can be found, returns None.
+
+    `root` is also used to resolve some relative paths in the config file.
+    """
     # user-supplied
     if config_path is not None:
         try:
-            return RunConfig.from_path(config_path, pathlib.Path.cwd())
+            return RunConfig.from_path(config_path, root)
         except FileNotFoundError:
             raise ConfigError(f"path {config_path} doesn't exist")
 
