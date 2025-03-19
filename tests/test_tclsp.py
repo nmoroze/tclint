@@ -205,6 +205,85 @@ async def test_config(client: pytest_lsp.LanguageClient, tmp_path_factory):
 
 
 @pytest.mark.asyncio
+async def test_config_extension_settings(
+    client: pytest_lsp.LanguageClient, tmp_path_factory
+):
+    """Tests configuration reading, similar to test_config, except with paths to the
+    config files supplied to the LSP via initialization params settings.
+    """
+    # Set up workspaces
+    document = MY_DIR / "data" / "dirty.tcl"
+
+    ws_foo = tmp_path_factory.mktemp("foo")
+    config_foo = ws_foo / "nondefault.toml"
+    with open(config_foo, "w") as f:
+        f.write("ignore = ['redundant-expr']")
+    doc_foo = Path(shutil.copy(document, ws_foo))
+
+    ws_bar = tmp_path_factory.mktemp("bar")
+    config_bar = ws_bar / "nondefault.toml"
+    with open(config_bar, "w") as f:
+        f.write("ignore = ['unbraced-expr']")
+    doc_bar = Path(shutil.copy(document, ws_bar))
+
+    config_global = tmp_path_factory.mktemp("global") / "nondefault.toml"
+    with open(config_global, "w") as f:
+        f.write("ignore = ['redundant-expr', 'unbraced-expr']")
+
+    # Initialize client
+    params = lsp.InitializeParams(
+        capabilities=get_capabilities("visual-studio-code"),
+        workspace_folders=[
+            lsp.WorkspaceFolder(uri=ws_foo.as_uri(), name=ws_foo.name),
+            lsp.WorkspaceFolder(uri=ws_bar.as_uri(), name=ws_bar.name),
+        ],
+        initialization_options={
+            "settings": [
+                {
+                    "cwd": ws_foo,
+                    "configPath": config_foo,
+                },
+                {
+                    "cwd": ws_bar,
+                    "configPath": config_bar,
+                },
+            ],
+            "globalSettings": {"cwd": "/", "configPath": config_global},
+        },
+    )
+    await client.initialize_session(params)
+
+    # Check diagnostics for workspace "foo"
+    results = await client.text_document_diagnostic_async(
+        params=lsp.DocumentDiagnosticParams(
+            text_document=lsp.TextDocumentIdentifier(uri=doc_foo.as_uri())
+        )
+    )
+    assert results is not None
+    assert len(results.items) == 1
+    assert results.items[0].code == "unbraced-expr"
+
+    # Check diagnostics for workspace "bar"
+    results = await client.text_document_diagnostic_async(
+        params=lsp.DocumentDiagnosticParams(
+            text_document=lsp.TextDocumentIdentifier(uri=doc_bar.as_uri())
+        )
+    )
+    assert results is not None
+    assert len(results.items) == 1
+    assert results.items[0].code == "redundant-expr"
+
+    # Check diagnostics for an unpatriated file, global config should apply here
+    results = await client.text_document_diagnostic_async(
+        params=lsp.DocumentDiagnosticParams(
+            text_document=lsp.TextDocumentIdentifier(uri=document.as_uri())
+        )
+    )
+    assert results is not None
+    assert len(results.items) == 0
+
+
+@pytest.mark.asyncio
 async def test_invalid_config(client: pytest_lsp.LanguageClient, tmp_path_factory):
     # Set up workspace
     ws = tmp_path_factory.mktemp("ws")

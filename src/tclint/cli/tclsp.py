@@ -1,7 +1,8 @@
 import argparse
+import dataclasses
 import logging
 from pathlib import Path
-from typing import List
+from typing import Dict, List, Optional
 import uuid
 
 from lsprotocol import types as lsp
@@ -11,7 +12,7 @@ from pygls.workspace import TextDocument
 from pygls.uris import to_fs_path
 
 from tclint import main as tclint
-from tclint.config import get_config, DEFAULT_CONFIGS, Config, ConfigError
+from tclint.config import get_config, DEFAULT_CONFIGS, RunConfig, Config, ConfigError
 from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
 from tclint.parser import Parser
@@ -68,6 +69,12 @@ def lint(source, config, path):
     return diagnostics
 
 
+@dataclasses.dataclass
+class ExtensionSettings:
+    # This path is expected to be absolute.
+    config_file: Optional[Path] = dataclasses.field(default=None)
+
+
 class TclspServer(LanguageServer):
     """Main server class. Implements pull diagnostics using a method adapted from
     https://pygls.readthedocs.io/en/latest/examples/pull-diagnostics.html."""
@@ -75,9 +82,13 @@ class TclspServer(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.diagnostics = {}
-        # maps root path -> RunConfig, since there may be more than one workspace.
-        self.configs = {}
+        self.global_config: RunConfig = None
+        # Maps workspace roots to configs.
+        self.configs: Dict[Path, RunConfig] = {}
         self.client_supports_refresh = False
+
+        self.global_settings = ExtensionSettings()
+        self.workspace_settings: Dict[Path, ExtensionSettings] = {}
 
     def get_roots(self) -> List[Path]:
         roots = []
@@ -94,12 +105,19 @@ class TclspServer(LanguageServer):
 
         return roots
 
+    def get_config_file(self, workspace_root: Path) -> Optional[Path]:
+        if workspace_root in self.workspace_settings:
+            settings = self.workspace_settings[workspace_root]
+            return settings.config_file
+        return self.global_settings.config_file
+
     def load_configs(self):
         self.configs = {}
         for root in self.get_roots():
             config = None
             try:
-                config = get_config(None, root)
+                path = self.get_config_file(root)
+                config = get_config(path, root)
             except ConfigError as e:
                 self.show_message(f"Error loading config file: {e}")
 
@@ -113,13 +131,23 @@ class TclspServer(LanguageServer):
 
                 self.configs[root] = config
 
+        # If a global config file exists, we apply it to any file not under a workspace
+        # folder.
+        global_path = self.global_settings.config_file
+        if global_path is not None:
+            try:
+                config = get_config(global_path, global_path.parent)
+                self.global_config = config
+            except ConfigError as e:
+                self.show_message(f"Error loading config file: {e}")
+
     def get_config(self, path: Path) -> Config:
-        matching_config = Config()
         for root, config in self.configs.items():
             if path.is_relative_to(root):
-                matching_config = config.get_for_path(path)
-                break
-        return matching_config
+                return config.get_for_path(path)
+        if self.global_config is not None:
+            return self.global_config.get_for_path(path)
+        return Config()
 
     def parse(self, document: TextDocument):
         path = Path(document.path)
@@ -237,6 +265,34 @@ def format_document(ls: TclspServer, params: lsp.DocumentFormattingParams):
     ]
 
 
+@server.feature(lsp.INITIALIZE)
+def initialize(ls: TclspServer, params: lsp.InitializeParams) -> None:
+    if params.initialization_options is None:
+        return
+
+    # Apply settings provided on initialization. The schema was copied from the template
+    # that the tclint-vscode extension is based on.
+    globalSettings = params.initialization_options.get("globalSettings", {})
+    if globalSettings.get("configPath"):
+        path = Path(globalSettings["configPath"]).expanduser()
+        if not path.is_absolute():
+            ls.show_message(
+                f"Warning: expected global config path to be absolute, got {path}"
+            )
+        else:
+            ls.global_settings.config_file = path
+
+    for settings in params.initialization_options.get("settings", []):
+        root = Path(settings["cwd"])
+        if root not in ls.workspace_settings:
+            ls.workspace_settings[root] = ExtensionSettings()
+        if settings.get("configPath"):
+            path = Path(settings["configPath"]).expanduser()
+            if not path.is_absolute():
+                path = root / path
+            ls.workspace_settings[root].config_file = path
+
+
 @server.feature(lsp.INITIALIZED)
 def init(ls: TclspServer, params: lsp.InitializeParams):
     """Registers file watchers on config filenames so that we can reload configs and
@@ -266,6 +322,12 @@ def init(ls: TclspServer, params: lsp.InitializeParams):
         for filename in (*DEFAULT_CONFIGS, "pyproject.toml"):
             pattern = f"**/{filename}"
             watchers.append(lsp.FileSystemWatcher(glob_pattern=pattern))
+
+        for settings in (ls.global_settings, *ls.workspace_settings.values()):
+            if settings.config_file is not None:
+                watchers.append(
+                    lsp.FileSystemWatcher(glob_pattern=settings.config_file)
+                )
 
         ls.register_capability(
             lsp.RegistrationParams(
