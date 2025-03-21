@@ -8,6 +8,26 @@ and formatting into editors.
 `tclsp` searches for `tclint` configuration files in the root of open workspaces.
 `tclsp` defaults to the client-provided setting for indentation, but this will be overridden by an explicit setting in a config file.
 
+On initialization, a client may provide `tclsp` with explicit paths to configuration files via [`InitializeParams.initializationOptions`][initialize-params].
+This detail only concerns advanced users who are manually configuring LSP integration with their editor.
+For VS Code users, this is handled automatically by the [extension][vscode]. The options are expected to match a schema like the following:
+
+```jsonc
+{
+  // global config, applies to all files (if no workspace config applies)
+  "globalSettings": {
+    "configPath": "/path/to/global/config.toml"
+  },
+  // workspace configs, each applies to files under corresponding `cwd`
+  "settings": [{
+    "cwd": "/path/to/workspace/folder",
+    "configPath": "/path/to/workspace/config.toml",
+  }]
+}
+```
+
+Note that this schema is likely to change in a future release.
+
 ## Supported Editors
 
 This language server should be compatible with any editor that supports the Language
@@ -87,3 +107,4 @@ Due to an unsupported LSP feature, Emacs will not automatically refresh diagnost
 the `tclint` configuration file is updated.
 
 [vscode]: https://marketplace.visualstudio.com/items?itemName=nmoroze.tclint
+[initialize-params]: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams
