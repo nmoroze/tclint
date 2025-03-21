@@ -244,6 +244,10 @@ class Parser:
             value += ts.value()
             ts.next()
 
+        # Stripping trailing whitespace from comments here allows tclfmt to clean it up
+        # without affecting the AST.
+        value = value.rstrip()
+
         return Comment(value, pos=pos, end_pos=ts.pos())
 
     def parse_command(self, ts, in_command_sub):

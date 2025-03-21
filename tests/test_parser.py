@@ -150,7 +150,7 @@ def test_weird_code_block():
             BareWord("proc"),
             BareWord("foo"),
             List(),
-            Script(Comment(" bar ")),
+            Script(Comment(" bar")),
         ),
         Command(BareWord("puts"), BareWord("baz")),
         Command(BareWord("}")),

@@ -27,6 +27,10 @@ def _test(
 
     assert out == expected + "\n"
 
+    original_tree = parser.parse(script)
+    formatted_tree = parser.parse(out)
+    assert original_tree == formatted_tree
+
 
 def test_fizzbuzz():
     with open(MY_DIR / "data" / "dirty.tcl", "r") as f:
@@ -628,3 +632,7 @@ def test_preserve_braces_in_unbraced_expr():
     semantic meaning of the command."""
     script = r"expr {$foo} + 2"
     _test(script, script)
+
+
+def test_strip_trailing_whitespace_from_comments():
+    _test("# foo ", "# foo")
