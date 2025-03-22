@@ -98,13 +98,10 @@ def test_resolve_sources(tmp_path_factory):
     to_include = tmp_path / "src" / "foo.tcl"
     to_include.touch()
 
-    cwd = os.getcwd()
-    os.chdir(tmp_path)
-
     extensions = ["tcl"]
 
     sources = main.resolve_sources(
-        [pathlib.Path(".")],
+        [tmp_path],
         exclude_patterns=[
             # test bare pattern matches anywhere in tree
             "ignore",
@@ -118,7 +115,7 @@ def test_resolve_sources(tmp_path_factory):
     )
 
     assert len(sources) == 1
-    assert sources[0] == to_include.relative_to(tmp_path)
+    assert sources[0] == to_include
 
     # test absolute path outside of exclude_root doesn't get matched by ignore
     # pattern starting with "/"
@@ -158,8 +155,6 @@ def test_resolve_sources(tmp_path_factory):
         extensions=extensions,
     )
     assert len(sources) == 0
-
-    os.chdir(cwd)
 
 
 def test_resolve_sources_extensions(tmp_path):
