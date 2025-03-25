@@ -667,16 +667,16 @@ class Parser:
         if ts.type() == TOK_LBRACKET:
             return self.parse_command_sub(ts)
         if ts.type() == TOK_LPAREN:
-            expr = ParenExpression(pos=ts.pos())
+            start = ts.pos()
             ts.next()
-            expr.add(self._parse_expression(ts))
+            expr = self._parse_expression(ts)
             ts.expect(
                 TOK_RPAREN,
                 message="reached EOF without finding match for paren",
                 pos=expr.pos,
             )
-            expr.end_pos = ts.pos()
-            return expr
+            end = ts.pos()
+            return ParenExpression(expr, start, end)
         if ts.value() in {"-", "+", "~", "!"}:
             operator = ts.value()
             operator_pos = ts.pos()

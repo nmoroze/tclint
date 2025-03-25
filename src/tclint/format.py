@@ -371,9 +371,7 @@ class Formatter:
         return ["{"] + self._indent(formatted, self.opts.indent) + ["}"]
 
     def format_paren_expression(self, expr) -> List[str]:
-        # TODO: enforce in type?
-        assert len(expr.children) == 1
-        body = expr.children[0]
+        body = expr.body
 
         formatted = ["("]
         lines = self.format(body)

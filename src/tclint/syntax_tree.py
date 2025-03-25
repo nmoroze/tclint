@@ -373,6 +373,10 @@ class BracedExpression(Node):
 
 
 class ParenExpression(Node):
+    def __init__(self, body: Expression, pos=None, end_pos=None):
+        self.body = body
+        super().__init__(body, pos=pos, end_pos=end_pos)
+
     def accept(self, visitor, recurse=False):
         if recurse:
             self._recurse(visitor)
