@@ -1,10 +1,12 @@
 import os
 import pathlib
 import subprocess
+import sys
 
 import pytest
 
 from tclint import main
+from tclint.cli.utils import make_exclude_filter
 
 MY_DIR = pathlib.Path(__file__).parent.resolve()
 
@@ -155,6 +157,11 @@ def test_resolve_sources(tmp_path_factory):
         extensions=extensions,
     )
     assert len(sources) == 0
+
+@pytest.mark.skipif(sys.platform != 'win32', reason="testing edge case with Windows path handling")
+def test_make_exclude_filter():
+    is_excluded = make_exclude_filter(["foo.tcl"], pathlib.Path("D:\\"))
+    assert is_excluded(pathlib.Path("C:\\foo.tcl"))
 
 
 def test_resolve_sources_extensions(tmp_path):

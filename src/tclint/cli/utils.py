@@ -16,6 +16,33 @@ def register_codec_warning(name):
     codecs.register_error(name, replace_with_warning_handler)
 
 
+def make_exclude_filter(exclude_patterns: List[str], exclude_root: pathlib.Path):
+    exclude_root = exclude_root.resolve()
+    exclude_patterns = [
+        re.sub(r"^\s*#", r"\#", pattern) for pattern in exclude_patterns
+    ]
+    exclude_spec = pathspec.PathSpec.from_lines("gitwildmatch", exclude_patterns)
+
+    def is_excluded(path: pathlib.Path) -> bool:
+        abspath = path.resolve()
+
+        try:
+            relpath = pathlib.Path(os.path.relpath(abspath, start=exclude_root))
+            print('relpath', relpath)
+        except ValueError:
+            print(
+                "Warning: processing files on different drive from where command was"
+                " run, 'exclude' config may not behave as expected"
+            )
+            relpath = abspath
+
+        if exclude_spec.match_file(relpath):
+            return True
+        return False
+
+    return is_excluded
+
+
 def resolve_sources(
     paths: List[pathlib.Path],
     exclude_patterns: List[str],
@@ -34,25 +61,8 @@ def resolve_sources(
     """
     extensions = [f".{ext}" if not ext.startswith(".") else ext for ext in extensions]
     exclude_root = exclude_root.resolve()
-    exclude_patterns = [
-        re.sub(r"^\s*#", r"\#", pattern) for pattern in exclude_patterns
-    ]
-    exclude_spec = pathspec.PathSpec.from_lines("gitwildmatch", exclude_patterns)
 
-    def is_excluded(path):
-        abspath = path.resolve()
-        try:
-            relpath = os.path.relpath(abspath, start=exclude_root)
-        except ValueError:
-            print(
-                "Warning: processing files on different drive from where command was"
-                " run, 'exclude' config may not behave as expected"
-            )
-            relpath = abspath
-
-        if exclude_spec.match_file(relpath):
-            return True
-        return False
+    is_excluded = make_exclude_filter(exclude_patterns, exclude_root)
 
     sources: List[Optional[pathlib.Path]] = []
 

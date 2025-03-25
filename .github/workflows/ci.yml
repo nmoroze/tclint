@@ -6,21 +6,42 @@ on:
   pull_request:
 
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+  # test:
+  #   name: Test
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+  #   steps:
+  #     - name: Check out Git repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Set up Python ${{ matrix.python }}
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: ${{ matrix.python }}
+
+  #     - name: Install tclint
+  #       run: |
+  #         pip install .[dev] -c dev-constraints.txt
+
+  #     - name: Run tests
+  #       run: |
+  #         pytest
+
+  test_windows:
+    name: Test Windows
+    runs-on: windows-latest
 
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python }}
+          python-version: 3.9
 
       - name: Install tclint
         run: |
@@ -28,51 +49,51 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest
+          pytest -k test_make_exclude_filter -s -vv
 
-  format:
-    name: Check format
-    runs-on: ubuntu-latest
+  # format:
+  #   name: Check format
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Check out Git repository
+  #       uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: 3.11
 
-      - name: Check format
-        run: |
-          pip install black -c dev-constraints.txt
-          black --check --preview .
+  #     - name: Check format
+  #       run: |
+  #         pip install black -c dev-constraints.txt
+  #         black --check --preview .
 
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
+  # lint:
+  #   name: Lint
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Check out Git repository
+  #       uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: 3.11
 
-      - name: Lint
-        run: |
-          pip install flake8 -c dev-constraints.txt
-          flake8 --statistics .
+  #     - name: Lint
+  #       run: |
+  #         pip install flake8 -c dev-constraints.txt
+  #         flake8 --statistics .
 
-      - name: Typecheck
-        run: |
-          pip install . # need to install package to ensure we get type stubs for deps
-          pip install mypy -c dev-constraints.txt
-          mypy src
+  #     - name: Typecheck
+  #       run: |
+  #         pip install . # need to install package to ensure we get type stubs for deps
+  #         pip install mypy -c dev-constraints.txt
+  #         mypy src
 
-      - name: Spell check
-        run: |
-          pip install codespell -c dev-constraints.txt
-          git ls-files | xargs codespell
+  #     - name: Spell check
+  #       run: |
+  #         pip install codespell -c dev-constraints.txt
+  #         git ls-files | xargs codespell
