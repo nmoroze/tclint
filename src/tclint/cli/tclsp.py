@@ -135,22 +135,13 @@ class TclspServer(LanguageServer):
     def load_configs(self):
         self.configs = {}
         for root in self.get_roots():
-            config = None
             try:
                 path = self.get_config_file(root)
                 config = get_config(path, root)
+                if config is not None:
+                    self.configs[root] = config
             except ConfigError as e:
                 self.show_message(f"Error loading config file: {e}")
-
-            if config is not None:
-                for other in self.configs.keys():
-                    if root.is_relative_to(other) or other.is_relative_to(root):
-                        self.show_message(
-                            f"Warning: found configs in overlapping workspaces: {root},"
-                            f" {other}. It's undefined which will apply."
-                        )
-
-                self.configs[root] = config
 
         # If a global config file exists, we apply it to any file not under a workspace
         # folder.

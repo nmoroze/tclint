@@ -314,11 +314,16 @@ async def test_nested_configs(client: pytest_lsp.LanguageClient, tmp_path_factor
     # Set up workspaces
     parent_ws = tmp_path_factory.mktemp("ws")
     with open(parent_ws / "tclint.toml", "w") as f:
-        f.write("")
+        f.write("ignore = []")
     child_ws = parent_ws / "child"
     child_ws.mkdir()
     with open(child_ws / "tclint.toml", "w") as f:
-        f.write("")
+        f.write("ignore = ['command-args']")
+
+    document = child_ws / "source.tcl"
+    with open(document, "w") as f:
+        # Missing arguments
+        f.write("puts")
 
     # Initialize client
     params = lsp.InitializeParams(
@@ -329,13 +334,13 @@ async def test_nested_configs(client: pytest_lsp.LanguageClient, tmp_path_factor
         ],
     )
     await client.initialize_session(params)
-    await client.wait_for_notification(lsp.WINDOW_SHOW_MESSAGE)
-    assert len(client.messages) == 1
-    assert (
-        client.messages[0].message
-        == f"Warning: found configs in overlapping workspaces: {child_ws},"
-        f" {parent_ws}. It's undefined which will apply."
+    results = await client.text_document_diagnostic_async(
+        params=lsp.DocumentDiagnosticParams(
+            text_document=lsp.TextDocumentIdentifier(uri=document.as_uri())
+        )
     )
+    assert results is not None
+    assert len(results.items) == 0
 
 
 @pytest.mark.asyncio
