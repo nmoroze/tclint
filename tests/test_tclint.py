@@ -158,10 +158,17 @@ def test_resolve_sources(tmp_path_factory):
     )
     assert len(sources) == 0
 
-@pytest.mark.skipif(sys.platform != 'win32', reason="testing edge case with Windows path handling")
-def test_make_exclude_filter():
-    is_excluded = make_exclude_filter(["foo.tcl"], pathlib.Path("D:\\"))
-    assert is_excluded(pathlib.Path("C:\\foo.tcl"))
+
+@pytest.mark.skipif(sys.platform != 'win32', reason="testing edge cases with Windows path handling")
+@pytest.mark.parametrize("pattern,path,root,excluded", [
+    ("foo.tcl", "C:\\foo.tcl", "D:\\", True),
+    ("foo.tcl", "C:\\blah.tcl", "D:\\", False),
+    ("../foo.tcl", "C:\\foo.tcl", "D:\\", False),
+    ("/foo.tcl", "C:\\foo.tcl", "D:\\", False),
+])
+def test_make_exclude_filter(pattern, path, root, excluded):
+    is_excluded = make_exclude_filter([pattern], pathlib.Path(root))
+    assert is_excluded(pathlib.Path(path)) == excluded
 
 
 def test_resolve_sources_extensions(tmp_path):
