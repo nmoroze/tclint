@@ -1,6 +1,6 @@
 import argparse
 import pathlib
-from typing import Union, List, Any
+from typing import Union, List
 from typing import Optional as OptionalType
 import dataclasses
 import sys
@@ -24,8 +24,8 @@ class Config:
     validation (and normalization) is defined by `validators` below.
     """
 
-    exclude: List[Any] = dataclasses.field(default_factory=list)
-    ignore: List[Any] = dataclasses.field(default_factory=list)
+    exclude: List[str] = dataclasses.field(default_factory=list)
+    ignore: List[Rule] = dataclasses.field(default_factory=list)
     commands: OptionalType[pathlib.Path] = dataclasses.field(default=None)
     extensions: List[str] = dataclasses.field(
         default_factory=lambda: ["tcl", "sdc", "xdc", "upf"]
@@ -96,21 +96,10 @@ _VALIDATORS = {
     "ignore": And(
         Use(_str2list),
         [
-            Or(
-                Use(
-                    Rule,
-                    error="invalid rule ID provided for 'ignore'",
-                ),
-                {
-                    "path": Use(pathlib.Path),
-                    "rules": [
-                        Use(
-                            Rule,
-                            error="invalid rule ID provided for 'ignore'",
-                        )
-                    ],
-                },
-            )
+            Use(
+                Rule,
+                error="invalid rule ID provided for 'ignore'",
+            ),
         ],
     ),
     "commands": Use(pathlib.Path),

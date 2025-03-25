@@ -3,7 +3,7 @@
 import argparse
 import pathlib
 import sys
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 
 from tclint.config import (
@@ -32,23 +32,14 @@ EXIT_INPUT_ERROR = 4
 
 
 def filter_violations(
-    violations, config_ignore, inline_ignore, path: Optional[pathlib.Path]
-):
-    global_ignore = []
-    if path is not None:
-        path = path.resolve()
-    for entry in config_ignore:
-        if isinstance(entry, Rule):
-            global_ignore.append(entry)
-        elif path is not None:
-            ignore_path = entry["path"].resolve()
-            if path.is_relative_to(ignore_path):
-                global_ignore.extend(entry["rules"])
-
+    violations: List[Violation],
+    config_ignore: List[Rule],
+    inline_ignore: Dict[int, List[Rule]],
+) -> List[Violation]:
     filtered_violations = []
 
     for violation in violations:
-        if violation.id in global_ignore:
+        if violation.id in config_ignore:
             continue
         line = violation.start[0]
         if line in inline_ignore and violation.id in inline_ignore[line]:
@@ -80,7 +71,7 @@ def lint(
 
     v = CommentVisitor()
     ignore_lines = v.run(tree, path)
-    violations = filter_violations(violations, config.ignore, ignore_lines, path)
+    violations = filter_violations(violations, config.ignore, ignore_lines)
 
     return violations
 

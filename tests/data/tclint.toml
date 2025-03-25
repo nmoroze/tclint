@@ -1,11 +1,7 @@
 # paths to exclude when searching directories. defaults to empty list.
 exclude = ["ignore_me/", "ignore*.tcl", "/ignore_from_here"]
 # lint violations to ignore. defaults to empty list.
-# can also supply an inline table with a path and a list of violations to ignore under that path.
-ignore = [
-    "unbraced-expr",
-    { path = "files_with_long_lines/", rules = ["line-length"] }
-]
+ignore = ["unbraced-expr"]
 # extensions of files to lint when searching directories. defaults to tcl, sdc,
 # xdc, and upf.
 extensions = ["tcl"]

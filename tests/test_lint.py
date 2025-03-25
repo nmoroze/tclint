@@ -30,13 +30,13 @@ def test_accidental_return_expr():
     assert violations[0].id == Rule("command-args")
 
 
-def test_ignore_path():
+def test_ignore():
     script = "expr $foo"
     fake_path = Path("bad.tcl")
     violations = lint(script, Config(), fake_path)
     assert len(violations) == 1
 
-    config = Config(ignore=[{"path": fake_path, "rules": [Rule("unbraced-expr")]}])
+    config = Config(ignore=[Rule("unbraced-expr")])
     violations = lint(script, config, fake_path)
     assert len(violations) == 0
 

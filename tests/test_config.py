@@ -15,13 +15,7 @@ def test_example_config():
     global_ = config.get_for_path(pathlib.Path())
 
     assert global_.exclude == ["ignore_me/", "ignore*.tcl", "/ignore_from_here"]
-    assert global_.ignore == [
-        Rule("unbraced-expr"),
-        {
-            "path": pathlib.Path("files_with_long_lines/"),
-            "rules": [Rule("line-length")],
-        },
-    ]
+    assert global_.ignore == [Rule("unbraced-expr")]
     assert global_.extensions == ["tcl"]
     assert global_.commands == pathlib.Path("~/.tclint/openroad.json")
 
