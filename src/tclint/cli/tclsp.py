@@ -16,6 +16,7 @@ from tclint.config import get_config, DEFAULT_CONFIGS, RunConfig, Config, Config
 from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
 from tclint.parser import Parser
+from tclint.cli import utils
 
 try:
     from tclint._version import __version__  # type: ignore
@@ -91,6 +92,7 @@ class TclspServer(LanguageServer):
         self.workspace_settings: Dict[Path, ExtensionSettings] = {}
 
     def get_roots(self) -> List[Path]:
+        """Returns root folders currently open in the workspace."""
         roots = []
         for uri in self.workspace.folders.keys():
             path = to_fs_path(uri)
@@ -104,6 +106,25 @@ class TclspServer(LanguageServer):
             roots.append(Path(self.workspace.root_path))
 
         return roots
+
+    def get_root(self, path: Path) -> Optional[Path]:
+        """Returns workspace root folder that's closest to path.
+
+        Returns None if path is not in a workspace folder or if there are no workspace
+        folders.
+        """
+        roots = self.get_roots()
+        closest_root = None
+        distance = float("inf")
+        for root in roots:
+            try:
+                relpath = path.relative_to(root)
+            except ValueError:
+                continue
+            if len(relpath.parts) < distance:
+                distance = len(relpath.parts)
+                closest_root = root
+        return closest_root
 
     def get_config_file(self, workspace_root: Path) -> Optional[Path]:
         if workspace_root in self.workspace_settings:
@@ -141,22 +162,33 @@ class TclspServer(LanguageServer):
             except ConfigError as e:
                 self.show_message(f"Error loading config file: {e}")
 
-    def get_config(self, path: Path) -> Config:
-        for root, config in self.configs.items():
-            if path.is_relative_to(root):
-                return config.get_for_path(path)
+    def get_config(self, path: Path, root: Optional[Path]) -> Config:
+        if root in self.configs:
+            return self.configs[root].get_for_path(path)
         if self.global_config is not None:
             return self.global_config.get_for_path(path)
         return Config()
 
-    def parse(self, document: TextDocument):
+    def _compute_diagnostics(self, document: TextDocument) -> List[lsp.Diagnostic]:
         path = Path(document.path)
-        config = self.get_config(path)
+        root = self.get_root(path)
+        config = self.get_config(path, root)
 
+        if root is None:
+            root = path.parent
+
+        is_excluded = utils.make_exclude_filter(config.exclude)
+        if is_excluded(path, root):
+            return []
+
+        return lint(document.source, config, path)
+
+    def compute_diagnostics(self, document: TextDocument):
         # `None` sentinel ensures that `diagnostics` gets updated if the URI is not
         # present.
         _, previous = self.diagnostics.get(document.uri, (0, None))
-        diagnostics = lint(document.source, config, path)
+
+        diagnostics = self._compute_diagnostics(document)
 
         # Only update if the list has changed
         if previous != diagnostics:
@@ -164,7 +196,8 @@ class TclspServer(LanguageServer):
 
     def format(self, document: TextDocument, options: lsp.FormattingOptions):
         path = Path(document.path)
-        config = self.get_config(path)
+        root = self.get_root(path)
+        config = self.get_config(path, root)
 
         parser = Parser()
 
@@ -192,7 +225,7 @@ def did_open(ls: TclspServer, params: lsp.DidOpenTextDocumentParams):
     """Parse each document when it is opened"""
     logging.debug("Received %s: %s", lsp.TEXT_DOCUMENT_DID_OPEN, params)
     doc = ls.workspace.get_text_document(params.text_document.uri)
-    ls.parse(doc)
+    ls.compute_diagnostics(doc)
 
 
 @server.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)
@@ -200,7 +233,7 @@ def did_change(ls: TclspServer, params: lsp.DidOpenTextDocumentParams):
     """Parse each document when it is changed"""
     logging.debug("Received %s: %s", lsp.TEXT_DOCUMENT_DID_CHANGE, params)
     doc = ls.workspace.get_text_document(params.text_document.uri)
-    ls.parse(doc)
+    ls.compute_diagnostics(doc)
 
 
 @server.feature(
@@ -223,7 +256,7 @@ def document_diagnostic(ls: TclspServer, params: lsp.DocumentDiagnosticParams):
     if (uri := params.text_document.uri) not in ls.diagnostics:
         was_cached = False
         doc = ls.workspace.get_text_document(uri)
-        ls.parse(doc)
+        ls.compute_diagnostics(doc)
 
     version, diagnostics = ls.diagnostics[uri]
     result_id = f"{uri}@{version}"

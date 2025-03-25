@@ -336,3 +336,35 @@ async def test_nested_configs(client: pytest_lsp.LanguageClient, tmp_path_factor
         == f"Warning: found configs in overlapping workspaces: {child_ws},"
         f" {parent_ws}. It's undefined which will apply."
     )
+
+
+@pytest.mark.asyncio
+async def test_lsp_exclude(client: pytest_lsp.LanguageClient, tmp_path):
+    """Test that files excluded by the config are ignored."""
+    document = tmp_path / "excluded.tcl"
+    config = tmp_path / "tclint.toml"
+
+    with open(document, "w") as f:
+        # Missing arguments
+        f.write("puts")
+
+    with open(config, "w") as f:
+        f.write(f"exclude = ['{document.name}']")
+
+    params = lsp.InitializeParams(
+        capabilities=get_capabilities("visual-studio-code"),
+        initialization_options={
+            "globalSettings": {
+                "configPath": config,
+            },
+        },
+    )
+    await client.initialize_session(params)
+
+    results = await client.text_document_diagnostic_async(
+        params=lsp.DocumentDiagnosticParams(
+            text_document=lsp.TextDocumentIdentifier(uri=document.as_uri())
+        )
+    )
+    assert results is not None
+    assert len(results.items) == 0
