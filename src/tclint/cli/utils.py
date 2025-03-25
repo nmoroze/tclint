@@ -16,6 +16,31 @@ def register_codec_warning(name):
     codecs.register_error(name, replace_with_warning_handler)
 
 
+def make_exclude_filter(exclude_patterns: List[str]):
+    exclude_patterns = [
+        re.sub(r"^\s*#", r"\#", pattern) for pattern in exclude_patterns
+    ]
+    exclude_spec = pathspec.PathSpec.from_lines("gitwildmatch", exclude_patterns)
+
+    def is_excluded(path: pathlib.Path, root: pathlib.Path) -> bool:
+        abspath = path.resolve()
+        root = root.resolve()
+
+        try:
+            relpath = pathlib.Path(os.path.relpath(abspath, start=root))
+        except ValueError:
+            # We get here if path and exclude_root are on different drives (on Windows).
+            # Things should still behave roughly as expected without using a relative
+            # path. See test_cli_utils.py::test_exclude_filter_windows for test cases.
+            relpath = abspath
+
+        if exclude_spec.match_file(relpath):
+            return True
+        return False
+
+    return is_excluded
+
+
 def resolve_sources(
     paths: List[pathlib.Path],
     exclude_patterns: List[str],
@@ -33,26 +58,7 @@ def resolve_sources(
     Raises FileNotFoundError if a supplied path does not exist.
     """
     extensions = [f".{ext}" if not ext.startswith(".") else ext for ext in extensions]
-    exclude_root = exclude_root.resolve()
-    exclude_patterns = [
-        re.sub(r"^\s*#", r"\#", pattern) for pattern in exclude_patterns
-    ]
-    exclude_spec = pathspec.PathSpec.from_lines("gitwildmatch", exclude_patterns)
-
-    def is_excluded(path):
-        abspath = path.resolve()
-        try:
-            relpath = os.path.relpath(abspath, start=exclude_root)
-        except ValueError:
-            print(
-                "Warning: processing files on different drive from where command was"
-                " run, 'exclude' config may not behave as expected"
-            )
-            relpath = abspath
-
-        if exclude_spec.match_file(relpath):
-            return True
-        return False
+    is_excluded = make_exclude_filter(exclude_patterns)
 
     sources: List[Optional[pathlib.Path]] = []
 
@@ -64,7 +70,7 @@ def resolve_sources(
         if not path.exists():
             raise FileNotFoundError(f"path {path} does not exist")
 
-        if is_excluded(path):
+        if is_excluded(path, exclude_root):
             continue
 
         if not path.is_dir():
@@ -76,7 +82,7 @@ def resolve_sources(
                 _, ext = os.path.splitext(name)
                 if ext.lower() in extensions:
                     child = pathlib.Path(dirpath) / name
-                    if not is_excluded(child):
+                    if not is_excluded(child, exclude_root):
                         sources.append(child)
 
     return sources
