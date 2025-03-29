@@ -1,15 +1,14 @@
 # tclint &nbsp; [![CI](https://github.com/nmoroze/tclint/actions/workflows/ci.yml/badge.svg)](https://github.com/nmoroze/tclint/actions/workflows/ci.yml)
 
-`tclint` is a lint tool for Tcl. It analyzes Tcl source files and reports issues that may cause bugs, inhibit readability, or affect performance.
+`tclint` is a collection of modern dev tools for Tcl. It includes a linter, a formatter, and a language server that provides Tcl support to your editor of choice.
 
 ### Features
 
-- Checks for common Tcl errors
-- Companion formatting utility, [`tclfmt`](docs/tclfmt.md)
-- Usage checks for built-in commands
-- Visual Studio Code [extension][vscode]
-- [Plugin system](docs/plugins.md) for usage checks of EDA tool-specific commands, including [OpenROAD][openroad]
-- More coming soon!
+- [Editor integration][lsp] for VS Code, Neovim, and Emacs
+- [Linting][violations] for common Tcl errors
+- [Formatter][tclfmt] that enforces a consistent, readable style
+- [Plugin system](docs/plugins.md) that supports Tcl variants
+- [More features][features] coming soon!
 
 ## Getting Started
 
@@ -84,3 +83,7 @@ This project is copyright Noah Moroze, released under the [MIT license](LICENSE)
 
 [openroad]: https://github.com/The-OpenROAD-Project/OpenROAD
 [vscode]: https://marketplace.visualstudio.com/items?itemName=nmoroze.tclint
+[violations]: docs/violations.md
+[lsp]: docs/lsp.md
+[tclfmt]: docs/tclfmt.md
+[features]: https://github.com/nmoroze/tclint/issues/91
