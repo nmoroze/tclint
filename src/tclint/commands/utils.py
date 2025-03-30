@@ -1,4 +1,4 @@
-from tclint.syntax_tree import ArgExpansion, QuotedWord, BracedWord
+from tclint.syntax_tree import ArgExpansion, QuotedWord, BracedWord, BareWord
 
 
 class CommandArgError(Exception):
@@ -135,3 +135,75 @@ def eval(args, parser, command):
     script.end_pos = args[-1].end_pos
 
     return [script]
+
+
+def check_arg_spec(command, arg_spec):
+    # TODO check required arguments
+    def check(args, parser):
+        args_allowed = set(arg_spec.keys())
+        positional_args = []
+
+        args = list(args)
+        while len(args) > 0:
+            arg = args.pop(0)
+
+            # To facilitate better error messages, we expect that switches are always
+            # specified as BareWords that start with "-" or ">". This lets us throw an
+            # error when a switch-like thing doesn't match any supported arguments,
+            # rather than counting it towards the positional arguments (which usually
+            # ends up in a vague "too many arguments" error). To make tclint interpret a
+            # switch-like word as a positional argument, users should wrap it in "", and
+            # any switches should be BareWords.
+            contents = arg.contents
+            if not (
+                isinstance(arg, BareWord) and contents and contents[0] in {"-", ">"}
+            ):
+                positional_args.append(arg)
+                continue
+
+            if contents in args_allowed:
+                if arg_spec[contents]["value"]:
+                    try:
+                        args.pop(0)
+                    except IndexError:
+                        raise CommandArgError(
+                            f"invalid arguments for {command}: expected value after"
+                            f" {contents}"
+                        )
+                if not arg_spec[contents]["repeated"]:
+                    args_allowed.remove(contents)
+            elif contents in arg_spec:
+                raise CommandArgError(f"duplicate argument for {command}: {contents}")
+            else:
+                prefix_matches = []
+                for switch in arg_spec:
+                    if switch.startswith(contents):
+                        prefix_matches.append(switch)
+
+                if len(prefix_matches) == 1:
+                    raise CommandArgError(
+                        f"shortened argument for {command}: expand {contents} to"
+                        f" {prefix_matches[0]}"
+                    )
+
+                if len(prefix_matches) > 1:
+                    raise CommandArgError(
+                        f"ambiguous argument for {command}: {contents} could be any of"
+                        f" {', '.join(prefix_matches)}"
+                    )
+
+                raise CommandArgError(
+                    f"unrecognized argument for {command}: {contents}"
+                )
+
+        check = check_count(
+            command,
+            min=arg_spec[""]["min"],
+            max=arg_spec[""]["max"],
+            args_name="positional args",
+        )
+        check(positional_args, parser)
+
+        return None
+
+    return check

@@ -37,9 +37,6 @@ tclint-plugins = "tclint.cli.tclint_plugins:main"
 tclfmt = "tclint.cli.tclfmt:main"
 tclsp = "tclint.cli.tclsp:main"
 
-[project.entry-points."tclint.plugins"]
-openroad = "tclint.plugins.openroad.openroad"
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 timeout = 10

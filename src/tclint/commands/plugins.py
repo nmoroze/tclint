@@ -7,6 +7,13 @@ from types import ModuleType
 import schema
 
 from tclint.commands.schema import schema as command_schema
+from tclint.commands.utils import check_arg_spec
+
+
+def _commands_from_spec(spec: Dict) -> Dict:
+    return {
+        command: check_arg_spec(command, arg_spec) for command, arg_spec in spec.items()
+    }
 
 
 class _PluginManager:
@@ -51,20 +58,7 @@ class _PluginManager:
             print(f"Warning: invalid command spec {path}: {message}")
             return None
 
-        plugin_name = spec["plugin"]
-        module = self.get_mod(plugin_name)
-        if module is None:
-            return None
-
-        if not hasattr(module, "commands_from_spec"):
-            print(
-                f"Warning: command spec provided for {plugin_name} but this plugin "
-                "doesn't support command specs"
-            )
-            return None
-
-        commands_from_spec = getattr(module, "commands_from_spec")
-        return commands_from_spec(spec["spec"])
+        return _commands_from_spec(spec["spec"])
 
     def get_mod(self, name: str) -> Optional[ModuleType]:
         if name not in self._installed:
@@ -115,22 +109,8 @@ class _PluginManager:
             print(f"Skipping requested plugin {name}")
             return None
 
-        if name in self._command_specs:
-            if not hasattr(module, "commands_from_spec"):
-                print(
-                    f"Warning: skipping plugin {name}: associated spec file provided"
-                    " but plugin doesn't support spec files"
-                )
-                return None
-
-            commands_from_spec = getattr(module, "commands_from_spec")
-            return commands_from_spec(self._command_specs[name])
-
         if not hasattr(module, "commands"):
-            print(
-                f"Warning: skipping plugin {name} since no spec was provided and it"
-                " does not define commands"
-            )
+            print(f"Warning: skipping plugin {name} since it does not define commands")
             return None
 
         return getattr(module, "commands")
