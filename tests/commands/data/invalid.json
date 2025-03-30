@@ -1,0 +1,6 @@
+{
+    "plugin": "openroad",
+    "spec": {
+        "foo": {"": {"invalid key": 5}}
+    }
+}
