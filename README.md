@@ -81,7 +81,6 @@ $ ./util/pre-commit
 
 This project is copyright Noah Moroze, released under the [MIT license](LICENSE).
 
-[openroad]: https://github.com/The-OpenROAD-Project/OpenROAD
 [vscode]: https://marketplace.visualstudio.com/items?itemName=nmoroze.tclint
 [violations]: docs/violations.md
 [lsp]: docs/lsp.md
