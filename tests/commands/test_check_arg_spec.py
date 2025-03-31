@@ -1,7 +1,7 @@
 import pytest
 
 from tclint.commands import CommandArgError
-from tclint.commands.utils import check_arg_spec
+from tclint.commands.checks import check_arg_spec
 from tclint.syntax_tree import BareWord, ArgExpansion, VarSub
 
 

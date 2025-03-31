@@ -30,7 +30,7 @@ these would be helpful for your use case, please file an issue.
   - https://www.tcl.tk/man/tcl/TclCmd/mathop.html
 """
 
-from tclint.commands.utils import (
+from tclint.commands.checks import (
     CommandArgError,
     check_count,
     subcommands,
