@@ -32,7 +32,7 @@ dev = [
 ]
 
 [project.scripts]
-tclint = "tclint.main:main"
+tclint = "tclint.cli.tclint:main"
 tclfmt = "tclint.cli.tclfmt:main"
 tclsp = "tclint.cli.tclsp:main"
 
