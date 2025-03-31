@@ -1,3 +1,5 @@
+"""Helpers for checking command arguments."""
+
 from tclint.syntax_tree import ArgExpansion, QuotedWord, BracedWord, BareWord
 
 

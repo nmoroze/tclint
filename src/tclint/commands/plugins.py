@@ -7,7 +7,7 @@ from types import ModuleType
 import schema
 
 from tclint.commands.schema import schema as command_schema
-from tclint.commands.utils import check_arg_spec
+from tclint.commands.checks import check_arg_spec
 
 
 def _commands_from_spec(spec: Dict) -> Dict:
