@@ -1,7 +1,7 @@
 from importlib_metadata import entry_points
 import json
 import pathlib
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 from types import ModuleType
 
 import schema
@@ -20,7 +20,6 @@ class _PluginManager:
     def __init__(self):
         self._loaded = {}
         self._installed = {}
-        self._command_specs = {}
         self._loaded_specs = {}
         for plugin in entry_points(group="tclint.plugins"):
             if plugin.name in self._installed:
@@ -74,34 +73,6 @@ class _PluginManager:
             return None
 
         return module
-
-    def load_command_specs(self, command_specs: List[pathlib.Path]):
-        for spec_file in command_specs:
-            try:
-                with open(spec_file, "r") as f:
-                    spec = json.load(f)
-            except FileNotFoundError:
-                print(f"Spec file {spec_file} not found, skipping...")
-                continue
-
-            try:
-                plugin_name = spec["plugin"]
-            except KeyError:
-                print(f"Invalid spec file {spec_file}, missing key 'plugin'")
-                continue
-
-            try:
-                command_spec = spec["spec"]
-            except KeyError:
-                print(f"Invalid spec file {spec_file}, missing key 'spec'")
-                continue
-
-            if plugin_name in self._command_specs:
-                print(
-                    f"Warning: overwriting existing spec for {plugin_name} with"
-                    f" {spec_file}"
-                )
-            self._command_specs[plugin_name] = command_spec
 
     def _load(self, name: str):
         module = self.get_mod(name)
