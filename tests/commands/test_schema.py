@@ -64,3 +64,14 @@ def test_extra_property():
     with pytest.raises(Invalid) as excinfo:
         schema(invalid_spec)
     print("test_extra_property:", excinfo.value)
+
+
+def test_command_no_validation():
+    command_spec = {
+        "plugin": "test_plugin",
+        "spec": {
+            "command": None,
+        },
+    }
+
+    schema(command_spec)

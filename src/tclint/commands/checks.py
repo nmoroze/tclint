@@ -140,6 +140,9 @@ def eval(args, parser, command):
 
 
 def check_arg_spec(command, arg_spec):
+    if arg_spec is None:
+        return lambda _, __: None
+
     # TODO check required arguments
     def check(args, parser):
         args_allowed = set(arg_spec.keys())
