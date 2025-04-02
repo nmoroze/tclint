@@ -4,7 +4,7 @@ import pathlib
 from typing import Dict, Optional
 from types import ModuleType
 
-import schema
+import voluptuous
 
 from tclint.commands.schema import schema as command_schema
 from tclint.commands.checks import check_arg_spec
@@ -51,10 +51,9 @@ class _PluginManager:
             return None
 
         try:
-            command_schema.validate(spec)
-        except schema.SchemaError as e:
-            message = " ".join([line.lower() for line in str(e).split("\n")])
-            print(f"Warning: invalid command spec {path}: {message}")
+            command_schema(spec)
+        except voluptuous.Invalid as e:
+            print(f"Warning: invalid command spec {path}: {e}")
             return None
 
         return _commands_from_spec(spec["spec"])

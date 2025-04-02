@@ -1,6 +1,6 @@
 import pytest
 
-from schema import SchemaError
+from voluptuous import Invalid
 
 from tclint.commands.schema import schema
 
@@ -17,7 +17,7 @@ def test_valid_command_spec():
         },
     }
 
-    schema.validate(command_spec)
+    schema(command_spec)
 
 
 def test_missing_required_field():
@@ -31,9 +31,9 @@ def test_missing_required_field():
         },
     }
 
-    with pytest.raises(SchemaError) as excinfo:
-        schema.validate(invalid_command_spec)
-    print(excinfo.value)
+    with pytest.raises(Invalid) as excinfo:
+        schema(invalid_command_spec)
+    print("test_missing_required_field:", excinfo.value)
 
 
 def test_invalid_minmax_values():
@@ -42,9 +42,9 @@ def test_invalid_minmax_values():
         "spec": {"command1": {"": {"min": "0", "max": None}}},  # Should be integer
     }
 
-    with pytest.raises(SchemaError) as excinfo:
-        schema.validate(invalid_minmax_spec)
-    print(excinfo.value)
+    with pytest.raises(Invalid) as excinfo:
+        schema(invalid_minmax_spec)
+    print("test_invalid_minmax_values:", excinfo.value)
 
 
 def test_extra_property():
@@ -61,6 +61,6 @@ def test_extra_property():
         },
     }
 
-    with pytest.raises(SchemaError) as excinfo:
-        schema.validate(invalid_spec)
-    print(excinfo.value)
+    with pytest.raises(Invalid) as excinfo:
+        schema(invalid_spec)
+    print("test_extra_property:", excinfo.value)
