@@ -36,7 +36,7 @@ class Violation:
     def __lt__(self, other):
         return self.start < other.start
 
-    def str(self):
+    def __str__(self):
         line, col = self.start
         rule = str(self.id)
 
