@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from tclint.cli.tclint import lint
@@ -48,6 +49,20 @@ def test_redefined_builtin():
     assert violations[0].id == Rule("redefined-builtin")
     assert violations[0].start == (1, 1)
     assert violations[0].end == (1, 13)
+
+
+def test_redefined_builtin_plugin(tmp_path):
+    script = r"proc foo {} {}"
+    tmp_path = tmp_path / "plugin.json"
+    with open(tmp_path, "w") as f:
+        f.write(json.dumps({"plugin": "test", "spec": {"foo": None}}))
+
+    violations = lint(script, Config(commands=tmp_path), Path())
+    assert len(violations) == 1
+    print(violations[0])
+    assert violations[0].id == Rule("redefined-builtin")
+    assert violations[0].start == (1, 1)
+    assert violations[0].end == (1, 12)
 
 
 def test_no_violation_multiline_expr():
