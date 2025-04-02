@@ -161,7 +161,7 @@ def main():
             continue
 
         for violation in sorted(violations):
-            print(f"{out_prefix}:{violation.str()}")
+            print(f"{out_prefix}:{violation}")
 
         if len(violations) > 0:
             retcode |= EXIT_LINT_VIOLATIONS
