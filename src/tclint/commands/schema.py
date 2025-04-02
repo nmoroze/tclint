@@ -1,6 +1,6 @@
-from schema import Schema, Optional, Or
+from voluptuous import Schema, Optional, Or
 
-_command_schema = Schema({
+_command_schema = {
     "": {
         "min": int,
         "max": Or(int, None),
@@ -10,11 +10,12 @@ _command_schema = Schema({
         "value": bool,
         "repeated": bool,
     },
-})
+}
 
-schema = Schema({
-    "plugin": str,
-    "spec": {
-        Optional(str): _command_schema,
+schema = Schema(
+    {
+        "plugin": str,
+        "spec": {Optional(str): _command_schema},
     },
-})
+    required=True,
+)
