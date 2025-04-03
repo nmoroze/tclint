@@ -55,7 +55,7 @@ def test_redefined_builtin_plugin(tmp_path):
     script = r"proc foo {} {}"
     tmp_path = tmp_path / "plugin.json"
     with open(tmp_path, "w") as f:
-        f.write(json.dumps({"plugin": "test", "spec": {"foo": None}}))
+        f.write(json.dumps({"name": "test", "commands": {"foo": None}}))
 
     violations = lint(script, Config(commands=tmp_path), Path())
     assert len(violations) == 1

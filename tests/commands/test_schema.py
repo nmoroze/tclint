@@ -7,12 +7,14 @@ from tclint.commands.schema import schema
 
 def test_valid_command_spec():
     command_spec = {
-        "plugin": "test_plugin",
-        "spec": {
+        "name": "test_plugin",
+        "commands": {
             "command1": {
-                "": {"min": 0, "max": None},
-                "-switch1": {"required": False, "value": True, "repeated": False},
-                "-switch2": {"required": True, "value": False, "repeated": True},
+                "positionals": {"min": 0, "max": None},
+                "switches": {
+                    "-switch1": {"required": False, "value": True, "repeated": False},
+                    "-switch2": {"required": True, "value": False, "repeated": True},
+                },
             }
         },
     }
@@ -22,11 +24,13 @@ def test_valid_command_spec():
 
 def test_missing_required_field():
     invalid_command_spec = {
-        "plugin": "test_plugin",
-        "spec": {
+        "name": "test_plugin",
+        "commands": {
             "command1": {
-                "": {"min": 0, "max": None},
-                "-switch3": {"value": True, "repeated": False},
+                "positionals": {"min": 0, "max": None},
+                "switches": {
+                    "-switch3": {"value": True, "repeated": False},
+                },
             }
         },
     }
@@ -38,8 +42,13 @@ def test_missing_required_field():
 
 def test_invalid_minmax_values():
     invalid_minmax_spec = {
-        "plugin": "test_plugin",
-        "spec": {"command1": {"": {"min": "0", "max": None}}},  # Should be integer
+        "name": "test_plugin",
+        "commands": {
+            "command1": {
+                "positionals": {"min": "0", "max": None},  # Should be integer
+                "switches": {},
+            }
+        },
     }
 
     with pytest.raises(Invalid) as excinfo:
@@ -49,14 +58,15 @@ def test_invalid_minmax_values():
 
 def test_extra_property():
     invalid_spec = {
-        "plugin": "test_plugin",
-        "spec": {
+        "name": "test_plugin",
+        "commands": {
             "command1": {
-                "": {
+                "positionals": {
                     "min": 0,
                     "max": None,
                     "extra_field": "not allowed",  # Extra property not in schema
-                }
+                },
+                "switches": {},
             }
         },
     }
@@ -68,8 +78,8 @@ def test_extra_property():
 
 def test_command_no_validation():
     command_spec = {
-        "plugin": "test_plugin",
-        "spec": {
+        "name": "test_plugin",
+        "commands": {
             "command": None,
         },
     }

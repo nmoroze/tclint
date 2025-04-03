@@ -56,7 +56,7 @@ class _PluginManager:
             print(f"Warning: invalid command spec {path}: {e}")
             return None
 
-        return _commands_from_spec(spec["spec"])
+        return _commands_from_spec(spec["commands"])
 
     def get_mod(self, name: str) -> Optional[ModuleType]:
         if name not in self._installed:
