@@ -145,7 +145,8 @@ def check_arg_spec(command, arg_spec):
 
     # TODO check required arguments
     def check(args, parser):
-        args_allowed = set(arg_spec.keys())
+        switches = arg_spec["switches"]
+        args_allowed = set(switches)
         positional_args = []
 
         args = list(args)
@@ -167,7 +168,7 @@ def check_arg_spec(command, arg_spec):
                 continue
 
             if contents in args_allowed:
-                if arg_spec[contents]["value"]:
+                if switches[contents]["value"]:
                     try:
                         args.pop(0)
                     except IndexError:
@@ -175,13 +176,13 @@ def check_arg_spec(command, arg_spec):
                             f"invalid arguments for {command}: expected value after"
                             f" {contents}"
                         )
-                if not arg_spec[contents]["repeated"]:
+                if not switches[contents]["repeated"]:
                     args_allowed.remove(contents)
             elif contents in arg_spec:
                 raise CommandArgError(f"duplicate argument for {command}: {contents}")
             else:
                 prefix_matches = []
-                for switch in arg_spec:
+                for switch in switches:
                     if switch.startswith(contents):
                         prefix_matches.append(switch)
 
@@ -203,8 +204,8 @@ def check_arg_spec(command, arg_spec):
 
         check = check_count(
             command,
-            min=arg_spec[""]["min"],
-            max=arg_spec[""]["max"],
+            min=arg_spec["positionals"]["min"],
+            max=arg_spec["positionals"]["max"],
             args_name="positional args",
         )
         check(positional_args, parser)
