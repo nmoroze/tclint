@@ -1,3 +1,4 @@
+import contextlib
 import pytest
 
 from tclint.commands import CommandArgError
@@ -64,3 +65,49 @@ def test_positional_count_arg_expansion():
         "switches": {},
     }
     check_arg_spec("command", spec)(args, None)
+
+
+@pytest.mark.parametrize(
+    "args,valid",
+    [
+        ([BareWord("foo"), BareWord("arg1")], True),
+        ([BareWord("foo")], False),  # missing required argument
+        ([BareWord("bar"), BareWord("-asdf")], True),
+        ([BareWord("baz"), BareWord("quz")], True),
+        ([BareWord("baz")], False),  # missing subcommand
+        ([BareWord("-default"), BareWord("val")], True),
+        ([BareWord("arg1")], False),
+    ],
+)
+def test_subcommands(args, valid):
+    spec = {
+        "subcommands": {
+            "foo": {
+                "positionals": {"min": 1, "max": 1},
+                "switches": {},
+            },
+            "bar": None,
+            "baz": {
+                "subcommands": {
+                    "quz": None,
+                }
+            },
+            "": {
+                "positionals": {"min": 0, "max": 0},
+                "switches": {
+                    "-default": {"required": True, "value": True, "repeated": False}
+                },
+            },
+        }
+    }
+    check = check_arg_spec("command", spec)
+
+    if valid:
+        cm = contextlib.nullcontext(None)
+    else:
+        cm = pytest.raises(CommandArgError)
+    with cm as excinfo:
+        check(args, None)
+
+    if excinfo is not None:
+        print(excinfo.value)
