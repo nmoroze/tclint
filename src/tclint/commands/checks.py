@@ -1,5 +1,7 @@
 """Helpers for checking command arguments."""
 
+from typing import Optional
+
 from tclint.syntax_tree import ArgExpansion, QuotedWord, BracedWord, BareWord
 
 
@@ -139,12 +141,36 @@ def eval(args, parser, command):
     return [script]
 
 
-def check_arg_spec(command, arg_spec):
+def check_arg_spec(command: str, arg_spec: Optional[dict]):
     if arg_spec is None:
         return lambda _, __: None
 
     # TODO check required arguments
     def check(args, parser):
+        if "subcommands" in arg_spec:
+            subcommands = arg_spec["subcommands"]
+            try:
+                subcommand = args[0].contents
+            except IndexError:
+                subcommand = None
+
+            if subcommand in subcommands:
+                return check_arg_spec(
+                    f"{command} {subcommand}", subcommands[subcommand]
+                )(args[1:], parser)
+
+            if "" in subcommands:
+                return check_arg_spec(command, subcommands[""])(args, parser)
+
+            if subcommand is not None:
+                msg = f"invalid subcommand for {command}: got {subcommand}"
+            else:
+                msg = f"no subcommand provided for {command}"
+
+            raise CommandArgError(
+                f"{msg}, expected one of {', '.join(subcommands.keys())}"
+            )
+
         switches = arg_spec["switches"]
         args_allowed = set(switches)
         positional_args = []

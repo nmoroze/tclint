@@ -85,3 +85,25 @@ def test_command_no_validation():
     }
 
     schema(command_spec)
+
+
+def test_subcommands():
+    command_spec = {
+        "name": "test_plugin",
+        "commands": {
+            "command1": {
+                "subcommands": {
+                    "subcommand1": {
+                        "positionals": {"min": 1, "max": 2},
+                        "switches": {},
+                    },
+                    "subcommand2": None,
+                    "": {
+                        "positionals": {"min": 0, "max": None},
+                        "switches": {},
+                    },
+                }
+            }
+        },
+    }
+    schema(command_spec)
