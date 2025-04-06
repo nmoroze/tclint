@@ -35,9 +35,9 @@ these would be helpful for your use case, please file an issue.
 from tclint.commands.checks import (
     CommandArgError,
     check_count,
-    subcommands,
     eval,
 )
+from tclint.commands.schema import commands_schema
 from tclint.syntax_tree import BareWord
 
 
@@ -615,29 +615,30 @@ def _while(args, parser):
     ]
 
 
-commands = {
-    "after": subcommands(
-        "after",
-        {
+commands = commands_schema({
+    "after": {
+        "subcommands": {
             "cancel": _after_cancel,
             "idle": _after_idle,
-            "info": check_count("after info", 0, 1),
+            "info": {
+                "positionals": [
+                    {"name": "id", "value": {"type": "any"}, "required": False}
+                ]
+            },
+            "": _after,
         },
-        default=_after,
-    ),
-    "append": check_count("append", 1, None),
+    },
     "apply": _apply,
     # TODO: check subcommands
     "array": check_count("array", None, None),
-    "binary": subcommands(
-        "binary",
-        {
+    "binary": {
+        "subcommands": {
             "decode": check_count("binary decode", 2, None),
             "encode": check_count("binary encode", 2, None),
             "format": check_count("binary format", 1, None),
             "scan": check_count("binary scan", 2, None),
         },
-    ),
+    },
     "break": check_count("break", 0, 0),
     "catch": _catch,
     "cd": check_count("cd", 0, 1),
@@ -649,9 +650,8 @@ commands = {
     "concat": check_count("concat"),
     "continue": check_count("continue", 0, 0),
     "coroutine": check_count("coroutine", 2, None),
-    "dict": subcommands(
-        "dict",
-        {
+    "dict": {
+        "subcommands": {
             "append": check_count("dict append", 2, None),
             "create": check_count("dict create"),
             "exists": check_count("dict exists", 2, None),
@@ -673,17 +673,16 @@ commands = {
             "values": check_count("dict values", 1, 2),
             "with": _dict_with,
         },
-    ),
-    "encoding": subcommands(
-        "encoding",
-        {
+    },
+    "encoding": {
+        "subcommands": {
             "convertfrom": check_count("encoding convertfrom", 1, 2),
             "convertto": check_count("encoding convertto", 1, 2),
             "dirs": check_count("encoding dirs", 0, 1),
             "names": check_count("encoding names", 0, 0),
             "system": check_count("encoding system", 0, 1),
         },
-    ),
+    },
     "eof": check_count("eof", 1, 1),
     "error": check_count("error", 1, 3),
     "eval": _eval,
@@ -709,13 +708,12 @@ commands = {
     # TODO: check subcommands
     "info": check_count("info", 1, None),
     # TODO: check other subcommands
-    "interp": subcommands(
-        "interp",
-        {
+    "interp": {
+        "subcommands": {
             "eval": _interp_eval,
+            "": check_count("interp", 1, None),
         },
-        default=check_count("interp", 1, None),
-    ),
+    },
     "join": check_count("join", 1, 2),
     "lappend": check_count("lappend", 1, None),
     "lassign": check_count("lassign", 1, None),
@@ -732,9 +730,8 @@ commands = {
     "load": check_count("load", 1, 6),
     "lrange": check_count("lrange", 3, 3),
     "lsearch": check_count("lsearch", 2, None),
-    "memory": subcommands(
-        "memory",
-        {
+    "memory": {
+        "subcommands": {
             "active": check_count("memory active", 1, 1),
             "break_on_malloc": check_count("memory break_on_malloc", 1, 1),
             "info": check_count("memory info", 0, 0),
@@ -749,10 +746,9 @@ commands = {
             # just on or off
             "validate": check_count("memory validate", 1, 1),
         },
-    ),
-    "namespace": subcommands(
-        "namespace",
-        {
+    },
+    "namespace": {
+        "subcommands": {
             "children": check_count("namespace children", 0, 2),
             "code": _namespace_code,
             "current": check_count("namespace current", 0, 0),
@@ -768,20 +764,18 @@ commands = {
             "qualifiers": check_count("namespace qualifiers", 1, 1),
             "tail": check_count("namespace tail", 1, 1),
             "which": check_count("namespace which", 1, 2),
-            "ensemble": subcommands(
-                "namespace ensemble",
-                {
+            "ensemble": {
+                "subcommands": {
                     "create": None,
                     "configure": check_count("namespace ensemble configure", 1, None),
                     "exists": check_count("namespace ensemble exists", 1, 1),
                 },
-            ),
+            },
         },
-    ),
+    },
     "open": check_count("open", 1, 3),
-    "package": subcommands(
-        "package",
-        {
+    "package": {
+        "subcommands": {
             "forget": None,
             "ifneeded": _package_ifneeded,
             "names": check_count("package names", 0, 0),
@@ -794,7 +788,7 @@ commands = {
             "vsatisfies": check_count("package vsatisfies", 2, None),
             "prefer": check_count("package prefer", 1, 1),
         },
-    ),
+    },
     "pid": check_count("pid", 0, 1),
     "pkg::create": check_count("pkg::create", 2, None),
     "pkg_mkIndex": check_count("pkg_mkIndex", 1, None),
@@ -819,26 +813,24 @@ commands = {
     "subst": check_count("subst", 1, 4),
     "switch": _switch,
     "tailcall": check_count("tailcall", 1, None),
-    "tcl::prefix": subcommands(
-        "tcl::prefix",
-        {
+    "tcl::prefix": {
+        "subcommands": {
             "all": check_count("tcl::prefix all", 2, 2),
             "longest": check_count("tcl::prefix longest", 2, 2),
             "match": check_count("tcl::prefix match", 2, None),
         },
-    ),
+    },
     "tell": check_count("tell", 1, 1),
     "throw": check_count("throw", 2, 2),
     "time": _time,
     "timerate": _timerate,
-    "tcl::tm::path": subcommands(
-        "tcl::tm::path",
-        {
+    "tcl::tm::path": {
+        "subcommands": {
             "add": check_count("tcl::tm::path add"),
             "remove": check_count("tcl::tm::path remove"),
             "list": check_count("tcl::tm::path list", 0, 0),
         },
-    ),
+    },
     "tcl::tm::roots": check_count("tcl::tm::roots"),
     # TODO: check subcommands
     "trace": check_count("trace", 2, None),
@@ -855,4 +847,4 @@ commands = {
     "yieldto": check_count("yieldto", 2, None),
     # TODO: check subcommands
     "zlib": check_count("zlib", 3, None),
-}
+})
