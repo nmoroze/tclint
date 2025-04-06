@@ -64,36 +64,6 @@ def check_count(command, min=None, max=None, args_name="args"):
     return check
 
 
-def subcommands(name, subcommands, default=None):
-    def check(args, parser):
-        try:
-            arg = args[0].contents
-        except IndexError:
-            arg = None
-
-        if arg in subcommands:
-            func = subcommands[arg]
-            if func is None:
-                return None
-            new_args = func(args[1:], parser)
-            if new_args is None:
-                return None
-            return args[0:1] + new_args
-        elif default is not None:
-            return default(args, parser)
-        else:
-            if arg is not None:
-                msg = f"invalid subcommand for {name}: got {arg}"
-            else:
-                msg = f"no subcommand provided for {name}"
-
-            raise CommandArgError(
-                f"{msg}, expected one of {', '.join(subcommands.keys())}"
-            )
-
-    return check
-
-
 def eval(args, parser, command):
     if len(args) > 1 and any(isinstance(arg, (QuotedWord, BracedWord)) for arg in args):
         # Slightly odd restriction, but our syntax tree doesn't have a great way
