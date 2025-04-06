@@ -1,5 +1,7 @@
 """Parse-time handling of Tcl's builtin commands.
 
+Based on Tcl 8.6, https://www.tcl-lang.org/man/tcl8.6/TclCmd/contents.htm.
+
 Note that the following commands are not currently supported. If support for any of
 these would be helpful for your use case, please file an issue.
 
@@ -62,6 +64,7 @@ def _check_code(arg):
 
 
 def _after(args, parser):
+    """after ms [script...]"""
     # ref: https://www.tcl.tk/man/tcl/TclCmd/after.html
 
     script_arg = []
@@ -72,6 +75,7 @@ def _after(args, parser):
 
 
 def _after_cancel(args, parser):
+    """after id|(script...)"""
     # ref: https://www.tcl.tk/man/tcl/TclCmd/after.html
     check_count("after cancel", 1, None)
 
@@ -81,11 +85,13 @@ def _after_cancel(args, parser):
 
 
 def _after_idle(args, parser):
+    """after idle [script...]"""
     # ref: https://www.tcl.tk/man/tcl/TclCmd/after.html
     return eval(args, parser, "after idle")
 
 
 def _apply(args, parser):
+    """apply func [arg...]"""
     # ref: https://www.tcl.tk/man/tcl/TclCmd/apply.html
     if len(args) < 1:
         raise CommandArgError(
@@ -107,6 +113,7 @@ def _apply(args, parser):
 
 
 def _catch(args, parser):
+    """catch script [resultVarName] [optionsVarName]"""
     if len(args) < 1:
         raise CommandArgError(
             f"not enough args to catch: got {len(args)}, expected at least 1"
@@ -120,6 +127,11 @@ def _catch(args, parser):
 
 
 def _dict_filter(args, parser):
+    """dict filter <dictionaryValue> <filterType> <arg> [arg...]
+    dict filter <dictionaryValue> key [globPattern...]
+    dict filter <dictionaryValue> value [globPattern...]
+    """
+
     # ref: https://www.tcl.tk/man/tcl/TclCmd/dict.html#M8
 
     if len(args) < 2:
