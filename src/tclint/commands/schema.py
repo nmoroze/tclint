@@ -4,15 +4,19 @@ from voluptuous import Schema, Optional, Or, Self
 # persists through the Or in the main schema definition.
 _command_args = Schema(
     {
-        "positionals": {
-            "min": int,
-            "max": Or(int, None),
-        },
-        "switches": {
+        Optional("positionals", default=[]): [
+            {
+                "name": str,
+                "required": bool,
+                "value": Or({"type": "any"}, {"type": "variadic"}),
+            }
+        ],
+        Optional("switches", default={}): {
             Optional(str): {
                 "required": bool,
-                "value": bool,
                 "repeated": bool,
+                "value": Or({"type": "any"}, None),
+                Optional("metavar"): str,
             }
         },
     },

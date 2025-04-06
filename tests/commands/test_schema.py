@@ -10,10 +10,22 @@ def test_valid_command_spec():
         "name": "test_plugin",
         "commands": {
             "command1": {
-                "positionals": {"min": 0, "max": None},
+                "positionals": [
+                    {"name": "arg1", "required": True, "value": {"type": "any"}},
+                    {"name": "arg2", "required": False, "value": {"type": "variadic"}},
+                ],
                 "switches": {
-                    "-switch1": {"required": False, "value": True, "repeated": False},
-                    "-switch2": {"required": True, "value": False, "repeated": True},
+                    "-switch1": {
+                        "required": False,
+                        "value": {"type": "any"},
+                        "repeated": False,
+                        "metavar": "value1",
+                    },
+                    "-switch2": {
+                        "required": True,
+                        "value": None,
+                        "repeated": True,
+                    },
                 },
             }
         },
@@ -27,9 +39,9 @@ def test_missing_required_field():
         "name": "test_plugin",
         "commands": {
             "command1": {
-                "positionals": {"min": 0, "max": None},
                 "switches": {
-                    "-switch3": {"value": True, "repeated": False},
+                    # missing "required"
+                    "-switch1": {"value": {"type": "any"}, "repeated": False},
                 },
             }
         },
@@ -40,13 +52,18 @@ def test_missing_required_field():
     print("test_missing_required_field:", excinfo.value)
 
 
-def test_invalid_minmax_values():
+def test_invalid_datatype():
     invalid_minmax_spec = {
         "name": "test_plugin",
         "commands": {
             "command1": {
-                "positionals": {"min": "0", "max": None},  # Should be integer
-                "switches": {},
+                "switches": {
+                    "-switch1": {
+                        "required": True,
+                        "value": {"type": "any"},
+                        "repeated": "invalid",  # Should be a boolean
+                    }
+                },
             }
         },
     }
@@ -61,12 +78,14 @@ def test_extra_property():
         "name": "test_plugin",
         "commands": {
             "command1": {
-                "positionals": {
-                    "min": 0,
-                    "max": None,
-                    "extra_field": "not allowed",  # Extra property not in schema
-                },
-                "switches": {},
+                "positionals": [
+                    {
+                        "name": "arg1",
+                        "required": True,
+                        "value": {"type": "any"},
+                        "extra_field": "not allowed",  # Extra property not in schema
+                    }
+                ],
             }
         },
     }
@@ -94,13 +113,23 @@ def test_subcommands():
             "command1": {
                 "subcommands": {
                     "subcommand1": {
-                        "positionals": {"min": 1, "max": 2},
-                        "switches": {},
+                        "positionals": [
+                            {
+                                "name": "arg1",
+                                "required": True,
+                                "value": {"type": "any"},
+                            },
+                        ],
                     },
                     "subcommand2": None,
                     "": {
-                        "positionals": {"min": 0, "max": None},
-                        "switches": {},
+                        "switches": {
+                            "-switch1": {
+                                "required": False,
+                                "value": {"type": "any"},
+                                "repeated": False,
+                            },
+                        },
                     },
                 }
             }
