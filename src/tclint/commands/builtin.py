@@ -112,6 +112,75 @@ def _apply(args, parser):
     return [func_list] + args[1:]
 
 
+_array = {
+    "subcommands": {
+        "anymore": {
+            "positionals": [
+                {"name": "arrayName", "value": {"type": "any"}, "required": True},
+                {"name": "searchId", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "donesearch": {
+            "positionals": [
+                {"name": "arrayName", "value": {"type": "any"}, "required": True},
+                {"name": "searchId", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "exists": {
+            "positionals": [
+                {"name": "arrayName", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "get": {
+            "positionals": [
+                {"name": "arrayName", "value": {"type": "any"}, "required": True},
+                {"name": "pattern", "value": {"type": "any"}, "required": False},
+            ]
+        },
+        "names": {
+            "positionals": [
+                {"name": "arrayName", "value": {"type": "any"}, "required": True},
+                {"name": "mode", "value": {"type": "any"}, "required": False},
+                {"name": "pattern", "value": {"type": "any"}, "required": False},
+            ]
+        },
+        "nextelement": {
+            "positionals": [
+                {"name": "arrayName", "value": {"type": "any"}, "required": True},
+                {"name": "searchId", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "set": {
+            "positionals": [
+                {"name": "arrayName", "value": {"type": "any"}, "required": True},
+                {"name": "list", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "size": {
+            "positionals": [
+                {"name": "arrayName", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "startsearch": {
+            "positionals": [
+                {"name": "arrayName", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "statistics": {
+            "positionals": [
+                {"name": "arrayName", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "unset": {
+            "positionals": [
+                {"name": "arrayName", "value": {"type": "any"}, "required": True},
+                {"name": "pattern", "value": {"type": "any"}, "required": False},
+            ]
+        },
+    },
+}
+
+
 def _catch(args, parser):
     """catch script [resultVarName] [optionsVarName]"""
     if len(args) < 1:
@@ -124,6 +193,127 @@ def _catch(args, parser):
         )
 
     return [parser.parse_script(args[0])] + args[1:]
+
+
+_chan = {
+    "subcommands": {
+        "blocked": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "close": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+                {"name": "direction", "value": {"type": "any"}, "required": False},
+            ]
+        },
+        "configure": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+                {"name": "options", "value": {"type": "variadic"}, "required": False},
+            ],
+        },
+        "copy": {
+            "positionals": [
+                {"name": "inputChan", "value": {"type": "any"}, "required": True},
+                {"name": "outputChan", "value": {"type": "any"}, "required": True},
+                {"name": "options", "value": {"type": "variadic"}, "required": False},
+            ],
+        },
+        "create": {
+            "positionals": [
+                {"name": "mode", "value": {"type": "any"}, "required": True},
+                {"name": "cmdPrefix", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "eof": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "event": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+                {"name": "event", "value": {"type": "any"}, "required": True},
+                # TODO: parse this as script
+                {"name": "script", "value": {"type": "any"}, "required": False},
+            ]
+        },
+        "flush": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "gets": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+                {"name": "varName", "value": {"type": "any"}, "required": False},
+            ]
+        },
+        "names": {
+            "positionals": [
+                {"name": "pattern", "value": {"type": "any"}, "required": False},
+            ]
+        },
+        "pending": {
+            "positionals": [
+                {"name": "mode", "value": {"type": "any"}, "required": True},
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "pipe": {},
+        "pop": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "postevent": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+                {"name": "eventSpec", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "push": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+                {"name": "cmdPrefix", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "puts": {
+            "positionals": [
+                {"name": "-nonewline", "value": {"type": "any"}, "required": False},
+                {"name": "channelId", "value": {"type": "any"}, "required": False},
+                {"name": "string", "value": {"type": "any"}, "required": True},
+            ],
+        },
+        "read": {
+            "positionals": [
+                {"name": "-nonewline", "value": {"type": "any"}, "required": False},
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+                {"name": "numChars", "value": {"type": "any"}, "required": False},
+            ],
+        },
+        "seek": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+                {"name": "offset", "value": {"type": "any"}, "required": True},
+                {"name": "origin", "value": {"type": "any"}, "required": False},
+            ]
+        },
+        "tell": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+            ]
+        },
+        "truncate": {
+            "positionals": [
+                {"name": "channelId", "value": {"type": "any"}, "required": True},
+                {"name": "length", "value": {"type": "any"}, "required": False},
+            ]
+        },
+    },
+}
 
 
 def _dict_filter(args, parser):
@@ -628,9 +818,14 @@ commands = commands_schema({
             "": _after,
         },
     },
+    "append": {
+        "positionals": [
+            {"name": "varname", "value": {"type": "any"}, "required": True},
+            {"name": "value", "value": {"type": "variadic"}, "required": False},
+        ]
+    },
     "apply": _apply,
-    # TODO: check subcommands
-    "array": check_count("array", None, None),
+    "array": _array,
     "binary": {
         "subcommands": {
             "decode": check_count("binary decode", 2, None),
@@ -641,15 +836,33 @@ commands = commands_schema({
     },
     "break": check_count("break", 0, 0),
     "catch": _catch,
-    "cd": check_count("cd", 0, 1),
-    # TODO: check subcommands
-    "chan": check_count("chan"),
+    "cd": {
+        "positionals": [
+            {"name": "dirName", "value": {"type": "any"}, "required": False}
+        ],
+    },
+    "chan": _chan,
     # TODO: check subcommands
     "clock": check_count("clock"),
-    "close": check_count("close", 1, 2),
-    "concat": check_count("concat"),
-    "continue": check_count("continue", 0, 0),
-    "coroutine": check_count("coroutine", 2, None),
+    "close": {
+        "positionals": [
+            {"name": "channelId", "value": {"type": "any"}, "required": True},
+            {"name": "read|write", "value": {"type": "any"}, "required": False},
+        ],
+    },
+    "concat": {
+        "positionals": [
+            {"name": "arg", "value": {"type": "variadic"}, "required": True},
+        ]
+    },
+    "continue": {},
+    "coroutine": {
+        "positionals": [
+            {"name": "name", "value": {"type": "any"}, "required": True},
+            {"name": "command", "value": {"type": "any"}, "required": True},
+            {"name": "arg", "value": {"type": "variadic"}, "required": False},
+        ]
+    },
     "dict": {
         "subcommands": {
             "append": check_count("dict append", 2, None),
@@ -793,7 +1006,13 @@ commands = commands_schema({
     "pkg::create": check_count("pkg::create", 2, None),
     "pkg_mkIndex": check_count("pkg_mkIndex", 1, None),
     "proc": _proc,
-    "puts": check_count("puts", 1, 3),
+    "puts": {
+        "positionals": [
+            {"name": "-nonewline", "value": {"type": "any"}, "required": False},
+            {"name": "channelId", "value": {"type": "any"}, "required": False},
+            {"name": "string", "value": {"type": "any"}, "required": True},
+        ],
+    },
     "pwd": check_count("pwd", 0, 0),
     "read": check_count("read", 1, 2),
     "regexp": check_count("regexp", 2, None),
@@ -843,8 +1062,17 @@ commands = commands_schema({
     "variable": check_count("variable", 1, None),
     "vwait": check_count("vwait", 1, 1),
     "while": _while,
-    "yield": check_count("yield", 0, 1),
-    "yieldto": check_count("yieldto", 2, None),
+    "yield": {
+        "positionals": [
+            {"name": "value", "value": {"type": "any"}, "required": False},
+        ]
+    },
+    "yieldto": {
+        "positionals": [
+            {"name": "command", "value": {"type": "any"}, "required": True},
+            {"name": "arg", "value": {"type": "variadic"}, "required": False},
+        ]
+    },
     # TODO: check subcommands
     "zlib": check_count("zlib", 3, None),
 })
