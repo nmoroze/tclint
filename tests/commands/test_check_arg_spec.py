@@ -14,7 +14,7 @@ def test_repeated_switch_allowed():
             "-abc": {"required": False, "value": None, "repeated": True},
         },
     }
-    assert check_arg_spec("command", spec)(args, None) is None
+    check_arg_spec("command", args, spec)
 
 
 def test_repeated_switch_not_allowed():
@@ -26,14 +26,14 @@ def test_repeated_switch_not_allowed():
         },
     }
     with pytest.raises(CommandArgError):
-        check_arg_spec("command", spec)(args, None)
+        check_arg_spec("command", args, spec)
 
 
 def test_positional_count_too_many():
     args = [BareWord("foo")]
     spec = {"positionals": [], "switches": {}}
     with pytest.raises(CommandArgError):
-        check_arg_spec("command", spec)(args, None)
+        check_arg_spec("command", args, spec)
 
 
 def test_positional_count_too_few():
@@ -46,7 +46,7 @@ def test_positional_count_too_few():
         "switches": {},
     }
     with pytest.raises(CommandArgError):
-        check_arg_spec("command", spec)(args, None)
+        check_arg_spec("command", args, spec)
 
 
 def test_positional_count_unlimited():
@@ -57,7 +57,7 @@ def test_positional_count_unlimited():
         ],
         "switches": {},
     }
-    check_arg_spec("command", spec)(args, None)
+    check_arg_spec("command", args, spec)
 
 
 def test_positional_count_arg_expansion():
@@ -70,7 +70,7 @@ def test_positional_count_arg_expansion():
         ],
         "switches": {},
     }
-    check_arg_spec("command", spec)(args, None)
+    check_arg_spec("command", args, spec)
 
 
 @pytest.mark.parametrize(
@@ -112,14 +112,13 @@ def test_subcommands(args, valid):
             },
         }
     }
-    check = check_arg_spec("command", spec)
 
     if valid:
         cm = contextlib.nullcontext(None)
     else:
         cm = pytest.raises(CommandArgError)
     with cm as excinfo:
-        check(args, None)
+        check_arg_spec("command", args, spec)
 
     if excinfo is not None:
         print(excinfo.value)
