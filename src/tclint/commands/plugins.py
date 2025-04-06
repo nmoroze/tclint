@@ -7,13 +7,6 @@ from types import ModuleType
 import voluptuous
 
 from tclint.commands.schema import schema as command_schema
-from tclint.commands.checks import check_arg_spec
-
-
-def _commands_from_spec(spec: Dict) -> Dict:
-    return {
-        command: check_arg_spec(command, arg_spec) for command, arg_spec in spec.items()
-    }
 
 
 class _PluginManager:
@@ -57,7 +50,7 @@ class _PluginManager:
             print(f"Warning: invalid command spec {path}: {e}")
             return None
 
-        return _commands_from_spec(spec["commands"])
+        return spec["commands"]
 
     def get_mod(self, name: str) -> Optional[ModuleType]:
         if name not in self._installed:
