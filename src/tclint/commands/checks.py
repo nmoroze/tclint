@@ -1,6 +1,7 @@
 """Helpers for checking command arguments."""
 
-from typing import List, Optional
+from collections.abc import Callable
+from typing import List, Optional, Union
 
 from tclint.syntax_tree import ArgExpansion, QuotedWord, BracedWord, BareWord, Node
 
@@ -141,10 +142,21 @@ def eval(args, parser, command):
     return [script]
 
 
-def check_arg_spec(command: str, args: List[Node], arg_spec: Optional[dict]):
-    if arg_spec is None:
-        return
+def check_command(
+    command: str, args: List[Node], parser, command_spec: Union[Callable, dict, None]
+) -> Optional[List[Node]]:
+    if command_spec is None:
+        return None
 
+    if isinstance(command_spec, dict):
+        return check_arg_spec(command, args, parser, command_spec)
+
+    return command_spec(args, parser)
+
+
+def check_arg_spec(
+    command: str, args: List[Node], parser, arg_spec: dict
+) -> Optional[List[Node]]:
     if "subcommands" in arg_spec:
         subcommands = arg_spec["subcommands"]
         try:
@@ -153,12 +165,15 @@ def check_arg_spec(command: str, args: List[Node], arg_spec: Optional[dict]):
             subcommand = None
 
         if subcommand in subcommands:
-            return check_arg_spec(
-                f"{command} {subcommand}", args[1:], subcommands[subcommand]
+            new_args = check_command(
+                f"{command} {subcommand}", args[1:], parser, subcommands[subcommand]
             )
+            if new_args is None:
+                return new_args
+            return args[0:1] + new_args
 
         if "" in subcommands:
-            return check_arg_spec(command, args, subcommands[""])
+            return check_command(command, args, parser, subcommands[""])
 
         if subcommand is not None:
             msg = f"invalid subcommand for {command}: got {subcommand}"
@@ -239,3 +254,5 @@ def check_arg_spec(command: str, args: List[Node], arg_spec: Optional[dict]):
         args_name="positional args",
     )
     check(positional_args, None)
+
+    return None

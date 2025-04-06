@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from voluptuous import Schema, Optional, Or, Self
 
 # Need to define this as a Schema with required=True to ensure that this requirement
@@ -23,12 +24,12 @@ _command_args = Schema(
     required=True,
 )
 
-_command_schema = Schema(
-    {Optional(str): Or(_command_args, None, {"subcommands": Self})},
+commands_schema = Schema(
+    {Optional(str): Or(_command_args, None, {"subcommands": Self}, Callable)},
     required=True,
 )
 
 schema = Schema(
-    {"name": str, "commands": _command_schema},
+    {"name": str, "commands": commands_schema},
     required=True,
 )

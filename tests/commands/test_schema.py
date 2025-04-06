@@ -136,3 +136,26 @@ def test_subcommands():
         },
     }
     schema(command_spec)
+
+
+def test_applies_defaults():
+    command_spec = {
+        "name": "test_plugin",
+        "commands": {"command1": {}, "command2": {"subcommands": {"subcommand1": {}}}},
+    }
+    validated = schema(command_spec)
+    for key in ("positionals", "switches"):
+        assert key in validated["commands"]["command1"]
+        assert key in validated["commands"]["command2"]["subcommands"]["subcommand1"]
+
+
+def test_functions():
+    """For Python plugins, command specs can be functions."""
+    command_spec = {
+        "name": "test_plugin",
+        "commands": {
+            "command1": lambda args, parser: None,
+            "command2": {"subcommands": {"subcommand1": lambda args, parser: None}},
+        },
+    }
+    schema(command_spec)

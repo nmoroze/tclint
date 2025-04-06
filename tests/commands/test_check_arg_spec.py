@@ -3,7 +3,7 @@ import pytest
 
 from tclint.commands import CommandArgError
 from tclint.commands.checks import check_arg_spec
-from tclint.syntax_tree import BareWord, ArgExpansion, VarSub
+from tclint.syntax_tree import BareWord, ArgExpansion, VarSub, BracedWord
 
 
 def test_repeated_switch_allowed():
@@ -14,7 +14,7 @@ def test_repeated_switch_allowed():
             "-abc": {"required": False, "value": None, "repeated": True},
         },
     }
-    check_arg_spec("command", args, spec)
+    check_arg_spec("command", args, None, spec)
 
 
 def test_repeated_switch_not_allowed():
@@ -26,14 +26,14 @@ def test_repeated_switch_not_allowed():
         },
     }
     with pytest.raises(CommandArgError):
-        check_arg_spec("command", args, spec)
+        check_arg_spec("command", args, None, spec)
 
 
 def test_positional_count_too_many():
     args = [BareWord("foo")]
     spec = {"positionals": [], "switches": {}}
     with pytest.raises(CommandArgError):
-        check_arg_spec("command", args, spec)
+        check_arg_spec("command", args, None, spec)
 
 
 def test_positional_count_too_few():
@@ -46,7 +46,7 @@ def test_positional_count_too_few():
         "switches": {},
     }
     with pytest.raises(CommandArgError):
-        check_arg_spec("command", args, spec)
+        check_arg_spec("command", args, None, spec)
 
 
 def test_positional_count_unlimited():
@@ -57,7 +57,7 @@ def test_positional_count_unlimited():
         ],
         "switches": {},
     }
-    check_arg_spec("command", args, spec)
+    check_arg_spec("command", args, None, spec)
 
 
 def test_positional_count_arg_expansion():
@@ -70,7 +70,7 @@ def test_positional_count_arg_expansion():
         ],
         "switches": {},
     }
-    check_arg_spec("command", args, spec)
+    check_arg_spec("command", args, None, spec)
 
 
 @pytest.mark.parametrize(
@@ -118,7 +118,22 @@ def test_subcommands(args, valid):
     else:
         cm = pytest.raises(CommandArgError)
     with cm as excinfo:
-        check_arg_spec("command", args, spec)
+        check_arg_spec("command", args, None, spec)
 
     if excinfo is not None:
         print(excinfo.value)
+
+
+def test_arg_replacement_subcommands():
+    args = [BareWord("subcommand"), BracedWord("arg")]
+
+    def _parse(args, _):
+        return [BareWord(args[0].contents)]
+
+    spec = {
+        "subcommands": {
+            "subcommand": _parse,
+        }
+    }
+    new_args = check_arg_spec("command", args, None, spec)
+    assert new_args == [BareWord("subcommand"), BareWord("arg")]

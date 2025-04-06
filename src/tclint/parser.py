@@ -45,7 +45,7 @@ from tclint.syntax_tree import (
     Function,
 )
 from tclint.commands import CommandArgError, get_commands
-from tclint.commands.checks import check_arg_spec
+from tclint.commands.checks import check_command
 from tclint.violations import Rule, Violation
 
 
@@ -150,17 +150,9 @@ class Parser:
             return args
 
         spec = self._commands[routine]
-        if spec is None:
-            return args
-
-        if isinstance(spec, dict):
-            check_arg_spec(routine, args, spec)
-            return args
-
-        # If we get here, spec should be a callable
 
         try:
-            new_args = spec(args, self)
+            new_args = check_command(routine, args, self, spec)
         except TclSyntaxError as e:
             raise e
         except CommandArgError as e:
