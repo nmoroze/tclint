@@ -228,10 +228,21 @@ def check_arg_spec(command: str, arg_spec: Optional[dict]):
                     f"unrecognized argument for {command}: {contents}"
                 )
 
+        min_positionals = 0
+        max_positionals = 0
+        for positional in arg_spec["positionals"]:
+            if positional["value"]["type"] == "variadic":
+                max_positionals = None
+
+            if positional["required"]:
+                min_positionals += 1
+            if max_positionals is not None:
+                max_positionals += 1
+
         check = check_count(
             command,
-            min=arg_spec["positionals"]["min"],
-            max=arg_spec["positionals"]["max"],
+            min=min_positionals,
+            max=max_positionals,
             args_name="positional args",
         )
         check(positional_args, parser)

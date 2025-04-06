@@ -51,7 +51,8 @@ class _PluginManager:
             return None
 
         try:
-            command_schema(spec)
+            # Apply defaults and validate the spec.
+            spec = command_schema(spec)
         except voluptuous.Invalid as e:
             print(f"Warning: invalid command spec {path}: {e}")
             return None

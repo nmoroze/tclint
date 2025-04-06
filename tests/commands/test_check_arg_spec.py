@@ -9,9 +9,9 @@ from tclint.syntax_tree import BareWord, ArgExpansion, VarSub
 def test_repeated_switch_allowed():
     args = [BareWord("-abc"), BareWord("-abc")]
     spec = {
-        "positionals": {"min": 0, "max": 0},
+        "positionals": [],
         "switches": {
-            "-abc": {"required": False, "value": False, "repeated": True},
+            "-abc": {"required": False, "value": None, "repeated": True},
         },
     }
     assert check_arg_spec("command", spec)(args, None) is None
@@ -20,9 +20,9 @@ def test_repeated_switch_allowed():
 def test_repeated_switch_not_allowed():
     args = [BareWord("-abc"), BareWord("-abc")]
     spec = {
-        "positionals": {"min": 0, "max": 0},
+        "positionals": [],
         "switches": {
-            "-abc": {"required": False, "value": False, "repeated": False},
+            "-abc": {"required": False, "value": None, "repeated": False},
         },
     }
     with pytest.raises(CommandArgError):
@@ -31,10 +31,7 @@ def test_repeated_switch_not_allowed():
 
 def test_positional_count_too_many():
     args = [BareWord("foo")]
-    spec = {
-        "positionals": {"min": 0, "max": 0},
-        "switches": {},
-    }
+    spec = {"positionals": [], "switches": {}}
     with pytest.raises(CommandArgError):
         check_arg_spec("command", spec)(args, None)
 
@@ -42,7 +39,10 @@ def test_positional_count_too_many():
 def test_positional_count_too_few():
     args = [BareWord("foo")]
     spec = {
-        "positionals": {"min": 2, "max": 2},
+        "positionals": [
+            {"name": "arg1", "value": {"type": "any"}, "required": True},
+            {"name": "arg2", "value": {"type": "any"}, "required": True},
+        ],
         "switches": {},
     }
     with pytest.raises(CommandArgError):
@@ -52,7 +52,9 @@ def test_positional_count_too_few():
 def test_positional_count_unlimited():
     args = [BareWord("foo")] * 10
     spec = {
-        "positionals": {"min": 1, "max": None},
+        "positionals": [
+            {"name": "args", "value": {"type": "variadic"}, "required": True}
+        ],
         "switches": {},
     }
     check_arg_spec("command", spec)(args, None)
@@ -61,7 +63,11 @@ def test_positional_count_unlimited():
 def test_positional_count_arg_expansion():
     args = [BareWord("foo"), ArgExpansion(VarSub("foo"))]
     spec = {
-        "positionals": {"min": 3, "max": None},
+        "positionals": [
+            {"name": "arg1", "value": {"type": "any"}, "required": True},
+            {"name": "arg2", "value": {"type": "any"}, "required": True},
+            {"name": "remaining", "value": {"type": "variadic"}, "required": True},
+        ],
         "switches": {},
     }
     check_arg_spec("command", spec)(args, None)
@@ -83,7 +89,9 @@ def test_subcommands(args, valid):
     spec = {
         "subcommands": {
             "foo": {
-                "positionals": {"min": 1, "max": 1},
+                "positionals": [
+                    {"name": "arg1", "required": True, "value": {"type": "any"}}
+                ],
                 "switches": {},
             },
             "bar": None,
@@ -93,9 +101,13 @@ def test_subcommands(args, valid):
                 }
             },
             "": {
-                "positionals": {"min": 0, "max": 0},
+                "positionals": [],
                 "switches": {
-                    "-default": {"required": True, "value": True, "repeated": False}
+                    "-default": {
+                        "required": True,
+                        "value": {"type": "any"},
+                        "repeated": False,
+                    }
                 },
             },
         }

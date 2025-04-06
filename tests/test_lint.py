@@ -65,6 +65,33 @@ def test_redefined_builtin_plugin(tmp_path):
     assert violations[0].end == (1, 12)
 
 
+def test_command_plugin(tmp_path):
+    tmp_path = tmp_path / "plugin.json"
+    with open(tmp_path, "w") as f:
+        f.write(
+            json.dumps({
+                "name": "test",
+                "commands": {
+                    "foo": {
+                        "positionals": [
+                            {"name": "arg", "value": {"type": "any"}, "required": True}
+                        ],
+                    }
+                },
+            })
+        )
+    config = Config(commands=tmp_path)
+
+    valid_script = "foo myarg"
+    violations = lint(valid_script, config, Path())
+    assert len(violations) == 0
+
+    invalid_script = "foo"
+    violations = lint(invalid_script, config, Path())
+    assert len(violations) == 1
+    assert violations[0].id == Rule("command-args")
+
+
 def test_no_violation_multiline_expr():
     script = r"""
 if {1 && \
