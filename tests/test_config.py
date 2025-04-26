@@ -35,8 +35,11 @@ def test_example_config():
 
 
 def test_invalid_rule():
-    with pytest.raises(ConfigError):
+    with pytest.raises(ConfigError) as excinfo:
         RunConfig.from_dict({"ignore": ["asdf"]}, pathlib.Path.cwd())
+
+    if excinfo is not None:
+        print(str(excinfo.value))
 
 
 def test_pyproject():

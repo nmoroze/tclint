@@ -10,7 +10,7 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
-from schema import Schema, Optional, Or, Use, SchemaError, And
+from voluptuous import Schema, Optional, And, Coerce, Invalid, Range
 
 from tclint.violations import Rule
 
@@ -70,7 +70,7 @@ class Config:
         )
 
 
-# Validators using `schema` library that check and normalize config inputs.
+# Validators using `voluptuous` library that check and normalize config inputs.
 # Used for checking both config files as well as config-related CLI args.
 
 # Using these for CLI args adds a constraint that all non-boolean validators
@@ -78,10 +78,9 @@ class Config:
 # e.g. a string representation of a list into a .toml config file, but we shouldn't
 # document this, since it won't be considered stable behavior.
 
-# _str2list handles this string-to-list normalization.
-
 
 def _str2list(s):
+    """Handles string-to-list normalization."""
     if isinstance(s, str):
         if s == "":
             return []
@@ -92,33 +91,27 @@ def _str2list(s):
 _VALIDATORS = {
     # note: it's ok if paths don't exist - allows for generic
     # configurations with directories like .git/ excluded
-    "exclude": Use(_str2list),
+    "exclude": _str2list,
     "ignore": And(
-        Use(_str2list),
+        _str2list,
         [
-            Use(
-                Rule,
-                error="invalid rule ID provided for 'ignore'",
-            ),
+            Coerce(Rule, msg="invalid rule ID"),
         ],
     ),
-    "commands": Use(pathlib.Path),
-    "extensions": Use(_str2list),
-    "style_indent": Or(
-        lambda v: v == "tab", Use(int), error="indent must be integer or 'tab'"
+    "commands": Coerce(pathlib.Path),
+    "extensions": _str2list,
+    "style_indent": Coerce(
+        lambda v: v if v == "tab" else int(v), msg="expected integer or 'tab'"
     ),
-    "style_line_length": Use(int, error="line-length must be integer"),
+    "style_line_length": Coerce(int),
     "style_max_blank_lines": And(
-        Use(int),
+        Coerce(int),
         # we could technically support i >= 0, but I think 0 would be a weird
         # setting and this lets us ignore pluralizing the violation message :)
-        lambda i: i >= 1,
-        error="max-blank-lines must be an integer with value at least 1",
+        Range(min=1),
     ),
-    "style_indent_namespace_eval": Use(
-        bool, error="indent-namespace-eval must be a bool"
-    ),
-    "style_spaces_in_braces": Use(bool, error="spaces-in-braces must be a bool"),
+    "style_indent_namespace_eval": bool,
+    "style_spaces_in_braces": bool,
 }
 
 
@@ -146,26 +139,38 @@ def _validate_config(config):
         Optional("exclude"): _VALIDATORS["exclude"],
         Optional("extensions"): _VALIDATORS["extensions"],
         **base_config,
-        Optional("fileset"): Schema([{"paths": [Use(pathlib.Path)], **base_config}]),
+        Optional("fileset"): Schema(
+            [{"paths": [Coerce(pathlib.Path)], **base_config}], required=True
+        ),
     })
 
     try:
-        return schema.validate(config)
-    except SchemaError as e:
-        if e.errors[-1] is not None:
-            error = e.errors[-1]
-        else:
-            error = e.autos[-1]
-        raise ConfigError(error)
+        return schema(config)
+    except Invalid as e:
+        if not e.path:
+            raise ConfigError(e.error_message)
+
+        # Stringify error path to my own taste.
+        path = []
+        for item in e.path:
+            if isinstance(item, int):
+                # Brackets around indices
+                if len(path) > 0:
+                    path[-1] += f"[{item}]"
+                else:
+                    path.append(f"[{item}]")
+            else:
+                path.append(str(item))
+
+        raise ConfigError(f"{e.error_message} ({'.'.join(path)})")
 
 
 def _validator(key):
     def func(s):
         try:
-            return Schema(_VALIDATORS[key]).validate(s)
-        except SchemaError as e:
-            error_s = str(e).replace("\n", " ")
-            raise argparse.ArgumentTypeError(error_s)
+            return Schema(_VALIDATORS[key])(s)
+        except Invalid as e:
+            raise argparse.ArgumentTypeError(str(e))
 
     return func
 

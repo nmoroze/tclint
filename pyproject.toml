@@ -14,7 +14,6 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "ply==3.11",
-    "schema==0.7.5",
     "tomli~=2.0.1; python_version < '3.11'",
     "pathspec==0.11.2",
     "importlib-metadata==6.8.0",
@@ -51,6 +50,5 @@ version_file = "src/tclint/_version.py"
 [[tool.mypy.overrides]]
 module = [
     "ply.*",
-    "schema",
 ]
 ignore_missing_imports = true
