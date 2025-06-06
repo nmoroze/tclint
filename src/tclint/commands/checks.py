@@ -154,6 +154,7 @@ def check_arg_spec(
 
     switches = arg_spec["switches"]
     args_allowed = set(switches)
+    args_required = {switch for switch in switches if switches[switch]["required"]}
     positional_args = []
 
     args = list(args)
@@ -184,6 +185,8 @@ def check_arg_spec(
                     )
             if not switches[contents]["repeated"]:
                 args_allowed.remove(contents)
+            if contents in args_required:
+                args_required.remove(contents)
         elif contents in arg_spec:
             raise CommandArgError(f"duplicate argument for {command}: {contents}")
         else:
@@ -205,6 +208,15 @@ def check_arg_spec(
                 )
 
             raise CommandArgError(f"unrecognized argument for {command}: {contents}")
+
+    if len(args_required) > 1:
+        raise CommandArgError(
+            f"missing required arguments for {command}: {', '.join(args_required)}"
+        )
+    elif len(args_required) == 1:
+        raise CommandArgError(
+            f"missing required argument for {command}: {args_required.pop()}"
+        )
 
     min_positionals = 0
     max_positionals: Optional[int] = 0

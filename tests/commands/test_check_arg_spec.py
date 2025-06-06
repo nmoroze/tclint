@@ -73,6 +73,37 @@ def test_positional_count_arg_expansion():
     check_arg_spec("command", args, None, spec)
 
 
+def test_required_switch():
+    spec = {
+        "positionals": [],
+        "switches": {
+            "-foo": {
+                "required": True,
+                "value": None,
+                "repeated": False,
+            },
+            "-bar": {
+                "required": False,
+                "value": None,
+                "repeated": False,
+            },
+        },
+    }
+
+    check_arg_spec("command", [BareWord("-foo"), BareWord("-bar")], None, spec)
+    check_arg_spec("command", [BareWord("-foo")], None, spec)
+
+    with pytest.raises(CommandArgError) as excinfo:
+        check_arg_spec("command", [BareWord("-bar")], None, spec)
+    if excinfo is not None:
+        print(excinfo.value)
+
+    with pytest.raises(CommandArgError) as excinfo:
+        check_arg_spec("command", [], None, spec)
+    if excinfo is not None:
+        print(excinfo.value)
+
+
 @pytest.mark.parametrize(
     "args,valid",
     [
