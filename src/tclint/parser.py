@@ -876,7 +876,7 @@ _FUNCTIONS = {
     "exp": 1,
     "floor": 1,
     "fmod": 2,
-    "hyopt": 2,
+    "hypot": 2,
     "int": 1,
     "isqrt": 1,
     "log": 1,
