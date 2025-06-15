@@ -1,4 +1,6 @@
 import dataclasses
+import itertools
+import textwrap
 from typing import List, Tuple, Union
 import sys
 
@@ -115,6 +117,31 @@ class Formatter:
         tree = parser.parse(script)
         self.script = script.split("\n")
         return "\n".join(self.format_script_contents(tree)) + "\n"
+
+    def format_partial(self, script: str, parser: Parser) -> str:
+        """Formats a partial Tcl script.
+
+        This function formats a partial script according to the gofmt partial formatting
+        rules, "[preserving] leading indentation as well as leading and trailing spaces"
+        (ref: https://pkg.go.dev/cmd/gofmt#pkg-overview). Unlike Go, we have no way of
+        detecting if a given script is a program fragment, hence the distinct method
+        from `format_top` .
+        """
+        leading = "".join(itertools.takewhile(str.isspace, script))
+        try:
+            leading, indent = leading.rsplit("\n", 1)
+            leading += "\n"
+        except ValueError:
+            leading, indent = "", leading
+        trailing = "".join(itertools.takewhile(str.isspace, reversed(script)))[::-1]
+
+        script = script.strip()
+        tree = parser.parse(script)
+        self.script = script.split("\n")
+
+        formatted = "\n".join(self.format_script_contents(tree))
+
+        return leading + textwrap.indent(formatted, indent) + trailing
 
     def format_script_contents(self, script: Union[Script, CommandSub]) -> List[str]:
         to_format = []

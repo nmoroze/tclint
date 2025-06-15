@@ -636,3 +636,31 @@ def test_preserve_braces_in_unbraced_expr():
 
 def test_strip_trailing_whitespace_from_comments():
     _test("# foo ", "# foo")
+
+
+def test_partial():
+    script = r"""
+    puts "foo"
+      puts "bar"
+"""
+    expected = r"""
+    puts "foo"
+    puts "bar"
+"""
+    parser = Parser()
+    format = Formatter(
+        FormatterOpts(
+            indent="    ",
+            spaces_in_braces=True,
+            max_blank_lines=2,
+            indent_namespace_eval=True,
+        )
+    )
+
+    out = format.format_partial(script, parser)
+
+    assert out == expected
+
+    original_tree = parser.parse(script)
+    formatted_tree = parser.parse(out)
+    assert original_tree == formatted_tree
