@@ -77,7 +77,7 @@ For example:
 }
 ```
 
-Here's the command spec for a subset of the `create_clocks` SDC command:
+Here's the command spec for a subset of the `create_clock` SDC command:
 
 ```jsonc
 /*
