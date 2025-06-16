@@ -2,7 +2,7 @@ import argparse
 import dataclasses
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 import uuid
 
 from lsprotocol import types as lsp
@@ -185,7 +185,12 @@ class TclspServer(LanguageServer):
         if previous != diagnostics:
             self.diagnostics[document.uri] = (document.version, diagnostics)
 
-    def format(self, document: TextDocument, options: lsp.FormattingOptions):
+    def format(
+        self,
+        document: TextDocument,
+        options: lsp.FormattingOptions,
+        range: Optional[Tuple[int, int]] = None,
+    ):
         path = Path(document.path)
         root = self.get_root(path)
         config = self.get_config(path, root)
@@ -205,6 +210,11 @@ class TclspServer(LanguageServer):
                 indent_namespace_eval=config.style_indent_namespace_eval,
             )
         )
+
+        if range is not None:
+            start, end = range
+            return formatter.format_partial(document.source[start:end], parser)
+
         return formatter.format_top(document.source, parser)
 
 
@@ -284,6 +294,37 @@ def format_document(ls: TclspServer, params: lsp.DocumentFormattingParams):
     return [
         lsp.TextEdit(
             range=lsp.Range(start=start, end=end),
+            new_text=formatted,
+        )
+    ]
+
+
+@server.feature(lsp.TEXT_DOCUMENT_RANGE_FORMATTING)
+def format_range(ls: TclspServer, params: lsp.DocumentRangeFormattingParams):
+    """Format the given range with a document"""
+    doc = ls.workspace.get_text_document(params.text_document.uri)
+
+    # Round up range to full lines.
+    start_line = params.range.start.line
+    end_line = params.range.end.line
+    if params.range.end.character > 0:
+        end_line += 1
+    range = lsp.Range(
+        start=lsp.Position(line=start_line, character=0),
+        end=lsp.Position(line=end_line, character=0),
+    )
+
+    start = doc.offset_at_position(range.start)
+    end = doc.offset_at_position(range.end)
+
+    try:
+        formatted = ls.format(doc, params.options, range=(start, end))
+    except TclSyntaxError:
+        return None
+
+    return [
+        lsp.TextEdit(
+            range=range,
             new_text=formatted,
         )
     ]

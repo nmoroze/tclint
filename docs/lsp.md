@@ -106,5 +106,11 @@ To activate `lsp-mode` in your current buffer, call `M-x lsp`.
 Due to an unsupported LSP feature, Emacs will not automatically refresh diagnostics when
 the `tclint` configuration file is updated.
 
+## Formatting
+
+`tclsp` supports both document and range/selection formatting according to the `tclfmt`
+[rules](tclfmt.md). When formatting a selection that only includes part of a line,
+`tclsp` will effectively extend the selection to format the entire line.
+
 [vscode]: https://marketplace.visualstudio.com/items?itemName=nmoroze.tclint
 [initialize-params]: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams

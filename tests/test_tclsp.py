@@ -140,6 +140,57 @@ indent = 'tab'""")
 
 
 @pytest.mark.asyncio
+async def test_format_range(client: pytest_lsp.LanguageClient, tmp_path):
+    params = lsp.InitializeParams(
+        capabilities=get_capabilities("visual-studio-code"),
+        workspace_folders=[
+            lsp.WorkspaceFolder(uri=tmp_path.as_uri(), name=tmp_path.name)
+        ],
+    )
+    await client.initialize_session(params)
+
+    document = tmp_path / "source.tcl"
+
+    source = r"""
+puts "hello"
+
+    if {1} {
+  puts  "world"
+ }
+
+puts "goodbye"
+"""
+
+    expected = r"""
+    if {1} {
+       puts "world"
+    }
+""".lstrip("\n")
+
+    with open(document, "w") as f:
+        f.write(source)
+
+    result = await client.text_document_range_formatting_async(
+        params=lsp.DocumentRangeFormattingParams(
+            text_document=lsp.TextDocumentIdentifier(uri=document.as_uri()),
+            options=lsp.FormattingOptions(tab_size=3, insert_spaces=True),
+            range=lsp.Range(
+                start=lsp.Position(line=3, character=8),
+                end=lsp.Position(line=5, character=1),
+            ),
+        ),
+    )
+    assert len(result) == 1
+    result = result[0]
+
+    assert result.new_text == expected
+    assert result.range.start.line == 3
+    assert result.range.start.character == 0
+    assert result.range.end.line == 6
+    assert result.range.end.character == 0
+
+
+@pytest.mark.asyncio
 async def test_config(client: pytest_lsp.LanguageClient, tmp_path_factory):
     """Tests configuration reading, specifically:
     1) That configs for multiple workspaces are found and applied correctly.
