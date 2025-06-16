@@ -17,12 +17,8 @@ The top-level schema of a JSON plugin looks like the following:
 
 ```jsonc
 {
-    // Schema version. Must be 0.1.
-    "tclint-schema": "0.1",
     // Plugin name.
     "name": "<name>",
-    // Plugin version.
-    "version": "1.0",
     // Dictionary mapping command names to "command specs".
     "commands": {
         "command1": { /* ... */ },
