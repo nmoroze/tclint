@@ -243,7 +243,7 @@ class Comment(Node):
 
 
 class Command(Node):
-    def __init__(self, routine, *args, pos=None, end_pos=None):
+    def __init__(self, routine: Node, *args: Node, pos=None, end_pos=None):
         self.routine = routine
         self.args = args
         super().__init__(routine, *args, pos=pos, end_pos=end_pos)

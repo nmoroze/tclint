@@ -1,5 +1,6 @@
 import string
 import re
+from typing import Optional, Tuple
 
 from tclint.lexer import (
     Lexer,
@@ -113,7 +114,7 @@ class Parser:
             print("  " * self._debug_indent, end="")
             print(*msg)
 
-    def parse(self, script, pos=None):
+    def parse(self, script: str, pos: Optional[Tuple[int, int]] = None):
         lexer = Lexer(pos=pos)
         lexer.input(script)
         tree = self._parse_script(lexer, in_command_sub=False)
