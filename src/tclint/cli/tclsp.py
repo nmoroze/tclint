@@ -12,11 +12,13 @@ from pygls.workspace import TextDocument
 from pygls.uris import to_fs_path
 
 from tclint.cli import tclint
+from tclint.commands import get_commands
 from tclint.config import get_config, DEFAULT_CONFIGS, RunConfig, Config, ConfigError
 from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
 from tclint.parser import Parser
 from tclint.cli import utils
+from tclint.syntax_tree import Visitor
 
 try:
     from tclint._version import __version__  # type: ignore
@@ -328,6 +330,58 @@ def format_range(ls: TclspServer, params: lsp.DocumentRangeFormattingParams):
             new_text=formatted,
         )
     ]
+
+
+class _Highlighter(Visitor):
+    def __init__(self, plugins):
+        self._commands = get_commands(plugins)
+        self._keywords = []
+
+    def visit_command(self, command):
+        routine = command.routine
+        if routine.contents in self._commands:
+            line, col = routine.pos
+            self._keywords.append(((line - 1, col - 1), len(routine.contents)))
+
+    def tokens(self):
+        """Encode tokens as described in
+        https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens.
+        """
+        tokens = []
+        last_line = 0
+        last_col = 0
+        for (line, col), length in sorted(self._keywords, key=lambda x: x[0]):
+            line_delta = line - last_line
+            col_delta = col
+            if line == last_line:
+                col_delta -= last_col
+
+            tokens.extend([line_delta, col_delta, length, 0, 0])
+            last_line, last_col = line, col
+
+        return tokens
+
+
+@server.feature(
+    lsp.TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL,
+    lsp.SemanticTokensLegend(token_types=["keyword"], token_modifiers=[]),
+)
+def semantic_tokens(ls: TclspServer, params: lsp.SemanticTokensParams):
+    logging.debug("Received %s: %s", lsp.TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL, params)
+    document = ls.workspace.get_text_document(params.text_document.uri)
+
+    path = Path(document.path)
+    root = ls.get_root(path)
+    config = ls.get_config(path, root)
+
+    plugins = [config.commands] if config.commands is not None else []
+    parser = Parser(command_plugins=plugins)
+    hl = _Highlighter(plugins)
+
+    tree = parser.parse(document.source)
+    tree.accept(hl, recurse=True)
+
+    return lsp.SemanticTokens(data=hl.tokens())
 
 
 @server.feature(lsp.INITIALIZE)
