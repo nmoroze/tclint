@@ -1,6 +1,7 @@
 from pathlib import Path
 import shutil
 import sys
+from typing import Union, List
 
 from lsprotocol import types as lsp
 import pytest
@@ -27,7 +28,7 @@ def get_capabilities(client: str) -> lsp.ClientCapabilities:
 @pytest_lsp.fixture(
     config=pytest_lsp.ClientServerConfig(
         # -I ensures the server imports the tclint package instead of the entry point.
-        server_command=[sys.executable, "-I", str(LSP_BIN)]
+        server_command=[sys.executable, "-I", str(LSP_BIN), "--log-level", "debug"]
     )
 )
 async def client(lsp_client: pytest_lsp.LanguageClient, request):
@@ -427,3 +428,39 @@ async def test_lsp_exclude(client: pytest_lsp.LanguageClient, tmp_path):
     )
     assert results is not None
     assert len(results.items) == 0
+
+
+@pytest.mark.asyncio
+async def test_goto_definition(client: pytest_lsp.LanguageClient):
+    """Goto definition test."""
+    params = lsp.InitializeParams(capabilities=get_capabilities("visual-studio-code"))
+    await client.initialize_session(params)
+
+    document = MY_DIR / "data" / "symbols.tcl"
+
+    async def _test(
+        line: int, character: int
+    ) -> Union[lsp.Location, List[lsp.Location], List[lsp.LocationLink], None]:
+        return await client.text_document_definition_async(
+            lsp.DefinitionParams(
+                text_document=lsp.TextDocumentIdentifier(uri=f"file://{document}"),
+                position=lsp.Position(line=line, character=character),
+            )
+        )
+
+    result = await _test(10, 0)
+    assert isinstance(result, lsp.Location)
+    assert result.range.start.line == 1
+    assert result.range.start.character == 0
+
+    result = await _test(15, 0)
+    assert isinstance(result, lsp.Location)
+    assert result.range.start.line == 6
+    assert result.range.start.character == 0
+
+    result = await _test(20, 0)
+    assert isinstance(result, lsp.Location)
+    assert result.range.start.line == 1
+    assert result.range.start.character == 0
+
+

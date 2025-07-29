@@ -17,6 +17,7 @@ from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
 from tclint.parser import Parser
 from tclint.cli import utils
+from tclint.symbol_table import SymbolTableBuilder
 
 try:
     from tclint._version import __version__  # type: ignore
@@ -328,6 +329,36 @@ def format_range(ls: TclspServer, params: lsp.DocumentRangeFormattingParams):
             new_text=formatted,
         )
     ]
+
+
+@server.feature(lsp.TEXT_DOCUMENT_DEFINITION)
+def goto_definition(ls: TclspServer, params: lsp.DefinitionParams):
+    """Jump to an object's definition."""
+    doc = ls.workspace.get_text_document(params.text_document.uri)
+
+    word = doc.word_at_position(params.position)
+
+    parser = Parser()
+    tree = parser.parse(doc.source)
+
+    symtab_builder = SymbolTableBuilder()
+    tree.accept(symtab_builder, recurse=True)
+
+    table = symtab_builder.table
+
+    pos = table.lookup_definition(word)
+
+    if pos is None:
+        return None
+
+    # LSP counts starting at zero, we are off by one
+    # TODO: refactor conversion from our internal "pos" to lsp.Position
+    range = lsp.Range(
+        start=lsp.Position(line=pos[0][0] - 1, character=pos[0][1] - 1),
+        end=lsp.Position(line=pos[1][0] - 1, character=pos[1][1] - 1),
+    )
+
+    return lsp.Location(doc.uri, range)
 
 
 @server.feature(lsp.INITIALIZE)
