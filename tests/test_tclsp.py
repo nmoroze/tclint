@@ -448,6 +448,8 @@ async def test_goto_definition(client: pytest_lsp.LanguageClient):
             )
         )
 
+    # Test definitions of procedures
+
     result = await _test(10, 0)
     assert isinstance(result, lsp.Location)
     assert result.range.start.line == 1
@@ -461,6 +463,18 @@ async def test_goto_definition(client: pytest_lsp.LanguageClient):
     result = await _test(20, 0)
     assert isinstance(result, lsp.Location)
     assert result.range.start.line == 1
+    assert result.range.start.character == 0
+
+    # Test definitions of variables
+
+    result = await _test(17, 25)
+    assert isinstance(result, lsp.Location)
+    assert result.range.start.line == 12
+    assert result.range.start.character == 0
+
+    result = await _test(17, 40)
+    assert isinstance(result, lsp.Location)
+    assert result.range.start.line == 13
     assert result.range.start.character == 0
 
 
@@ -483,6 +497,8 @@ async def test_get_references(client: pytest_lsp.LanguageClient):
             )
         )
 
+    # Test references of procedures
+
     result = await _test(1, 5)
     assert isinstance(result, List)
     assert len(result) == 2
@@ -496,3 +512,11 @@ async def test_get_references(client: pytest_lsp.LanguageClient):
     assert len(result) == 1
     assert result[0].range.start.line == 15
     assert result[0].range.start.character == 0
+
+    # Test references of variables
+
+    result = await _test(12, 7)
+    assert isinstance(result, List)
+    assert len(result) == 1
+    assert result[0].range.start.line == 17
+    assert result[0].range.start.character == 25

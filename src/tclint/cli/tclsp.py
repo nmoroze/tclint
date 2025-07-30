@@ -332,12 +332,18 @@ def format_range(ls: TclspServer, params: lsp.DocumentRangeFormattingParams):
     ]
 
 
+RE_END_WORD_OPT = re.compile(r"^\$?[A-Za-z_0-9]*")
+RE_START_WORD_OPT = re.compile(r"\$?[A-Za-z_0-9]*$")
+
+
 @server.feature(lsp.TEXT_DOCUMENT_DEFINITION)
 def goto_definition(ls: TclspServer, params: lsp.DefinitionParams):
     """Jump to an object's definition."""
     doc = ls.workspace.get_text_document(params.text_document.uri)
 
-    word = doc.word_at_position(params.position)
+    word = doc.word_at_position(
+        params.position, re_start_word=RE_START_WORD_OPT, re_end_word=RE_END_WORD_OPT
+    )
 
     parser = Parser()
     tree = parser.parse(doc.source)
@@ -368,12 +374,15 @@ def find_references(ls: TclspServer, params: lsp.ReferenceParams):
     doc = ls.workspace.get_text_document(params.text_document.uri)
 
     # TODO: if we're at a "set" or "proc" keyword, use the following word
-    word = doc.word_at_position(params.position)
+    word = doc.word_at_position(
+        params.position, re_start_word=RE_START_WORD_OPT, re_end_word=RE_END_WORD_OPT
+    )
     # TODO: what to do with context/include_declarations parameter?
 
     # TODO: refactor parsing/symtab building, maybe cache symtab between calls?
     parser = Parser()
     tree = parser.parse(doc.source)
+    logging.debug(tree.pretty())
 
     symtab_builder = SymbolTableBuilder()
     tree.accept(symtab_builder, recurse=True)
