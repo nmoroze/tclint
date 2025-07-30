@@ -525,6 +525,19 @@ def _namespace_inscope(args, parser):
     )
 
 
+def _namespace_unknown(args, parser):
+    if len(args) > 1:
+        raise CommandArgError(
+            f"too many args to 'namespace unknown': got {len(args)}, expected no more"
+            " than 1"
+        )
+
+    if len(args) == 1:
+        return [parser.parse_script(args[0])]
+
+    return None
+
+
 def _package_ifneeded(args, parser):
     # ref: https://www.tcl.tk/man/tcl/TclCmd/package.html
 
@@ -974,8 +987,24 @@ commands = commands_schema({
             "inscope": _namespace_inscope,
             "origin": check_count("namespace origin", 1, 1),
             "parent": check_count("namespace parent", 0, 1),
+            "path": {
+                "positionals": [
+                    {
+                        "name": "namespaceList",
+                        "value": {"type": "any"},
+                        "required": False,
+                    },
+                ]
+            },
             "qualifiers": check_count("namespace qualifiers", 1, 1),
             "tail": check_count("namespace tail", 1, 1),
+            "unknown": _namespace_unknown,
+            "upvar": {
+                "positionals": [
+                    {"name": "namespace", "value": {"type": "any"}, "required": True},
+                    {"name": "var", "value": {"type": "variadic"}, "required": False},
+                ]
+            },
             "which": check_count("namespace which", 1, 2),
             "ensemble": {
                 "subcommands": {
