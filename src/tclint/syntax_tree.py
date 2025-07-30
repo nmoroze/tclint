@@ -1,4 +1,6 @@
-"""Classes for representing and interacting with Tcl syntax trees. """
+"""Classes for representing and interacting with Tcl syntax trees."""
+
+from typing import Self
 
 
 class Visitor:

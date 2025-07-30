@@ -332,40 +332,45 @@ def format_range(ls: TclspServer, params: lsp.DocumentRangeFormattingParams):
     ]
 
 
-RE_END_WORD_OPT = re.compile(r"^\$?[A-Za-z_0-9]*")
-RE_START_WORD_OPT = re.compile(r"\$?[A-Za-z_0-9]*$")
-
-
 @server.feature(lsp.TEXT_DOCUMENT_DEFINITION)
 def goto_definition(ls: TclspServer, params: lsp.DefinitionParams):
     """Jump to an object's definition."""
     doc = ls.workspace.get_text_document(params.text_document.uri)
 
-    word = doc.word_at_position(
-        params.position, re_start_word=RE_START_WORD_OPT, re_end_word=RE_END_WORD_OPT
-    )
-
+    # Parse the source file
     parser = Parser()
     tree = parser.parse(doc.source)
 
+    # Build the symbol table
     symtab_builder = SymbolTableBuilder()
-    tree.accept(symtab_builder, recurse=True)
+    table = symtab_builder.build(tree)
 
-    table = symtab_builder.table
+    # Find node under the cursor
+    node = tree.find_by_pos(
+        line=params.position.line + 1, col=params.position.character + 1
+    )
+    if node is None:
+        return None
 
-    pos = table.lookup_definition(word)
-
-    if pos is None:
+    # Do the actual definition lookup
+    pos = table.lookup_definition(node)
+    if pos == []:
         return None
 
     # LSP counts starting at zero, we are off by one
     # TODO: refactor conversion from our internal "pos" to lsp.Position
-    range = lsp.Range(
-        start=lsp.Position(line=pos[0][0] - 1, character=pos[0][1] - 1),
-        end=lsp.Position(line=pos[1][0] - 1, character=pos[1][1] - 1),
-    )
+    definitions = [
+        lsp.Location(
+            doc.uri,
+            lsp.Range(
+                start=lsp.Position(line=start[0] - 1, character=start[1] - 1),
+                end=lsp.Position(line=end[0] - 1, character=end[1] - 1),
+            ),
+        )
+        for start, end in pos
+    ]
 
-    return lsp.Location(doc.uri, range)
+    return definitions
 
 
 @server.feature(lsp.TEXT_DOCUMENT_REFERENCES)
@@ -373,25 +378,26 @@ def find_references(ls: TclspServer, params: lsp.ReferenceParams):
     """Find references of an object."""
     doc = ls.workspace.get_text_document(params.text_document.uri)
 
-    # TODO: if we're at a "set" or "proc" keyword, use the following word
-    word = doc.word_at_position(
-        params.position, re_start_word=RE_START_WORD_OPT, re_end_word=RE_END_WORD_OPT
-    )
     # TODO: what to do with context/include_declarations parameter?
-
     # TODO: refactor parsing/symtab building, maybe cache symtab between calls?
+
+    # Parse the source file
     parser = Parser()
     tree = parser.parse(doc.source)
-    logging.debug(tree.pretty())
 
+    # Build the symbol table
     symtab_builder = SymbolTableBuilder()
-    tree.accept(symtab_builder, recurse=True)
+    table = symtab_builder.build(tree)
 
-    table = symtab_builder.table
+    # Find node under the cursor
+    node = tree.find_by_pos(
+        line=params.position.line + 1, col=params.position.character + 1
+    )
+    if node is None:
+        return None
 
-    pos = table.lookup_references(word)
-
-    if pos is None:
+    pos = table.lookup_references(node)
+    if pos == []:
         return None
 
     references = [
