@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import uuid
+import re
 
 from lsprotocol import types as lsp
 
@@ -359,6 +360,43 @@ def goto_definition(ls: TclspServer, params: lsp.DefinitionParams):
     )
 
     return lsp.Location(doc.uri, range)
+
+
+@server.feature(lsp.TEXT_DOCUMENT_REFERENCES)
+def find_references(ls: TclspServer, params: lsp.ReferenceParams):
+    """Find references of an object."""
+    doc = ls.workspace.get_text_document(params.text_document.uri)
+
+    # TODO: if we're at a "set" or "proc" keyword, use the following word
+    word = doc.word_at_position(params.position)
+    # TODO: what to do with context/include_declarations parameter?
+
+    # TODO: refactor parsing/symtab building, maybe cache symtab between calls?
+    parser = Parser()
+    tree = parser.parse(doc.source)
+
+    symtab_builder = SymbolTableBuilder()
+    tree.accept(symtab_builder, recurse=True)
+
+    table = symtab_builder.table
+
+    pos = table.lookup_references(word)
+
+    if pos is None:
+        return None
+
+    references = [
+        lsp.Location(
+            doc.uri,
+            lsp.Range(
+                start=lsp.Position(line=start[0] - 1, character=start[1] - 1),
+                end=lsp.Position(line=end[0] - 1, character=end[1] - 1),
+            ),
+        )
+        for start, end in pos
+    ]
+
+    return references
 
 
 @server.feature(lsp.INITIALIZE)

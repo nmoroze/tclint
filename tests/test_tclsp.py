@@ -464,3 +464,35 @@ async def test_goto_definition(client: pytest_lsp.LanguageClient):
     assert result.range.start.character == 0
 
 
+@pytest.mark.asyncio
+async def test_get_references(client: pytest_lsp.LanguageClient):
+    """Get references test."""
+    params = lsp.InitializeParams(capabilities=get_capabilities("visual-studio-code"))
+    await client.initialize_session(params)
+
+    document = MY_DIR / "data" / "symbols.tcl"
+
+    async def _test(
+        line: int, character: int
+    ) -> Union[lsp.Location, List[lsp.Location], List[lsp.LocationLink], None]:
+        return await client.text_document_references_async(
+            lsp.ReferenceParams(
+                text_document=lsp.TextDocumentIdentifier(uri=f"file://{document}"),
+                position=lsp.Position(line=line, character=character),
+                context=lsp.ReferenceContext(include_declaration=False),
+            )
+        )
+
+    result = await _test(1, 5)
+    assert isinstance(result, List)
+    assert len(result) == 2
+    assert result[0].range.start.line == 10
+    assert result[0].range.start.character == 0
+    assert result[1].range.start.line == 20
+    assert result[1].range.start.character == 0
+
+    result = await _test(6, 5)
+    assert isinstance(result, List)
+    assert len(result) == 1
+    assert result[0].range.start.line == 15
+    assert result[0].range.start.character == 0

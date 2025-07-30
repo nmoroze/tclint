@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from typing import List
 
 from tclint.syntax_tree import (
     Visitor,
@@ -16,9 +17,17 @@ class SymbolTable:
         self.sym_def = {k: defaultdict(list) for k in self.KEYS}
         self.sym_ref = {k: defaultdict(list) for k in self.KEYS}
 
+    def add_reference(self, key: str, command: Command) -> None:
+        if key.startswith("$"):
+            # TODO: add reference to variable
+            return
+
+        logging.debug(f"Reference to {key} at: {command._pos_str()}")
+        self.sym_ref["proc"][key].append((command.pos, command.end_pos))
+
     def add_command(self, key: str, command: Command) -> None:
         if key not in self.KEYS:
-            return
+            return self.add_reference(key, command)
 
         if len(command.args) == 0:
             # This is a syntax error, just ignore it
@@ -37,6 +46,12 @@ class SymbolTable:
         if len(defs) > 1:
             logging.warning(f"Multiple definitions ({len(defs)}) of '{word}'")
         return defs[0]
+
+    def lookup_references(self, word: str) -> List[tuple[tuple, tuple]] | None:
+        logging.debug(f"Lookup references of {word}")
+        if word not in self.sym_ref["proc"]:
+            return None
+        return self.sym_ref["proc"][word]
 
 
 class SymbolTableBuilder(Visitor):
