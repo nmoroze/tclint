@@ -84,10 +84,19 @@ class Node:
         if not all(isinstance(v, Node) for v in init):
             raise TypeError("Children must be Node instances")
 
+        self.prev = None
+        self.next = None
         self.children = list(init)
+        self.update_children_links()
 
     def add(self, node):
         self.children.append(node)
+        self.update_children_links()
+
+    def update_children_links(self):
+        for i in range(1, len(self.children)):
+            self.children[i].prev = self.children[i - 1]
+            self.children[i - 1].next = self.children[i]
 
     @property
     def contents(self):

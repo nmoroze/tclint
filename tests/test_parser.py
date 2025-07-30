@@ -908,3 +908,41 @@ def test_find_by_pos():
     result = tree.find_by_pos(7, 16)
     assert isinstance(result, BareWord)
     assert result.value == "Buzz"
+
+
+def test_linked_children():
+    with open(MY_DIR / "data" / "clean.tcl", "r") as f:
+        script = f.read()
+    tree = parse(script)
+
+    result = tree.find_by_pos(4, 9)
+    assert isinstance(result, BareWord)
+    assert result.value == "elseif"
+
+    print(tree.pretty())
+
+    node = result.prev
+    assert isinstance(node, Script)
+    node = node.prev
+    assert isinstance(node, BracedExpression)
+    node = node.prev
+    assert isinstance(node, BareWord)
+    node = node.prev
+    assert node is None
+
+    node = result.next
+    assert isinstance(node, BracedExpression)
+    node = node.next
+    assert isinstance(node, Script)
+    node = node.next
+    assert isinstance(node, BareWord)
+    node = node.next
+    assert isinstance(node, BracedExpression)
+    node = node.next
+    assert isinstance(node, Script)
+    node = node.next
+    assert isinstance(node, BareWord)
+    node = node.next
+    assert isinstance(node, Script)
+    node = node.next
+    assert node is None
