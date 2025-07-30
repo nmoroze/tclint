@@ -15,20 +15,21 @@ class SymbolTable:
         self.sym_ref = {k: defaultdict(list) for k in self.KEYS}
 
     def add_proc_reference(self, name: str, command: Command) -> None:
-        logging.debug(f"Reference to proc {name} at: {command._pos_str()}")
+        logging.debug(f"Reference to proc {name} at {command._pos_str()}")
         self.sym_ref["proc"][name].append((command.pos, command.end_pos))
 
     def add_var_reference(self, name: str, var_sub: VarSub) -> None:
-        logging.debug(f"Reference to var {name} at: {var_sub._pos_str()}")
+        logging.debug(f"Reference to var {name} at {var_sub._pos_str()}")
         self.sym_ref["var"][name].append((var_sub.pos, var_sub.end_pos))
 
     def add_definition(self, sym_type: str, command: Command) -> None:
         if len(command.args) == 0:
             return
-        name = command.args[0].contents
 
-        logging.debug(f"Definition of {sym_type}: {name} at: {command._pos_str()}")
-        self.sym_def[sym_type][name].append((command.pos, command.end_pos))
+        def_node = command.args[0]
+        name = def_node.contents
+        logging.debug(f"Definition of {sym_type} {name} at {def_node._pos_str()}")
+        self.sym_def[sym_type][name].append((def_node.pos, def_node.end_pos))
 
     def lookup(self, node: Node, table: dict):
         ts = self.type_and_symbol(node)

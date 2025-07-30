@@ -453,13 +453,13 @@ async def test_goto_definition(client: pytest_lsp.LanguageClient):
         assert result[0].range.start.character == res_char
 
     # Test goto definition of procedures
-    await _test(10, 0, 1, 0)
-    await _test(15, 0, 6, 0)
-    await _test(20, 0, 1, 0)
+    await _test(10, 0, 1, 5)
+    await _test(15, 0, 6, 5)
+    await _test(20, 0, 1, 5)
 
     # Test goto definition of variables
-    await _test(17, 25, 12, 0)
-    await _test(17, 40, 13, 0)
+    await _test(17, 25, 12, 4)
+    await _test(17, 40, 13, 4)
 
 
 @pytest.mark.asyncio
