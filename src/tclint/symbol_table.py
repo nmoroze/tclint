@@ -15,14 +15,17 @@ class SymbolTable:
         self.sym_ref = {k: defaultdict(list) for k in self.KEYS}
 
     def add_proc_reference(self, name: str, command: Command) -> None:
+        """Add reference to procedure"""
         logging.debug(f"Reference to proc {name} at {command._pos_str()}")
         self.sym_ref["proc"][name].append((command.pos, command.end_pos))
 
     def add_var_reference(self, name: str, var_sub: VarSub) -> None:
+        """Add reference to variable"""
         logging.debug(f"Reference to var {name} at {var_sub._pos_str()}")
         self.sym_ref["var"][name].append((var_sub.pos, var_sub.end_pos))
 
     def add_definition(self, sym_type: str, command: Command) -> None:
+        """Add definition of either procedure or variable (according to sym_type)"""
         if len(command.args) == 0:
             return
 
@@ -31,7 +34,8 @@ class SymbolTable:
         logging.debug(f"Definition of {sym_type} {name} at {def_node._pos_str()}")
         self.sym_def[sym_type][name].append((def_node.pos, def_node.end_pos))
 
-    def lookup(self, node: Node, table: dict):
+    def lookup(self, node: Node, table: dict) -> List[tuple[tuple, tuple]]:
+        """Lookup either reference(s) or definition(s) of the thing (procedure or variable) pointed at by node"""
         ts = self.type_and_symbol(node)
         if ts is None:
             return []
@@ -44,9 +48,11 @@ class SymbolTable:
         return table[key][word]
 
     def lookup_definition(self, node: Node) -> List[tuple[tuple, tuple]]:
+        """Lookup definition(s) of the thing (procedure or variable) pointed at by node"""
         return self.lookup(node, self.sym_def)
 
     def lookup_references(self, node: Node) -> List[tuple[tuple, tuple]]:
+        """Lookup reference(s) to the thing (procedure or variable) pointed at by node"""
         return self.lookup(node, self.sym_ref)
 
     def type_and_symbol(self, node: Node) -> tuple[str, str] | None:
@@ -112,7 +118,7 @@ class SymbolTableBuilder(Visitor):
             self.table.add_definition("var", command)
         elif key == "proc":
             self.table.add_definition("proc", command)
-        else:
+        elif key is not None:
             self.table.add_proc_reference(key, command)
 
     def visit_var_sub(self, var_sub: VarSub):
