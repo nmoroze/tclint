@@ -894,3 +894,17 @@ def test_unbraced_list():
     args_list_node = command.args[1]
     assert args_list_node.pos == (1, 10)
     assert args_list_node.children[0].pos == (1, 10)
+
+
+def test_find_by_pos():
+    with open(MY_DIR / "data" / "clean.tcl", "r") as f:
+        script = f.read()
+    tree = parse(script)
+
+    result = tree.find_by_pos(4, 16)
+    assert isinstance(result, VarSub)
+    assert result.value == "i"
+
+    result = tree.find_by_pos(7, 16)
+    assert isinstance(result, BareWord)
+    assert result.value == "Buzz"

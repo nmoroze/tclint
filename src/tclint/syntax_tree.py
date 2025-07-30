@@ -222,6 +222,30 @@ class Node:
         for child in self.children:
             child.accept(visitor, recurse=True)
 
+    def _pos_match(self, line: int, col: int) -> bool:
+        """Return True if pos is within this node's block"""
+        if self.pos is None:
+            return False
+        if self.end_pos is None:
+            return line == self.pos[0] and col == self.pos[1]
+        # FIXME: check for off-by-one with end_pos
+        return (
+            line >= self.pos[0]
+            and line <= self.end_pos[0]
+            and (col >= self.pos[1] or line > self.pos[0])
+            and (col <= self.end_pos[1] or line < self.end_pos[0])
+        )
+
+    def find_by_pos(self, line: int, col: int) -> Self | None:
+        if not self._pos_match(line, col):
+            return None
+
+        for child in self.children:
+            if child._pos_match(line, col):
+                return child.find_by_pos(line, col)
+
+        return self
+
 
 class Script(Node):
     def __init__(self, *args, **kwargs):
