@@ -28,7 +28,7 @@ def get_capabilities(client: str) -> lsp.ClientCapabilities:
 @pytest_lsp.fixture(
     config=pytest_lsp.ClientServerConfig(
         # -I ensures the server imports the tclint package instead of the entry point.
-        server_command=[sys.executable, "-I", str(LSP_BIN), "--log-level", "debug"]
+        server_command=[sys.executable, "-I", str(LSP_BIN)]
     )
 )
 async def client(lsp_client: pytest_lsp.LanguageClient, request):
