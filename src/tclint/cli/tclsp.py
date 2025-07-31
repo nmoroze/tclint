@@ -17,6 +17,7 @@ from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
 from tclint.parser import Parser
 from tclint.cli import utils
+from tclint.symbol_table import SymbolTableBuilder, get_symbol_text
 
 try:
     from tclint._version import __version__  # type: ignore
@@ -328,6 +329,57 @@ def format_range(ls: TclspServer, params: lsp.DocumentRangeFormattingParams):
             new_text=formatted,
         )
     ]
+
+
+@server.feature(lsp.TEXT_DOCUMENT_DEFINITION)
+def goto_definition(ls: TclspServer, params: lsp.DefinitionParams):
+    """Jump to an object's definition."""
+    doc = ls.workspace.get_text_document(params.text_document.uri)
+
+    # Parse the source file
+    parser = Parser()
+    tree = parser.parse(doc.source)
+
+    # Build the symbol table
+    symtab_builder = SymbolTableBuilder()
+    table = symtab_builder.build(tree)
+
+    # Find node under the cursor
+    # LSP counts starting at zero, we are off by one
+    # TODO: refactor conversion from lsp.Position to our internal "pos"
+    node = tree.find_by_pos(
+        line=params.position.line + 1, col=params.position.character + 1
+    )
+    if node is None:
+        return None
+
+    # Do the actual definition lookup
+    # First, check what symbol we are looking for
+    symbol_text = get_symbol_text(node)
+    if not symbol_text:
+        return None
+
+    # Then lookup the matching nodes
+    result_nodes = table.lookup_proc_definitions(symbol_text)
+    if result_nodes == []:
+        return None
+
+    # Finally, get positions of the nodes
+    # LSP counts starting at zero, we are off by one
+    # TODO: refactor conversion from our internal "pos" to lsp.Position
+    result_positions = [
+        lsp.Location(
+            doc.uri,
+            lsp.Range(
+                start=lsp.Position(line=n.pos[0] - 1, character=n.pos[1] - 1),
+                end=lsp.Position(line=n.end_pos[0] - 1, character=n.end_pos[1] - 1),
+            ),
+        )
+        for n in result_nodes
+        if n.pos is not None and n.end_pos is not None
+    ]
+
+    return result_positions
 
 
 @server.feature(lsp.INITIALIZE)

@@ -1,6 +1,7 @@
 from pathlib import Path
 import shutil
 import sys
+from typing import Union, List
 
 from lsprotocol import types as lsp
 import pytest
@@ -427,3 +428,31 @@ async def test_lsp_exclude(client: pytest_lsp.LanguageClient, tmp_path):
     )
     assert results is not None
     assert len(results.items) == 0
+
+
+@pytest.mark.asyncio
+async def test_goto_definition(client: pytest_lsp.LanguageClient):
+    """Goto definition test."""
+    params = lsp.InitializeParams(capabilities=get_capabilities("visual-studio-code"))
+    await client.initialize_session(params)
+
+    document = MY_DIR / "data" / "symbols.tcl"
+
+    async def _test(
+        line: int, character: int, res_line: int, res_char: int
+    ) -> Union[lsp.Location, List[lsp.Location], List[lsp.LocationLink], None]:
+        result = await client.text_document_definition_async(
+            lsp.DefinitionParams(
+                text_document=lsp.TextDocumentIdentifier(uri=f"file://{document}"),
+                position=lsp.Position(line=line, character=character),
+            )
+        )
+        assert isinstance(result, List)
+        assert len(result) == 1
+        assert result[0].range.start.line == res_line
+        assert result[0].range.start.character == res_char
+
+    # Test goto definition of procedures
+    await _test(10, 0, 1, 5)
+    await _test(15, 0, 6, 5)
+    await _test(20, 0, 1, 5)
