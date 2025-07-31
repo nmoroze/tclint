@@ -905,3 +905,31 @@ def test_cr():
             BracedExpression(BinaryOp(BareWord("2"), BareWord(">"), BareWord("1"))),
         )
     )
+
+
+def test_find_by_pos():
+    with open(MY_DIR / "data" / "clean.tcl", "r") as f:
+        script = f.read()
+
+    tree = parse(script)
+
+    def test_tab(tab):
+        for line, col, expected_node in tab:
+            result = tree.find_by_pos(line, col)
+            assert result == expected_node
+
+    test_tab([
+        (4, 16, VarSub("i")),
+        (7, 16, BareWord("Buzz")),
+    ])
+
+    # Check for off-by-one
+    test_tab([
+        (1, 6, BareWord("set")),
+        (1, 7, BareWord("set")),
+        (1, 8, BareWord("set")),
+        # On Column 9 there is whitespace, so it falls back to the parent node.
+        # TODO: Is this what we want?
+        (1, 9, Command(BareWord("set"), BareWord("i"), BareWord("1"))),
+        (1, 10, BareWord("i")),
+    ])
