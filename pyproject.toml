@@ -21,14 +21,24 @@ dependencies = [
     "voluptuous==0.15.2",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "black",
-    "flake8",
-    "pytest",
-    "pytest-timeout",
-    "codespell",
-    "pytest-lsp",
+  {include-group = "format"},
+  {include-group = "lint"},
+  {include-group = "test"}
+]
+format = [
+    "black==23.11.0",
+]
+lint = [
+    "flake8==6.1.0",
+    "mypy==1.9.0",
+    "codespell==2.3.0",
+]
+test = [
+    "pytest==7.4.0",
+    "pytest-timeout==2.2.0",
+    "pytest-lsp==0.4.3",
 ]
 
 [project.scripts]
