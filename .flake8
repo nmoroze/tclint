@@ -3,4 +3,4 @@
 [flake8]
 max-line-length = 88
 extend-ignore = E203, E704
-extend-exclude = venv, .git
+extend-exclude = .venv, .git
