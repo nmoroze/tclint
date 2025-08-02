@@ -24,7 +24,7 @@ jobs:
 
       - name: Install tclint
         run: |
-          pip install .[dev] -c dev-constraints.txt
+          pip install . --group test
 
       - name: Run tests
         run: |
@@ -45,7 +45,7 @@ jobs:
 
       - name: Check format
         run: |
-          pip install black -c dev-constraints.txt
+          pip install --group format
           black --check --preview .
 
   lint:
@@ -61,18 +61,19 @@ jobs:
         with:
           python-version: 3.11
 
+      - name: Install dependencies
+        run:
+          pip install --group lint
+
       - name: Lint
         run: |
-          pip install flake8 -c dev-constraints.txt
           flake8 --statistics .
 
       - name: Typecheck
         run: |
           pip install . # need to install package to ensure we get type stubs for deps
-          pip install mypy -c dev-constraints.txt
           mypy src
 
       - name: Spell check
         run: |
-          pip install codespell -c dev-constraints.txt
           git ls-files | xargs codespell
