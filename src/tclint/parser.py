@@ -762,9 +762,14 @@ class Parser:
             operator = ts.value()
             ts.next()
         else:
-            raise TclSyntaxError(
-                f"invalid operator in expression: {ts.value()}", pos, ts.pos()
-            )
+            message = "invalid operator in expression: "
+            if ts.value() == "\\ ":
+                message += (
+                    "\\ (check for trailing whitespace if it's the end of the line)"
+                )
+            else:
+                message += ts.value()
+            raise TclSyntaxError(message, pos, ts.pos())
 
         return BareWord(operator, pos=pos, end_pos=ts.pos())
 
