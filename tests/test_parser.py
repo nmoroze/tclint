@@ -894,3 +894,14 @@ def test_unbraced_list():
     args_list_node = command.args[1]
     assert args_list_node.pos == (1, 10)
     assert args_list_node.children[0].pos == (1, 10)
+
+
+def test_cr():
+    script = "expr {2 \\\r\n>1}"
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("expr"),
+            BracedExpression(BinaryOp(BareWord("2"), BareWord(">"), BareWord("1"))),
+        )
+    )

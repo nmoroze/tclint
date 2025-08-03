@@ -1,3 +1,4 @@
+import io
 import string
 import re
 from typing import Optional, Tuple
@@ -109,12 +110,16 @@ class Parser:
             command_plugins = []
         self._commands = get_commands(command_plugins)
 
+        # Used to normalize newlines consistently with open()'s universal newlines mode.
+        self._decoder = io.IncrementalNewlineDecoder(None, True)
+
     def debug(self, *msg):
         if self._debug:
             print("  " * self._debug_indent, end="")
             print(*msg)
 
     def parse(self, script: str, pos: Optional[Tuple[int, int]] = None):
+        script = self._decoder.decode(script, True)
         lexer = Lexer(pos=pos)
         lexer.input(script)
         tree = self._parse_script(lexer, in_command_sub=False)
