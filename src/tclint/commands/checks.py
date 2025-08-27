@@ -220,14 +220,34 @@ def check_arg_spec(
 
     min_positionals = 0
     max_positionals: Optional[int] = 0
+    required_positionals = []
+
     for positional in arg_spec["positionals"]:
         if positional["value"]["type"] == "variadic":
             max_positionals = None
 
         if positional["required"]:
             min_positionals += 1
+            required_positionals.append(positional["name"])
         if max_positionals is not None:
             max_positionals += 1
+
+    if len(positional_args) < min_positionals:
+        missing_positionals = required_positionals[len(positional_args):]
+        if len(missing_positionals) == 1:
+            raise CommandArgError(
+                f"missing required positional argument for {command}: {missing_positionals[0]}"
+            )
+        else:
+            raise CommandArgError(
+                f"missing required positional arguments for {command}: {', '.join(missing_positionals)}"
+            )
+
+    # Still check for too many arguments
+    if max_positionals is not None and len(positional_args) > max_positionals:
+        raise CommandArgError(
+            f"too many positional args for {command}: got {len(positional_args)}, expected no more than {max_positionals}"
+        )
 
     check = check_count(
         command,
