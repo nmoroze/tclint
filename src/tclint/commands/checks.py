@@ -153,6 +153,7 @@ def check_arg_spec(
         raise CommandArgError(f"{msg}, expected one of {', '.join(subcommands.keys())}")
 
     switches = arg_spec["switches"]
+    positionals = arg_spec["positionals"]
     args_allowed = set(switches)
     args_required = {switch for switch in switches if switches[switch]["required"]}
     positional_args = []
@@ -160,6 +161,16 @@ def check_arg_spec(
     args = list(args)
     while len(args) > 0:
         arg = args.pop(0)
+        contents = arg.contents
+
+        ispos = False
+        for pos in positionals:
+            if pos["name"] == contents:
+                ispos = True
+                break
+        if ispos:
+            positional_args.append(arg)
+            continue
 
         # To facilitate better error messages, we expect that switches are always
         # specified as BareWords that start with "-" or ">". This lets us throw an
@@ -168,7 +179,6 @@ def check_arg_spec(
         # ends up in a vague "too many arguments" error). To make tclint interpret a
         # switch-like word as a positional argument, users should wrap it in "", and
         # any switches should be BareWords.
-        contents = arg.contents
         if not (isinstance(arg, BareWord) and contents and contents[0] in {"-", ">"}):
             positional_args.append(arg)
             continue
@@ -220,7 +230,7 @@ def check_arg_spec(
 
     min_positionals = 0
     max_positionals: Optional[int] = 0
-    for positional in arg_spec["positionals"]:
+    for positional in positionals:
         if positional["value"]["type"] == "variadic":
             max_positionals = None
 
