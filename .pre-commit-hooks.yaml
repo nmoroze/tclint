@@ -1,0 +1,5 @@
+-   id: tclint
+    name: tclint
+    description: '`tclint` is a linter for Tcl.'
+    entry: tclint
+    language: python
