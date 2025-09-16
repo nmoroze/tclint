@@ -168,3 +168,28 @@ def test_arg_replacement_subcommands():
     }
     new_args = check_arg_spec("command", args, None, spec)
     assert new_args == [BareWord("subcommand"), BareWord("arg")]
+
+
+def test_no_switches():
+    # Tcl command: append l -1
+    args = [BareWord("l"), BareWord("-1")]
+    spec = {
+        "positionals": [
+            {"name": "varname", "value": {"type": "any"}, "required": True},
+            {"name": "value", "value": {"type": "variadic"}, "required": False},
+        ],
+        "switches": {},
+    }
+    check_arg_spec("command", args, None, spec)
+
+    # Tcl command: puts -nonewline stdout foo
+    args = [BareWord("-nonewline"), BareWord("stdout"), BareWord("foo")]
+    spec = {
+        "positionals": [
+            {"name": "-nonewline", "value": {"type": "any"}, "required": False},
+            {"name": "channelId", "value": {"type": "any"}, "required": False},
+            {"name": "string", "value": {"type": "any"}, "required": True},
+        ],
+        "switches": {},
+    }
+    check_arg_spec("command", args, None, spec)
