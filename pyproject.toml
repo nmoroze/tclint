@@ -25,7 +25,8 @@ dependencies = [
 dev = [
   {include-group = "format"},
   {include-group = "lint"},
-  {include-group = "test"}
+  {include-group = "test"},
+  "pre-commit==3.2.0",
 ]
 format = [
     "black==23.11.0",

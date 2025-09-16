@@ -2,8 +2,8 @@
 
 set -e
 
-black --check --preview .
-flake8 .
+pre-commit run --all-files black
+pre-commit run --all-files flake8
 pytest
-mypy src/
-git ls-files | xargs codespell
+pre-commit run --all-files mypy
+pre-commit run --all-files codespell
