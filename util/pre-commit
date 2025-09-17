@@ -2,7 +2,7 @@
 
 set -e
 
-black --check --preview .
+black --check .
 flake8 .
 pytest
 mypy src/
