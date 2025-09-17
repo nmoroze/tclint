@@ -73,7 +73,7 @@ $ pip install -e . --group dev
 Please format, lint, and run tests before submitting changes:
 
 ```sh
-$ black --preview .
+$ black .
 $ ./util/pre-commit
 ```
 
