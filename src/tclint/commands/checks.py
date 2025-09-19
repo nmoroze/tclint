@@ -158,6 +158,10 @@ def check_arg_spec(
     positional_args = []
 
     args = list(args)
+    if not switches:
+        positional_args = args
+        args = []
+
     while len(args) > 0:
         arg = args.pop(0)
 
