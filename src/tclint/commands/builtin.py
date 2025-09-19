@@ -841,13 +841,56 @@ commands = commands_schema({
     "array": _array,
     "binary": {
         "subcommands": {
-            "decode": check_count("binary decode", 2, None),
-            "encode": check_count("binary encode", 2, None),
-            "format": check_count("binary format", 1, None),
-            "scan": check_count("binary scan", 2, None),
+            "decode": {
+                "positionals": [
+                    {"name": "format", "value": {"type": "any"}, "required": True},
+                    {
+                        "name": "options",
+                        "value": {"type": "variadic"},
+                        "required": False,
+                    },
+                    {"name": "data", "value": {"type": "any"}, "required": True},
+                ],
+            },
+            "encode": {
+                "positionals": [
+                    {"name": "format", "value": {"type": "any"}, "required": True},
+                    {
+                        "name": "options",
+                        "value": {"type": "variadic"},
+                        "required": False,
+                    },
+                    {"name": "data", "value": {"type": "any"}, "required": True},
+                ],
+            },
+            "format": {
+                "positionals": [
+                    {
+                        "name": "formatString",
+                        "value": {"type": "any"},
+                        "required": True,
+                    },
+                    {"name": "args", "value": {"type": "variadic"}, "required": False},
+                ],
+            },
+            "scan": {
+                "positionals": [
+                    {"name": "string", "value": {"type": "any"}, "required": True},
+                    {
+                        "name": "formatString",
+                        "value": {"type": "any"},
+                        "required": True,
+                    },
+                    {
+                        "name": "varName",
+                        "value": {"type": "variadic"},
+                        "required": False,
+                    },
+                ],
+            },
         },
     },
-    "break": check_count("break", 0, 0),
+    "break": {},
     "catch": _catch,
     "cd": {
         "positionals": [

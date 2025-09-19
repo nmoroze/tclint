@@ -15,6 +15,8 @@ from tclint.syntax_tree import Script, Command, BareWord, QuotedWord
         ("namespace upvar my_namespace var0 var1 var2", True),
         ("namespace unknown", True),
         ("namespace unknown puts hello", False),
+        ("break", True),
+        ("break asdf", False),
     ],
 )
 def test_validation(command, valid):
