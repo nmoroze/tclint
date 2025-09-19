@@ -237,11 +237,11 @@ def check_arg_spec(
             max_positionals += 1
 
     # Check for arg expansions first
-    count, has_arg_expansion = arg_count(positional_args, None)
+    count, has_arg_expansion = arg_count(positional_args, parser)
 
     # Only check for missing arguments if there are no arg expansions
-    if not has_arg_expansion and len(positional_args) < min_positionals:
-        missing_positionals = required_positionals[len(positional_args) :]
+    if not has_arg_expansion and count < min_positionals:
+        missing_positionals = required_positionals[count:]
         if len(missing_positionals) == 1:
             raise CommandArgError(
                 f"missing required positional argument for {command}: "
