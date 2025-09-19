@@ -1,16 +1,21 @@
 """Helpers for checking command arguments."""
 
+from __future__ import annotations
 from collections.abc import Callable
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple, TYPE_CHECKING
 
 from tclint.syntax_tree import ArgExpansion, QuotedWord, BracedWord, BareWord, Node
+
+# This lets us use Parser in type annotations without introducing a cyclic dependency.
+if TYPE_CHECKING:
+    from tclint.parser import Parser
 
 
 class CommandArgError(Exception):
     pass
 
 
-def arg_count(args, parser):
+def arg_count(args: List[Node], parser: Parser) -> Tuple[int, bool]:
     # TODO: graceful handling of argsub going into things with recursive parsing.
     # if the argsub happens to be "concrete", we can technically do the right
     # thing (although this should probably be flagged as a readability issue...)
@@ -64,7 +69,7 @@ def check_count(command, min=None, max=None, args_name="args"):
     return check
 
 
-def eval(args, parser, command):
+def eval(args: List[Node], parser: Parser, command: str) -> List[Node]:
     if len(args) > 1 and any(isinstance(arg, (QuotedWord, BracedWord)) for arg in args):
         # Slightly odd restriction, but our syntax tree doesn't have a great way
         # to handle this case. We require each command argument to correspond to
@@ -113,7 +118,10 @@ def eval(args, parser, command):
 
 
 def check_command(
-    command: str, args: List[Node], parser, command_spec: Union[Callable, dict, None]
+    command: str,
+    args: List[Node],
+    parser: Parser,
+    command_spec: Union[Callable, dict, None],
 ) -> Optional[List[Node]]:
     if command_spec is None:
         return None
@@ -125,7 +133,7 @@ def check_command(
 
 
 def check_arg_spec(
-    command: str, args: List[Node], parser, arg_spec: dict
+    command: str, args: List[Node], parser: Parser, arg_spec: dict
 ) -> Optional[List[Node]]:
     if "subcommands" in arg_spec:
         subcommands = arg_spec["subcommands"]
