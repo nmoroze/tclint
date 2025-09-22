@@ -67,6 +67,7 @@ Use the following steps to set up `tclint` for local development:
 ```sh
 $ git clone https://github.com/nmoroze/tclint.git # or URL to fork
 $ cd tclint
+$ pip install --upgrade pip # development requires pip >= 25.1
 $ pip install -e . --group dev
 ```
 
