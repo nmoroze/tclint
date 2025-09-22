@@ -16,15 +16,27 @@ class CommandArgError(Exception):
 
 
 def arg_count(args: List[Node], parser: Parser) -> Tuple[int, bool]:
-    # TODO: graceful handling of argsub going into things with recursive parsing.
-    # if the argsub happens to be "concrete", we can technically do the right
-    # thing (although this should probably be flagged as a readability issue...)
-    # otherwise, we should flag that the non-concrete argsub is not okay for
-    # these cases. however, I think its not okay-ness doesn't need to be absolute, e.g.
-    # I think we could allow:
-    #
-    #  catch {puts "my script"} {*}$catchopts
-    #
+    """Returns the number of arguments in args, taking {*} into account.
+
+    If an argument list contains an argument expansion operator that cannot be
+    statically expanded, the second return value is True, and the count is the minimum
+    possible number of arguments. Otherwise, the return value is False and the count
+    reflects the exact number of arguments.
+
+    This function should always be used for validating argument count, rather than
+    relying on `len(args)`.
+    """
+
+    # TODO: Replace this with or add a similar `expand_args` function that returns an
+    # expanded argument list. One tricky thing is we want to handle cases like:
+    # - foreach {*}$iters { ...body... }
+    # - catch {puts "my script"} {*}$catchopts
+    # With something like a list structure we can either forward or reverse index to
+    # still parse the body even with an unexpanded {*}.
+
+    # TODO: Add a violation that flags `{*}{a b c}` for rewriting as `a b c`. A future
+    # version of tclfmt that allows rewrites that break the syntax tree could do this
+    # automatically.
 
     arg_count = 0
     has_arg_expansion = False
@@ -33,7 +45,7 @@ def arg_count(args: List[Node], parser: Parser) -> Tuple[int, bool]:
             if arg.contents is None:
                 has_arg_expansion = True
                 continue
-            arg_count += len(parser.parse_list(arg.contents))
+            arg_count += len(parser.parse_list(arg).children)
         else:
             arg_count += 1
 

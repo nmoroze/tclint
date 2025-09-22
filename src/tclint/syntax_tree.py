@@ -364,7 +364,7 @@ class VarSub(Node):
 
 
 class ArgExpansion(Node):
-    def __init__(self, list, pos=None, end_pos=None):
+    def __init__(self, list: Node, pos=None, end_pos=None):
         self.list = list
         super().__init__(list, pos=pos, end_pos=end_pos)
 
@@ -372,6 +372,10 @@ class ArgExpansion(Node):
         if recurse:
             self._recurse(visitor)
         visitor.visit_arg_expansion(self)
+
+    @property
+    def contents(self):
+        return self.list.contents
 
 
 class List(Node):

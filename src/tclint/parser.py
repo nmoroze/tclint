@@ -27,6 +27,7 @@ from tclint.lexer import (
     TOK_EOF,
 )
 from tclint.syntax_tree import (
+    Node,
     Script,
     Comment,
     Command,
@@ -526,7 +527,7 @@ class Parser:
         self._debug_indent -= 1
         return script
 
-    def parse_list(self, node):
+    def parse_list(self, node: Node) -> List:
         """Parse contents of node as Tcl list. This is a distinct entry point
         that doesn't get used when generating the main syntax tree, but is used
         in command-specific argument parsing.
