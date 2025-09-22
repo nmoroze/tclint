@@ -34,6 +34,7 @@ these would be helpful for your use case, please file an issue.
 
 from tclint.commands.checks import (
     CommandArgError,
+    arg_count,
     check_count,
     eval,
 )
@@ -449,7 +450,10 @@ def _for(args, parser):
 
 def _foreach(args, parser):
     # ref: https://www.tcl.tk/man/tcl/TclCmd/foreach.html
-    if len(args) < 3:
+    count, has_arg_expansion = arg_count(args, parser)
+    # Second condition uses len(args) rather than count since we need to guard the
+    # args[-1] index and count < 0 is technically stricter than necessary.
+    if (not has_arg_expansion and count < 3) or (has_arg_expansion and len(args) < 1):
         raise CommandArgError(
             f"insufficient args to foreach: got {len(args)}, expected at least 3"
         )

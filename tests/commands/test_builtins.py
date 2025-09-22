@@ -17,6 +17,9 @@ from tclint.syntax_tree import Script, Command, BareWord, QuotedWord
         ("namespace unknown puts hello", False),
         ("break", True),
         ("break asdf", False),
+        ("foreach", False),
+        (r"foreach $iters {}", False),
+        (r"foreach {*}$iters {}", True),
     ],
 )
 def test_validation(command, valid):
@@ -24,6 +27,15 @@ def test_validation(command, valid):
     parser.parse(command)
 
     assert len(parser.violations) == 0 if valid else 1
+
+
+def test_foreach_arg_expansion_only():
+    parser = Parser()
+    parser.parse("foreach {*}$args")
+
+    assert len(parser.violations) == 1
+    assert not str(parser.violations[0]).startswith("1:1: insufficient args")
+    assert str(parser.violations[0]).startswith("1:1: expected braced word")
 
 
 def test_namespace_unknown_script():
