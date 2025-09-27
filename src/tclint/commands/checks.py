@@ -149,29 +149,7 @@ def check_arg_spec(
     command: str, args: list[Node], parser: Parser, arg_spec: dict
 ) -> Optional[list[Node]]:
     if "subcommands" in arg_spec:
-        subcommands = arg_spec["subcommands"]
-        try:
-            subcommand = args[0].contents
-        except IndexError:
-            subcommand = None
-
-        if subcommand in subcommands:
-            new_args = check_command(
-                f"{command} {subcommand}", args[1:], parser, subcommands[subcommand]
-            )
-            if new_args is None:
-                return new_args
-            return args[0:1] + new_args
-
-        if "" in subcommands:
-            return check_command(command, args, parser, subcommands[""])
-
-        if subcommand is not None:
-            msg = f"invalid subcommand for {command}: got {subcommand}"
-        else:
-            msg = f"no subcommand provided for {command}"
-
-        raise CommandArgError(f"{msg}, expected one of {', '.join(subcommands.keys())}")
+        return dispatch_subcommands(command, args, parser, arg_spec["subcommands"])
 
     switches = arg_spec["switches"]
     args_allowed = set(switches)
@@ -284,6 +262,33 @@ def check_arg_spec(
     # No need for check_count here as we've already done the checks
 
     return None
+
+
+def dispatch_subcommands(
+    command: str, args: list[Node], parser: Parser, spec: dict
+) -> Optional[list[Node]]:
+    try:
+        subcommand = args[0].contents
+    except IndexError:
+        subcommand = None
+
+    if subcommand in spec:
+        new_args = check_command(
+            f"{command} {subcommand}", args[1:], parser, spec[subcommand]
+        )
+        if new_args is None:
+            return new_args
+        return args[0:1] + new_args
+
+    if "" in spec:
+        return check_command(command, args, parser, spec[""])
+
+    if subcommand is not None:
+        msg = f"invalid subcommand for {command}: got {subcommand}"
+    else:
+        msg = f"no subcommand provided for {command}"
+
+    raise CommandArgError(f"{msg}, expected one of {', '.join(spec.keys())}")
 
 
 def map_positionals(
