@@ -40,7 +40,11 @@ class _PluginManager:
             with open(path.expanduser(), "r") as f:
                 spec = json.load(f)
         except (FileNotFoundError, RuntimeError):
+            # expanduser() may raise RuntimeError
             print(f"Warning: command spec {path} not found, skipping...")
+            return None
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            print(f"Warning: {path} contains invalid JSON: {e}, skipping...")
             return None
 
         try:
