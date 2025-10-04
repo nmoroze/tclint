@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 import pathlib
 from typing import List, Dict, Union
 
@@ -19,7 +20,7 @@ def validate_command_plugins(plugins: List[str]) -> List[str]:
     return valid_plugins
 
 
-def get_commands(plugins: List[Union[str, pathlib.Path]]) -> Dict:
+def get_commands(plugins: Sequence[Union[str, pathlib.Path]]) -> Dict:
     commands = {}
     commands.update(_builtin.commands)
 

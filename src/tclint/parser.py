@@ -1,4 +1,6 @@
+from collections.abc import Sequence
 import io
+from pathlib import Path
 import string
 import re
 from typing import Optional, Tuple
@@ -101,11 +103,11 @@ class _Word:
 
 
 class Parser:
-    def __init__(self, debug=False, command_plugins=None):
+    def __init__(self, debug=False, command_plugins: Optional[Sequence[Path]] = None):
         self._debug = debug
         self._debug_indent = 0
         # TODO: better way to handle this?
-        self.violations = []
+        self.violations: list[Violation] = []
 
         if command_plugins is None:
             command_plugins = []

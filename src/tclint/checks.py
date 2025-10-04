@@ -1,10 +1,12 @@
 import re
 
 from tclint.commands import get_commands
+from tclint.config import Config
 from tclint.violations import Rule, Violation
 
 from tclint.syntax_tree import (
     Visitor,
+    Script,
     BracedExpression,
     Expression,
     BracedWord,
@@ -81,8 +83,8 @@ class RedefinedBuiltinChecker(Visitor):
     Reports 'redefined-builtin' violations.
     """
 
-    def check(self, _, tree, config):
-        self._violations = []
+    def check(self, _, tree: Script, config: Config) -> list[Violation]:
+        self._violations: list[Violation] = []
 
         plugins = [config.commands] if config.commands is not None else []
         commands = get_commands(plugins)
