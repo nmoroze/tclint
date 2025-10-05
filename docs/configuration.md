@@ -20,7 +20,7 @@ commands = "~/.tclint/openroad.json"
 # with the exception of line-length, the [style] settings affect tclfmt rather than tclint.
 
 [style]
-# number of spaces to indent. can also be set to "tab". defaults to 4.
+# number of spaces to indent. can also be set to "tab", or "mixed",<s>,<t>. defaults to 4.
 indent = 2
 # maximum allowed line length. defaults to 100.
 line-length = 80

@@ -40,11 +40,13 @@ class FormatterOpts:
     spaces_in_braces: bool
     max_blank_lines: int
     indent_namespace_eval: bool
+    indent_mixed_tab_size: int
 
 
 class Formatter:
     def __init__(self, opts: FormatterOpts):
         self.opts = opts
+        self.indent_mixed_tab_size = opts.indent_mixed_tab_size
 
     def _indent(self, lines: List[str], indent: str) -> List[str]:
         indented = []
@@ -112,10 +114,47 @@ class Formatter:
 
         return formatted
 
+    def reindent(self, lines: List[str]) -> List[str]:
+        """Apply mixed space/tab indentation scheme.
+
+        Apply the mixed space/tab indentation scheme as requested by
+        --indent=mixed,<s>,<t>.
+
+        The input is lines with indentation in the form of spaces and/or tabs.
+        This function transforms the indentation into a number of tabs,
+        followed by a number of spaces.
+
+        A more structural way of doing this would be to model input lines as a
+        tuple of an indentation level and a string, and use this function to
+        expand the indentation level, but that requires broader changes.
+        """
+        tab_size = self.indent_mixed_tab_size
+        if tab_size == 0:
+            return lines
+
+        fixed_lines = []
+        for line in lines:
+            # Split line into leading whitespace, and the rest.
+            after = line.lstrip()
+            split_pos = len(line) - len(after)
+            leading = line[0:split_pos]
+
+            # Expand tabs.
+            leading = leading.expandtabs(tab_size)
+
+            # Tabify.
+            leading = leading.replace(" " * tab_size, "\t")
+
+            fixed_lines.append(leading + after)
+
+        return fixed_lines
+
     def format_top(self, script: str, parser: Parser) -> str:
         tree = parser.parse(script)
         self.script = script.split("\n")
-        return "\n".join(self.format_script_contents(tree)) + "\n"
+        lines = self.format_script_contents(tree)
+        lines = self.reindent(lines)
+        return "\n".join(lines) + "\n"
 
     def format_partial(self, script: str, parser: Parser) -> str:
         """Formats a partial Tcl script.
@@ -138,7 +177,9 @@ class Formatter:
         tree = parser.parse(script)
         self.script = script.split("\n")
 
-        formatted = "\n".join(self._indent(self.format_script_contents(tree), indent))
+        lines = self._indent(self.format_script_contents(tree), indent)
+        lines = self.reindent(lines)
+        formatted = "\n".join(lines)
 
         return leading + formatted + trailing
 
