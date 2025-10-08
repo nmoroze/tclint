@@ -36,9 +36,10 @@ lint = [
     "codespell==2.3.0",
 ]
 test = [
-    "pytest==7.4.0",
+    "pytest==8.2.0",
     "pytest-timeout==2.2.0",
     "pytest-lsp==0.4.3",
+    "pytest-asyncio==0.24",
 ]
 
 [project.scripts]
