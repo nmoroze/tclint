@@ -67,15 +67,18 @@ Use the following steps to set up `tclint` for local development:
 ```sh
 $ git clone https://github.com/nmoroze/tclint.git # or URL to fork
 $ cd tclint
-$ pip install --upgrade pip # development requires pip >= 25.1
-$ pip install -e . --group dev
+$ python3 -m venv .venv # set up a venv to ensure clean environment
+$ source .venv/bin/activate
+(venv) $ pip install --upgrade pip # development requires pip >= 25.1
+(venv) $ pip install -e . --group dev
 ```
 
 Please format, lint, and run tests before submitting changes:
 
 ```sh
-$ black .
-$ ./util/pre-commit
+$ source .venv/bin/activate
+(venv) $ black .
+(venv) $ ./util/pre-commit
 ```
 
 ## License
