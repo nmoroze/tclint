@@ -39,6 +39,8 @@ test = [
     "pytest==8.2.0",
     "pytest-timeout==2.2.0",
     "pytest-lsp==0.4.3",
+    # TODO: remove this entry if we standardize on uv (in favor of
+    # `tool.uv.constraint-dependencies`).
     "pytest-asyncio==0.24",
 ]
 
@@ -66,3 +68,10 @@ ignore_missing_imports = true
 
 [tool.black]
 preview = true
+
+[tool.uv]
+constraint-dependencies = [
+    # Included by pytest-lsp, this version is required to support
+    # `asyncio_default_fixture_loop_scope`.
+    "pytest-asyncio>=0.24"
+]
