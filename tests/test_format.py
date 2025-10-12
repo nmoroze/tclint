@@ -664,3 +664,39 @@ def test_partial():
     original_tree = parser.parse(script)
     formatted_tree = parser.parse(out)
     assert original_tree == formatted_tree
+
+
+def test_partial_multiline_string():
+    """We can't add an extra level of indent in the second line of the braced word,
+    since this will change the actual text."""
+    script = r"""
+ puts \
+{ one
+  two }
+puts "three"
+"""
+
+    expected = r"""
+ puts \
+   { one
+  two }
+ puts "three"
+"""
+
+    parser = Parser()
+    format = Formatter(
+        FormatterOpts(
+            indent="  ",
+            spaces_in_braces=True,
+            max_blank_lines=2,
+            indent_namespace_eval=True,
+        )
+    )
+
+    out = format.format_partial(script, parser)
+
+    assert out == expected
+
+    original_tree = parser.parse(script)
+    formatted_tree = parser.parse(out)
+    assert original_tree == formatted_tree

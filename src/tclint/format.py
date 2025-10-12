@@ -1,6 +1,5 @@
 import dataclasses
 import itertools
-import textwrap
 from typing import List, Tuple, Union
 import sys
 
@@ -139,9 +138,9 @@ class Formatter:
         tree = parser.parse(script)
         self.script = script.split("\n")
 
-        formatted = "\n".join(self.format_script_contents(tree))
+        formatted = "\n".join(self._indent(self.format_script_contents(tree), indent))
 
-        return leading + textwrap.indent(formatted, indent) + trailing
+        return leading + formatted + trailing
 
     def format_script_contents(self, script: Union[Script, CommandSub]) -> List[str]:
         to_format = []
