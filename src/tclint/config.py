@@ -410,11 +410,14 @@ def get_config(
         except FileNotFoundError:
             raise ConfigError(f"path {config_path} doesn't exist")
 
-    for path in DEFAULT_CONFIGS:
-        try:
-            return RunConfig.from_path(root / path, root)
-        except FileNotFoundError:
-            pass
+    current_root = root
+    while current_root != current_root.parent:
+        for path in DEFAULT_CONFIGS:
+            try:
+                return RunConfig.from_path(current_root / path, current_root)
+            except FileNotFoundError:
+                pass
+        current_root = current_root.parent
 
     try:
         return RunConfig.from_pyproject(directory=root)
