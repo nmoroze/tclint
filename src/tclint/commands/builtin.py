@@ -673,6 +673,9 @@ def _switch(args, parser):
     for i, node in enumerate(pattern_and_commands):
         if i % 2 == 0:
             parsed_patterns_and_commands.append(node)
+        elif node.contents == "-":
+            # Detect passthrough.
+            parsed_patterns_and_commands.append(node)
         else:
             parsed_patterns_and_commands.append(parser.parse_script(node))
 

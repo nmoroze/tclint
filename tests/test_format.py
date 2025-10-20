@@ -700,3 +700,18 @@ puts "three"
     original_tree = parser.parse(script)
     formatted_tree = parser.parse(out)
     assert original_tree == formatted_tree
+
+
+def test_preserve_switch_continuation():
+    """Test that `-` is preserved in switch.
+
+    Regression test for https://github.com/nmoroze/tclint/issues/129."""
+    script = r"""
+switch a {
+  a -
+  b "-"
+  c {-}
+  d { puts "fallthrough" }
+}
+""".strip()
+    _test(script, script, spaces_in_braces=True)
