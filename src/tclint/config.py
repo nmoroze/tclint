@@ -63,11 +63,18 @@ class Config:
             return "\t"
         elif isinstance(self.style_indent, int):
             return " " * self.style_indent
+        elif isinstance(self.style_indent, tuple):
+            return " " * self.style_indent[0]
 
         # Should be unreachable, validated on ingestion of config
         raise ValueError(
             f"unexpected value for config.style_indent: {self.style_indent}"
         )
+
+    def get_indent_mixed_tab_size(self) -> int:
+        if isinstance(self.style_indent, tuple):
+            return self.style_indent[1]
+        return 0
 
 
 # Validators using `voluptuous` library that check and normalize config inputs.
@@ -88,6 +95,14 @@ def _str2list(s):
     return s
 
 
+def parse_mixed(v: str) -> tuple[int, int]:
+    """Parse --indent=mixed,<s>,<t>."""
+    s = v.split(",")
+    if not (len(s) == 3 and s[0] == "mixed" and s[1].isdigit() and s[2].isdigit()):
+        raise ValueError()
+    return (int(s[1]), int(s[2]))
+
+
 _VALIDATORS = {
     # note: it's ok if paths don't exist - allows for generic
     # configurations with directories like .git/ excluded
@@ -101,7 +116,16 @@ _VALIDATORS = {
     "commands": Coerce(pathlib.Path),
     "extensions": _str2list,
     "style_indent": Coerce(
-        lambda v: v if v == "tab" else int(v), msg="expected integer or 'tab'"
+        lambda v: (
+            v
+            if v == "tab"
+            else (
+                int(v)
+                if isinstance(v, int) or (isinstance(v, str) and v.isdigit())
+                else parse_mixed(v)
+            )
+        ),
+        msg="expected integer, 'tab', or 'mixed',integer,integer",
     ),
     "style_line_length": Coerce(int),
     "style_max_blank_lines": And(

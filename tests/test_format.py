@@ -10,6 +10,7 @@ def _test(
     script,
     expected,
     indent="  ",
+    indent_mixed_tab_size=0,
     spaces_in_braces=True,
     max_blank_lines=2,
     indent_namespace_eval=True,
@@ -18,6 +19,7 @@ def _test(
     format = Formatter(
         FormatterOpts(
             indent=indent,
+            indent_mixed_tab_size=indent_mixed_tab_size,
             spaces_in_braces=spaces_in_braces,
             max_blank_lines=max_blank_lines,
             indent_namespace_eval=indent_namespace_eval,
@@ -503,6 +505,26 @@ expr {
     _test(script, expected)
 
 
+def test_add_mixed_indent_expr():
+    script = r"""
+if { 1 } {
+if { 1 } {
+foo
+}
+}"""
+
+    # Ignore E101 here.  Flake8 should not check indentation inside strings (
+    # https://github.com/PyCQA/pycodestyle/issues/376 ).
+    expected = r"""
+if { 1 } {
+    if { 1 } {
+	foo
+    }
+}""".strip()  # noqa E101
+
+    _test(script, expected, indent="    ", indent_mixed_tab_size=8)
+
+
 def test_empty_braces():
     script = r"if {1} {}"
     _test(script, script, spaces_in_braces=False)
@@ -651,6 +673,7 @@ def test_partial():
     format = Formatter(
         FormatterOpts(
             indent="    ",
+            indent_mixed_tab_size=0,
             spaces_in_braces=True,
             max_blank_lines=2,
             indent_namespace_eval=True,
@@ -687,6 +710,73 @@ puts "three"
     format = Formatter(
         FormatterOpts(
             indent="  ",
+            indent_mixed_tab_size=0,
+            spaces_in_braces=True,
+            max_blank_lines=2,
+            indent_namespace_eval=True,
+        )
+    )
+
+    out = format.format_partial(script, parser)
+
+    assert out == expected
+
+    original_tree = parser.parse(script)
+    formatted_tree = parser.parse(out)
+    assert original_tree == formatted_tree
+
+
+def test_partial_mixed():
+    script = r"""
+    if { 1 } {
+      puts "foo"
+    }
+"""  # noqa E101
+    expected = r"""
+    if { 1 } {
+	puts "foo"
+    }
+"""  # noqa E101
+    parser = Parser()
+    format = Formatter(
+        FormatterOpts(
+            indent="    ",
+            indent_mixed_tab_size=8,
+            spaces_in_braces=True,
+            max_blank_lines=2,
+            indent_namespace_eval=True,
+        )
+    )
+
+    out = format.format_partial(script, parser)
+
+    assert out == expected
+
+    original_tree = parser.parse(script)
+    formatted_tree = parser.parse(out)
+    assert original_tree == formatted_tree
+
+
+def test_partial_mixed_2():
+    script = r"""
+	if { 1 } {
+if { 1 } {
+puts "foo"
+}
+}
+"""  # noqa E101
+    expected = r"""
+	if { 1 } {
+	    if { 1 } {
+		puts "foo"
+	    }
+	}
+"""  # noqa E101
+    parser = Parser()
+    format = Formatter(
+        FormatterOpts(
+            indent="    ",
+            indent_mixed_tab_size=8,
             spaces_in_braces=True,
             max_blank_lines=2,
             indent_namespace_eval=True,
