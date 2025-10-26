@@ -51,3 +51,38 @@ def test_namespace_unknown_script():
             Script(Command(BareWord("puts"), QuotedWord(BareWord("hello")))),
         )
     )
+
+
+def test_if_valid():
+    parser = Parser()
+
+    for script in [
+        "if 1 {}",
+        "if 1 {} {}",
+        "if 1 {} elseif 1 {}",
+        "if 1 {} elseif 1 {} {}",
+        "if 1 then {}",
+        "if 1 {} else {}",
+        "if 1 {} elseif 1 then {}",
+        "if 1 {} elseif 1 {} else {}",
+    ]:
+        parser.parse(script)
+        assert len(parser.violations) == 0
+
+
+def test_if_invalid():
+    parser = Parser()
+
+    n = 0
+    for script in [
+        "if 1",
+        "if 1 {} else",
+        "if 1 {} else {} {}",
+        "if 1 {} elseif",
+        "if 1 {} elseif 1",
+        "if 1 {} elseif 1 {} else",
+        "if 1 {} elseif 1 {} else {} {}",
+    ]:
+        n += 1
+        parser.parse(script)
+        assert len(parser.violations) == n
