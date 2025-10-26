@@ -463,28 +463,58 @@ def _foreach(args, parser):
 
 
 def _if(args, parser):
-    # ref: https://www.tcl.tk/man/tcl/TclCmd/if.html
-    # TODO: make arg checking strict
+    # ref: https://www.tcl-lang.org/man/tcl8.6/TclCmd/if.htm
 
     new_args = []
 
+    # Parse if condition.
     new_args.append(parser.parse_expression(args[0]))
 
-    while len(new_args) < len(args):
-        arg = args[len(new_args)]
-
-        if arg.contents == "then" or arg.contents == "else":
-            new_args.append(arg)
-            continue
-        if arg.contents == "elseif":
-            new_args.append(arg)
-            new_args.append(parser.parse_expression(args[len(new_args)]))
-            continue
-
-        arg = parser.parse_script(arg)
+    # Parse optional noise word then.
+    arg = args[len(new_args)]
+    if arg.contents == "then":
         new_args.append(arg)
 
-    return new_args
+    # Parse if body.
+    new_args.append(parser.parse_script(args[len(new_args)]))
+
+    # Parse elseif.
+    while (
+        len(new_args) < len(args)
+        and (arg := args[len(new_args)])
+        and arg.contents == "elseif"
+    ):
+        new_args.append(arg)
+
+        # Parse elseif condition.
+        new_args.append(parser.parse_expression(args[len(new_args)]))
+
+        # Parse optional noise word then.
+        arg = args[len(new_args)]
+        if arg.contents == "then":
+            new_args.append(arg)
+
+        # Parse elseif body.
+        new_args.append(parser.parse_script(args[len(new_args)]))
+
+    if len(new_args) == len(args):
+        # No else part, we're done.
+        return new_args
+
+    # Parse optional noise word else.
+    arg = args[len(new_args)]
+    if arg.contents == "else":
+        new_args.append(arg)
+
+    # Parse else body.
+    new_args.append(parser.parse_script(args[len(new_args)]))
+
+    if len(new_args) == len(args):
+        # Else part parsed, we're done.
+        return new_args
+
+    # Handle superfluous args.
+    raise ValueError
 
 
 def _interp_eval(args, parser):
