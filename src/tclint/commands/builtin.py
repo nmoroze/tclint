@@ -468,14 +468,20 @@ def _if(args, parser):
     new_args = []
 
     # Parse if condition.
+    if len(new_args) == len(args):
+        raise CommandArgError("Expected condition argument in 'if'")
     new_args.append(parser.parse_expression(args[0]))
 
     # Parse optional noise word then.
+    if len(new_args) == len(args):
+        raise CommandArgError("Expected then or body argument in 'if'")
     arg = args[len(new_args)]
     if arg.contents == "then":
         new_args.append(arg)
 
     # Parse if body.
+    if len(new_args) == len(args):
+        raise CommandArgError("Expected body argument in 'if'")
     new_args.append(parser.parse_script(args[len(new_args)]))
 
     # Parse elseif.
@@ -487,14 +493,24 @@ def _if(args, parser):
         new_args.append(arg)
 
         # Parse elseif condition.
+        if len(new_args) == len(args):
+            raise CommandArgError(
+                "Expected condition argument in 'elseif' part of 'if'"
+            )
         new_args.append(parser.parse_expression(args[len(new_args)]))
 
         # Parse optional noise word then.
+        if len(new_args) == len(args):
+            raise CommandArgError(
+                "Expected then or body argument in 'elseif' part of 'if'"
+            )
         arg = args[len(new_args)]
         if arg.contents == "then":
             new_args.append(arg)
 
         # Parse elseif body.
+        if len(new_args) == len(args):
+            raise CommandArgError("Expected body argument in 'elseif' part of 'if'")
         new_args.append(parser.parse_script(args[len(new_args)]))
 
     if len(new_args) == len(args):
@@ -507,6 +523,8 @@ def _if(args, parser):
         new_args.append(arg)
 
     # Parse else body.
+    if len(new_args) == len(args):
+        raise CommandArgError("Expected body argument to 'else' part of 'if'")
     new_args.append(parser.parse_script(args[len(new_args)]))
 
     if len(new_args) == len(args):
@@ -514,7 +532,11 @@ def _if(args, parser):
         return new_args
 
     # Handle superfluous args.
-    raise ValueError
+    arg = args[len(new_args)]
+    if arg.contents is None or not arg.contents:
+        raise CommandArgError("Argument after complete 'if'")
+    else:
+        raise CommandArgError("Argument after complete 'if': %s" % arg.contents)
 
 
 def _interp_eval(args, parser):
