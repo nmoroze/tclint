@@ -156,6 +156,31 @@ set foo [
 ]
 ```
 
+### Complete script vs. script fragment
+
+By default, `tclfmt` formats its input assuming it's a complete script.
+
+The LSP server `tclsp` formats fragments of scripts instead.
+
+If we pass `--partial` to `tclfmt`, it also formats its input assuming it's a
+script fragment.
+
+To demonstrate the difference, this input:
+```tcl
+    if 1 {}
+        if 1 {}
+```
+is transformed into this format with `--partial`:
+```tcl
+    if 1 {}
+    if 1 {}
+```
+but into this format with the default `--no-partial`:
+```tcl
+if 1 {}
+if 1 {}
+```
+
 ### Line length
 
 `tclfmt` does not (yet) reformat lines to stay under a certain length. However, it

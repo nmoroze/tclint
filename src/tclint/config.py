@@ -35,6 +35,7 @@ class Config:
     style_max_blank_lines: int = dataclasses.field(default=2)
     style_indent_namespace_eval: bool = dataclasses.field(default=True)
     style_spaces_in_braces: bool = dataclasses.field(default=False)
+    style_partial: bool = dataclasses.field(default=False)
 
     def apply_cli_args(self, args):
         args_dict = vars(args)
@@ -112,6 +113,7 @@ _VALIDATORS = {
     ),
     "style_indent_namespace_eval": bool,
     "style_spaces_in_braces": bool,
+    "style_partial": bool,
 }
 
 
@@ -131,6 +133,7 @@ def _validate_config(config):
                 "style_indent_namespace_eval"
             ],
             Optional("spaces-in-braces"): _VALIDATORS["style_spaces_in_braces"],
+            Optional("partial"): _VALIDATORS["style_partial"],
         },
     }
 
@@ -252,6 +255,13 @@ def setup_tclfmt_config_cli_args(parser):
         "style_spaces_in_braces",
         "--spaces-in-braces",
         "--no-spaces-in-braces",
+    )
+    _add_bool(
+        config_group,
+        parser,
+        "style_partial",
+        "--partial",
+        "--no-partial",
     )
 
 
