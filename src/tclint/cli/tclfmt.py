@@ -39,7 +39,10 @@ def format(script: str, config: Config, debug=False) -> str:
             indent_namespace_eval=config.style_indent_namespace_eval,
         )
     )
-    return formatter.format_top(script, parser)
+    if config.style_partial:
+        return formatter.format_partial(script, parser)
+    else:
+        return formatter.format_top(script, parser)
 
 
 def check(path: pathlib.Path, script: str, formatted: str):
