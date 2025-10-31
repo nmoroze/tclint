@@ -109,7 +109,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        config = get_config(args.config, pathlib.Path())
+        config = get_config(args.config, pathlib.Path.cwd())
     except ConfigError as e:
         print(f"Invalid config file: {e}")
         return EXIT_INPUT_ERROR
