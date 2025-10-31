@@ -205,7 +205,7 @@ class TclspServer(LanguageServer):
         formatter = Formatter(
             FormatterOpts(
                 indent=indent,
-                indent_mixed_tab_size=0,
+                indent_mixed_tab_size=config.get_indent_mixed_tab_size(),
                 spaces_in_braces=config.style_spaces_in_braces,
                 max_blank_lines=config.style_max_blank_lines,
                 indent_namespace_eval=config.style_indent_namespace_eval,
