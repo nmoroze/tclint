@@ -27,7 +27,7 @@ EXIT_SYNTAX_ERROR = 2
 EXIT_INPUT_ERROR = 4
 
 
-def format(script: str, config: Config, debug=False) -> str:
+def format(script: str, config: Config, debug=False, partial=False) -> str:
     plugins = [config.commands] if config.commands is not None else []
     parser = Parser(debug=debug, command_plugins=plugins)
 
@@ -40,7 +40,10 @@ def format(script: str, config: Config, debug=False) -> str:
             indent_namespace_eval=config.style_indent_namespace_eval,
         )
     )
-    return formatter.format_top(script, parser)
+    if partial:
+        return formatter.format_partial(script, parser)
+    else:
+        return formatter.format_top(script, parser)
 
 
 def check(path: pathlib.Path, script: str, formatted: str):
@@ -95,6 +98,12 @@ def main():
         default=None,
         metavar="<path>",
     )
+    parser.add_argument(
+        "--partial",
+        help="treat input as a fragment of a script",
+        action="store_true",
+    )
+
     setup_tclfmt_config_cli_args(parser)
     args = parser.parse_args()
 
@@ -140,7 +149,10 @@ def main():
 
         try:
             formatted = format(
-                script, config.get_for_path(path), debug=(args.debug > 1)
+                script,
+                config.get_for_path(path),
+                debug=(args.debug > 1),
+                partial=args.partial,
             )
             if args.in_place and path:
                 with open(path, "w") as f:

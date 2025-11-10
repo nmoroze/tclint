@@ -68,6 +68,11 @@ formatting and ensure that its syntax tree matches the original.
 `tclfmt`'s output is stable. That means if you run `tclfmt` on code already formatted by
 `tclfmt`, it will stay the same.
 
+## Partial formatting
+
+By default, `tclfmt` formats its input assuming it's a complete script.
+The `--partial` option causes it to treat its input as a fragment of a script instead, matching the behavior of the LSP server's range [formatting](lsp.md#formatting).
+
 ## Style
 
 This section describes major aspects of the style used by `tclfmt`. It also gives

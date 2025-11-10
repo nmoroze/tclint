@@ -112,5 +112,7 @@ the `tclint` configuration file is updated.
 [rules](tclfmt.md). When formatting a selection that only includes part of a line,
 `tclsp` will effectively extend the selection to format the entire line.
 
+When formatting a range, `tclsp` preserves leading indentation and leading and trailing whitespace.
+
 [vscode]: https://marketplace.visualstudio.com/items?itemName=nmoroze.tclint
 [initialize-params]: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams

@@ -41,3 +41,25 @@ def test_tclfmt_in_place(tmp_path):
 
     assert p.returncode == 0
     assert actual == expected
+
+
+def test_tclfmt_partial():
+    script = r"""
+    puts "foo"
+      puts "bar"
+"""
+    expected = r"""
+    puts "foo"
+    puts "bar"
+"""
+    p = subprocess.Popen(
+        ["tclfmt", "--partial", "-"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stdout, stderr = p.communicate(input=script.encode("utf-8"))
+
+    output = stdout.decode("utf-8")
+    assert output == expected
+    assert stderr == b""
