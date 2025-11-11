@@ -536,7 +536,7 @@ def _if(args, parser):
     if arg.contents is None or not arg.contents:
         raise CommandArgError("Argument after complete 'if'")
     else:
-        raise CommandArgError("Argument after complete 'if': %s" % arg.contents)
+        raise CommandArgError(f"Argument after complete 'if': {arg.contents}")
 
 
 def _interp_eval(args, parser):
