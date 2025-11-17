@@ -28,7 +28,10 @@ def get_commands(plugins: Sequence[Union[str, pathlib.Path]]) -> Dict:
         if isinstance(plugin, str):
             plugin_commands = PluginManager.load(plugin)
         elif isinstance(plugin, pathlib.Path):
-            plugin_commands = PluginManager.load_from_spec(plugin)
+            if plugin.suffix == ".py":
+                plugin_commands = PluginManager.load_from_py(plugin)
+            else:
+                plugin_commands = PluginManager.load_from_spec(plugin)
         else:
             raise TypeError(f"Plugins must be strings or paths, got {type(plugin)}")
 

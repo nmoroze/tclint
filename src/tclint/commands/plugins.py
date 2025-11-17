@@ -3,6 +3,7 @@ import json
 import pathlib
 from typing import Dict, Optional
 from types import ModuleType
+from importlib.util import spec_from_file_location, module_from_spec
 
 import voluptuous
 
@@ -14,6 +15,7 @@ class _PluginManager:
         self._loaded = {}
         self._installed = {}
         self._loaded_specs = {}
+        self._loaded_py = {}
         for plugin in entry_points(group="tclint.plugins"):
             if plugin.name in self._installed:
                 print(f"Warning: found duplicate definitions for plugin {plugin.name}")
@@ -71,8 +73,7 @@ class _PluginManager:
 
         return module
 
-    def _load(self, name: str):
-        module = self.get_mod(name)
+    def _load_module(self, name, module):
         if module is None:
             print(f"Skipping requested plugin {name}")
             return None
@@ -82,6 +83,37 @@ class _PluginManager:
             return None
 
         return getattr(module, "commands")
+
+    def _load(self, name: str):
+        module = self.get_mod(name)
+        return self._load_module(name, module)
+
+    def load_from_py(self, path: pathlib.Path) -> Optional[Dict]:
+        if path in self._loaded_py:
+            return self._loaded_py[path]
+
+        spec = self._load_from_py(path)
+        self._loaded_py[path] = spec
+        return spec
+
+    def _load_from_py(self, path: pathlib.Path) -> Optional[Dict]:
+        mod = None
+        name = path.stem
+
+        try:
+            spec = spec_from_file_location(name, path)
+            if spec is not None:
+                mod = module_from_spec(spec)
+                if spec.loader is not None:
+                    spec.loader.exec_module(mod)
+        except FileNotFoundError:
+            print(f"Warning: command spec {path} not found, skipping...")
+            return None
+        except Exception as e:
+            print(f"Warning: error loading plugin {path}: {e}")
+            return None
+
+        return self._load_module(name, mod)
 
 
 # TODO: we'll probably want to construct this in the tclint entry point and pass

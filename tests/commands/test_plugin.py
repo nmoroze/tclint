@@ -18,3 +18,9 @@ def test_load_invalid():
     plugins = PluginManager()
     loaded = plugins.load_from_spec(TEST_DATA_DIR / "invalid.json")
     assert loaded is None
+
+
+def test_load_py():
+    plugins = PluginManager()
+    loaded = plugins.load_from_py(TEST_DATA_DIR / "dynamic.py")
+    assert isinstance(loaded, dict)
