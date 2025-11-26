@@ -24,3 +24,9 @@ def test_load_py():
     plugins = PluginManager()
     loaded = plugins.load_from_py(TEST_DATA_DIR / "dynamic.py")
     assert isinstance(loaded, dict)
+
+
+def test_load_py_invalid():
+    plugins = PluginManager()
+    loaded = plugins.load_from_py(TEST_DATA_DIR / "dynamic_invalid.py")
+    assert loaded is None

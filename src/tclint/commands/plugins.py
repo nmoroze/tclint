@@ -7,7 +7,7 @@ from importlib.util import spec_from_file_location, module_from_spec
 
 import voluptuous
 
-from tclint.commands.schema import schema as command_schema
+from tclint.commands import schema
 
 
 class _PluginManager:
@@ -51,7 +51,7 @@ class _PluginManager:
 
         try:
             # Apply defaults and validate the spec.
-            spec = command_schema(spec)
+            spec = schema.schema(spec)
         except voluptuous.Invalid as e:
             print(f"Warning: invalid command spec {path}: {e}")
             return None
@@ -82,7 +82,15 @@ class _PluginManager:
             print(f"Warning: skipping plugin {name} since it does not define commands")
             return None
 
-        return getattr(module, "commands")
+        spec = getattr(module, "commands")
+        try:
+            # Apply defaults and validate the spec.
+            spec = schema.commands_schema(spec)
+        except voluptuous.Invalid as e:
+            print(f"Warning: invalid plugin {name}: {e}")
+            return None
+
+        return spec
 
     def _load(self, name: str):
         module = self.get_mod(name)
