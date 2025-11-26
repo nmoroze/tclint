@@ -179,3 +179,46 @@ def test_resolve_sources_extensions(tmp_path):
     assert sources[0] == bar_file
 
     os.chdir(cwd)
+
+
+def test_block_dynamic_plugin_config(tmp_path):
+    plugin = """
+print("plugin ran")
+commands = {}
+"""
+    plugin_path = tmp_path / "dynamic.py"
+    with open(plugin_path, "w") as f:
+        f.write(plugin)
+
+    config = f"commands = '{plugin_path}'"
+    config_path = tmp_path / "config.toml"
+    with open(config_path, "w") as f:
+        f.write(config)
+
+    # Validate setup can work
+    p = subprocess.Popen(
+        ["tclint", "--commands", plugin_path, "-"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=tmp_path,
+    )
+    stdout, stderr = p.communicate()
+
+    output = stdout.decode("utf-8").strip()
+    assert output == "plugin ran"
+    assert stderr == b""
+    assert p.returncode == 0
+
+    # Make sure dynamic plugin is blocked
+    p = subprocess.Popen(
+        ["tclint", "--config", config_path, "-"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=tmp_path,
+    )
+    stdout, stderr = p.communicate()
+
+    output = stdout.decode("utf-8").strip()
+    assert output.startswith("Invalid config file")
+    assert "dynamic plugins cannot be specified via config file" in output
+    assert p.returncode > 0

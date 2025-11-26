@@ -139,6 +139,15 @@ _VALIDATORS = {
 }
 
 
+def _error_if_dynamic_plugin(p: pathlib.Path):
+    if p.suffix == ".py":
+        raise Invalid(
+            "dynamic plugins cannot be specified via config file for security"
+            " reasons. Use --commands instead."
+        )
+    return p
+
+
 def _validate_config(config):
     """Validates dictionary read from TOML config file. Individual value validators
     are implemented in the global dict, this defines the actual structure of the
@@ -146,7 +155,9 @@ def _validate_config(config):
 
     base_config = {
         Optional("ignore"): _VALIDATORS["ignore"],
-        Optional("commands"): _VALIDATORS["commands"],
+        # tclint rejects paths to dynamic plugins in the config file. This restriction
+        # is designed to make it explicit when tclint is executing external code.
+        Optional("commands"): And(_VALIDATORS["commands"], _error_if_dynamic_plugin),
         Optional("style"): {
             Optional("indent"): _VALIDATORS["style_indent"],
             Optional("line-length"): _VALIDATORS["style_line_length"],
