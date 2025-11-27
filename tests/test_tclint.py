@@ -5,6 +5,7 @@ import subprocess
 import pytest
 
 from tclint.cli import tclint
+from tclint import config
 
 MY_DIR = pathlib.Path(__file__).parent.resolve()
 
@@ -104,13 +105,12 @@ def test_resolve_sources(tmp_path_factory):
         [tmp_path],
         exclude_patterns=[
             # test bare pattern matches anywhere in tree
-            "ignore",
+            config.ExcludePattern("ignore", tmp_path),
             # test glob
-            "ignore*.tcl",
+            config.ExcludePattern("ignore*.tcl", tmp_path),
             # test pattern with "/" only matches from root of tree
-            "/foo.tcl",
+            config.ExcludePattern("/foo.tcl", tmp_path),
         ],
-        exclude_root=tmp_path,
         extensions=extensions,
     )
 
@@ -124,8 +124,7 @@ def test_resolve_sources(tmp_path_factory):
     in_path.touch()
     sources = tclint.resolve_sources(
         [in_path],
-        exclude_patterns=[str(in_path)],
-        exclude_root=tmp_path,
+        exclude_patterns=[config.ExcludePattern(str(in_path), tmp_path)],
         extensions=extensions,
     )
     assert len(sources) == 1
@@ -136,8 +135,7 @@ def test_resolve_sources(tmp_path_factory):
     top_src.touch()
     sources = tclint.resolve_sources(
         [top_src],
-        exclude_patterns=["../top.tcl"],
-        exclude_root=tmp_path / "src",
+        exclude_patterns=[config.ExcludePattern("../top.tcl", tmp_path / "src")],
         extensions=extensions,
     )
     assert len(sources) == 0
@@ -150,8 +148,10 @@ def test_resolve_sources(tmp_path_factory):
     sources = tclint.resolve_sources(
         hash_srcs,
         # extra space before #bar.tcl is important to make sure we don't just match ^#
-        exclude_patterns=["#foo.tcl", " #bar.tcl"],
-        exclude_root=other_other_dir,
+        exclude_patterns=[
+            config.ExcludePattern("#foo.tcl", other_other_dir),
+            config.ExcludePattern(" #bar.tcl", other_other_dir),
+        ],
         extensions=extensions,
     )
     assert len(sources) == 0
@@ -167,18 +167,51 @@ def test_resolve_sources_extensions(tmp_path):
     os.chdir(tmp_path)
 
     sources = tclint.resolve_sources(
-        [tmp_path], exclude_patterns=[], exclude_root=tmp_path, extensions=["foo"]
+        [tmp_path], exclude_patterns=[], extensions=["foo"]
     )
     assert len(sources) == 1
     assert sources[0] == foo_file
 
     sources = tclint.resolve_sources(
-        [tmp_path], exclude_patterns=[], exclude_root=tmp_path, extensions=["bar"]
+        [tmp_path], exclude_patterns=[], extensions=["bar"]
     )
     assert len(sources) == 1
     assert sources[0] == bar_file
 
     os.chdir(cwd)
+
+
+def test_resolve_sources_multiple_roots(tmp_path):
+    bar = tmp_path / "bar.tcl"
+    baz = tmp_path / "baz.tcl"
+    (tmp_path / "foo").mkdir()
+    foo_bar = tmp_path / "foo" / "bar.tcl"
+    foo_baz = tmp_path / "foo" / "baz.tcl"
+
+    sources = []
+    for source in (bar, baz, foo_bar, foo_baz):
+        source.touch()
+        sources.append(source)
+
+    resolved = tclint.resolve_sources(
+        sources,
+        [
+            config.ExcludePattern("/bar.tcl", tmp_path),
+            config.ExcludePattern("/baz.tcl", tmp_path / "foo"),
+        ],
+        ["tcl"],
+    )
+    assert set(resolved) == set([baz, foo_bar])
+
+    resolved = tclint.resolve_sources(
+        sources,
+        [
+            config.ExcludePattern("/baz.tcl", tmp_path),
+            config.ExcludePattern("/bar.tcl", tmp_path / "foo"),
+        ],
+        ["tcl"],
+    )
+    assert set(resolved) == set([bar, foo_baz])
 
 
 def test_block_dynamic_plugin_config(tmp_path):

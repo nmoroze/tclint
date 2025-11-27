@@ -1,7 +1,7 @@
 import argparse
 import pathlib
 from typing import Union, List
-from typing import Optional as OptionalType
+from typing import Optional as OptionalType, NamedTuple
 import dataclasses
 import sys
 
@@ -15,6 +15,14 @@ from voluptuous import Schema, Optional, And, Coerce, Invalid, Range
 from tclint.violations import Rule
 
 
+class ExcludePattern(NamedTuple):
+    """Exclude patterns are applied relative to a certain root. This dataclass is used
+    to bundle the two."""
+
+    pattern: str
+    root: pathlib.Path
+
+
 @dataclasses.dataclass
 class Config:
     """This dataclass defines the supported Config fields and their default
@@ -24,6 +32,7 @@ class Config:
     validation (and normalization) is defined by `validators` below.
     """
 
+    # TODO: switch to `exclude: List[ExcludePattern]`
     exclude: List[str] = dataclasses.field(default_factory=list)
     ignore: List[Rule] = dataclasses.field(default_factory=list)
     commands: OptionalType[pathlib.Path] = dataclasses.field(default=None)

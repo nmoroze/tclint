@@ -12,7 +12,14 @@ from pygls.workspace import TextDocument
 from pygls.uris import to_fs_path
 
 from tclint.cli import tclint
-from tclint.config import get_config, DEFAULT_CONFIGS, RunConfig, Config, ConfigError
+from tclint.config import (
+    get_config,
+    DEFAULT_CONFIGS,
+    RunConfig,
+    Config,
+    ConfigError,
+    ExcludePattern,
+)
 from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
 from tclint.parser import Parser
@@ -168,8 +175,9 @@ class TclspServer(LanguageServer):
         if root is None:
             root = path.parent
 
-        is_excluded = utils.make_exclude_filter(config.exclude)
-        if is_excluded(path, root):
+        exclude = [ExcludePattern(pattern, root) for pattern in config.exclude]
+        is_excluded = utils.make_exclude_filter(exclude)
+        if is_excluded(path):
             return []
 
         return lint(document.source, config, path)

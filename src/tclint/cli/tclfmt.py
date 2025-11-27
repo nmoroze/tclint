@@ -10,6 +10,7 @@ from tclint.config import (
     setup_tclfmt_config_cli_args,
     Config,
     ConfigError,
+    ExcludePattern,
     RunConfig,
 )
 from tclint.parser import Parser, TclSyntaxError
@@ -123,10 +124,10 @@ def main():
         # directories, at which point exclude_root should be the parent dir of
         # the config file, unless -c is used (eslint rules)
         exclude_root = pathlib.Path.cwd()
+        exclude = [ExcludePattern(pattern, exclude_root) for pattern in config.exclude]
         sources = resolve_sources(
             args.source,
-            exclude_patterns=config.exclude,
-            exclude_root=exclude_root,
+            exclude_patterns=exclude,
             extensions=config.extensions,
         )
     except FileNotFoundError as e:

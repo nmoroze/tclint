@@ -1,10 +1,13 @@
 import codecs
+from collections import defaultdict
 import os
 import pathlib
 import re
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 import pathspec
+
+from tclint.config import ExcludePattern
 
 
 def register_codec_warning(name):
@@ -16,26 +19,38 @@ def register_codec_warning(name):
     codecs.register_error(name, replace_with_warning_handler)
 
 
-def make_exclude_filter(exclude_patterns: List[str]):
-    exclude_patterns = [
-        re.sub(r"^\s*#", r"\#", pattern) for pattern in exclude_patterns
-    ]
-    exclude_spec = pathspec.PathSpec.from_lines("gitwildmatch", exclude_patterns)
+def make_exclude_filter(
+    exclude_patterns: List[ExcludePattern],
+) -> Callable[[pathlib.Path], bool]:
+    # Transform patterns into a data structure keyed on root.
+    patterns_by_root = defaultdict(list)
+    for pattern, root in exclude_patterns:
+        # I think this is escaping #, which would otherwise be treated like a comment.
+        # Not 100% sure though, I originally wrote this a while ago.
+        pattern = re.sub(r"^\s*#", r"\#", pattern)
+        patterns_by_root[root.resolve()].append(pattern)
 
-    def is_excluded(path: pathlib.Path, root: pathlib.Path) -> bool:
+    compiled_patterns = {}
+    for root in patterns_by_root.keys():
+        patterns = patterns_by_root[root]
+        spec = pathspec.PathSpec.from_lines("gitwildmatch", patterns)
+        compiled_patterns[root] = spec
+
+    def is_excluded(path: pathlib.Path) -> bool:
         abspath = path.resolve()
-        root = root.resolve()
 
-        try:
-            relpath = pathlib.Path(os.path.relpath(abspath, start=root))
-        except ValueError:
-            # We get here if path and exclude_root are on different drives (on Windows).
-            # Things should still behave roughly as expected without using a relative
-            # path. See test_cli_utils.py::test_exclude_filter_windows for test cases.
-            relpath = abspath
+        for root, exclude_spec in compiled_patterns.items():
+            try:
+                relpath = pathlib.Path(os.path.relpath(abspath, start=root))
+            except ValueError:
+                # We get here if path and exclude_root are on different drives (on
+                # Windows).Things should still behave roughly as expected without
+                # using a relative path. See
+                # test_cli_utils.py::test_exclude_filter_windows for test cases.
+                relpath = abspath
 
-        if exclude_spec.match_file(relpath):
-            return True
+            if exclude_spec.match_file(relpath):
+                return True
         return False
 
     return is_excluded
@@ -43,8 +58,7 @@ def make_exclude_filter(exclude_patterns: List[str]):
 
 def resolve_sources(
     paths: List[pathlib.Path],
-    exclude_patterns: List[str],
-    exclude_root: pathlib.Path,
+    exclude_patterns: List[ExcludePattern],
     extensions: List[str],
 ) -> List[Optional[pathlib.Path]]:
     """Resolves paths passed via CLI to a list of filepaths to lint.
@@ -70,7 +84,7 @@ def resolve_sources(
         if not path.exists():
             raise FileNotFoundError(f"path {path} does not exist")
 
-        if is_excluded(path, exclude_root):
+        if is_excluded(path):
             continue
 
         if not path.is_dir():
@@ -82,7 +96,7 @@ def resolve_sources(
                 _, ext = os.path.splitext(name)
                 if ext.lower() in extensions:
                     child = pathlib.Path(dirpath) / name
-                    if not is_excluded(child, exclude_root):
+                    if not is_excluded(child):
                         sources.append(child)
 
     return sources
