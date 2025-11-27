@@ -1,7 +1,7 @@
 import argparse
 import pathlib
 from typing import Union, List
-from typing import Optional as OptionalType, NamedTuple
+from typing import Optional as OptionalType, NamedTuple, Callable
 import dataclasses
 import sys
 
@@ -112,40 +112,39 @@ def parse_mixed(v: str) -> tuple[int, int]:
     return (int(s[1]), int(s[2]))
 
 
-_VALIDATORS = {
-    # note: it's ok if paths don't exist - allows for generic
-    # configurations with directories like .git/ excluded
-    "exclude": _str2list,
-    "ignore": And(
-        _str2list,
-        [
-            Coerce(Rule, msg="invalid rule ID"),
-        ],
+# Define validators as module variables so they can be reused for config file schema
+# validation and CLI argument parsing.
+
+# note: it's ok if paths don't exist - allows for generic
+# configurations with directories like .git/ excluded
+_validate_exclude = _str2list
+_validate_ignore = And(
+    _str2list,
+    [
+        Coerce(Rule, msg="invalid rule ID"),
+    ],
+)
+_validate_commands = Coerce(pathlib.Path)
+_validate_extensions = _str2list
+_validate_style_indent = Coerce(
+    lambda v: (
+        v
+        if v == "tab"
+        else (
+            int(v)
+            if isinstance(v, int) or (isinstance(v, str) and v.isdigit())
+            else parse_mixed(v)
+        )
     ),
-    "commands": Coerce(pathlib.Path),
-    "extensions": _str2list,
-    "style_indent": Coerce(
-        lambda v: (
-            v
-            if v == "tab"
-            else (
-                int(v)
-                if isinstance(v, int) or (isinstance(v, str) and v.isdigit())
-                else parse_mixed(v)
-            )
-        ),
-        msg="expected integer, 'tab', or 'mixed',integer,integer",
-    ),
-    "style_line_length": Coerce(int),
-    "style_max_blank_lines": And(
-        Coerce(int),
-        # we could technically support i >= 0, but I think 0 would be a weird
-        # setting and this lets us ignore pluralizing the violation message :)
-        Range(min=1),
-    ),
-    "style_indent_namespace_eval": bool,
-    "style_spaces_in_braces": bool,
-}
+    msg="expected integer, 'tab', or 'mixed',integer,integer",
+)
+_validate_style_line_length = Coerce(int)
+_validate_style_max_blank_lines = And(
+    Coerce(int),
+    Range(min=1),
+)
+_validate_style_indent_namespace_eval = bool
+_validate_style_spaces_in_braces = bool
 
 
 def _error_if_dynamic_plugin(p: pathlib.Path):
@@ -159,29 +158,26 @@ def _error_if_dynamic_plugin(p: pathlib.Path):
 
 def _validate_config(config):
     """Validates dictionary read from TOML config file. Individual value validators
-    are implemented in the global dict, this defines the actual structure of the
-    schema."""
-
+    are implemented in the module-level variables above; this defines the actual
+    structure of the schema."""
     base_config = {
-        Optional("ignore"): _VALIDATORS["ignore"],
+        Optional("ignore"): _validate_ignore,
         # tclint rejects paths to dynamic plugins in the config file. This restriction
         # is designed to make it explicit when tclint is executing external code.
-        Optional("commands"): And(_VALIDATORS["commands"], _error_if_dynamic_plugin),
+        Optional("commands"): And(_validate_commands, _error_if_dynamic_plugin),
         Optional("style"): {
-            Optional("indent"): _VALIDATORS["style_indent"],
-            Optional("line-length"): _VALIDATORS["style_line_length"],
-            Optional("max-blank-lines"): _VALIDATORS["style_max_blank_lines"],
-            Optional("indent-namespace-eval"): _VALIDATORS[
-                "style_indent_namespace_eval"
-            ],
-            Optional("spaces-in-braces"): _VALIDATORS["style_spaces_in_braces"],
+            Optional("indent"): _validate_style_indent,
+            Optional("line-length"): _validate_style_line_length,
+            Optional("max-blank-lines"): _validate_style_max_blank_lines,
+            Optional("indent-namespace-eval"): _validate_style_indent_namespace_eval,
+            Optional("spaces-in-braces"): _validate_style_spaces_in_braces,
         },
     }
 
     schema = Schema({
         # exclude and extensions can only be used in global context
-        Optional("exclude"): _VALIDATORS["exclude"],
-        Optional("extensions"): _VALIDATORS["extensions"],
+        Optional("exclude"): _validate_exclude,
+        Optional("extensions"): _validate_extensions,
         **base_config,
         Optional("fileset"): Schema(
             [{"paths": [Coerce(pathlib.Path)], **base_config}], required=True
@@ -209,10 +205,13 @@ def _validate_config(config):
         raise ConfigError(f"{e.error_message} ({'.'.join(path)})")
 
 
-def _validator(key):
+def _argparsify(validator: Callable) -> Callable:
+    """Wrapper that applies a voluptuous-style validator and is compatible with
+    argparse's type argument."""
+
     def func(s):
         try:
-            return Schema(_VALIDATORS[key])(s)
+            return Schema(validator)(s)
         except Invalid as e:
             raise argparse.ArgumentTypeError(str(e))
 
@@ -228,16 +227,20 @@ def _add_bool(group, parser, dest, yes_flag, no_flag):
 
 def setup_common_config_cli_args(config_group):
     config_group.add_argument(
-        "--exclude", type=_validator("exclude"), metavar='"path1, path2, ..."'
+        "--exclude", type=_argparsify(_validate_exclude), metavar='"path1, path2, ..."'
     )
     config_group.add_argument(
-        "--extend-exclude", type=_validator("exclude"), metavar='"path1, path2, ..."'
+        "--extend-exclude",
+        type=_argparsify(_validate_exclude),
+        metavar='"path1, path2, ..."',
     )
     config_group.add_argument(
-        "--extensions", type=_validator("extensions"), metavar='"tcl, xdc, ..."'
+        "--extensions",
+        type=_argparsify(_validate_extensions),
+        metavar='"tcl, xdc, ..."',
     )
     config_group.add_argument(
-        "--commands", type=_validator("commands"), metavar="<path>"
+        "--commands", type=_argparsify(_validate_commands), metavar="<path>"
     )
 
 
@@ -249,15 +252,17 @@ def setup_config_cli_args(parser):
     config_group = parser.add_argument_group("configuration arguments")
 
     config_group.add_argument(
-        "--ignore", type=_validator("ignore"), metavar='"rule1, rule2, ..."'
+        "--ignore", type=_argparsify(_validate_ignore), metavar='"rule1, rule2, ..."'
     )
     config_group.add_argument(
-        "--extend-ignore", type=_validator("ignore"), metavar='"rule1, rule2, ..."'
+        "--extend-ignore",
+        type=_argparsify(_validate_ignore),
+        metavar='"rule1, rule2, ..."',
     )
     setup_common_config_cli_args(config_group)
     config_group.add_argument(
         "--style-line-length",
-        type=_validator("style_line_length"),
+        type=_argparsify(_validate_style_line_length),
         metavar="<line_length>",
     )
 
@@ -273,13 +278,13 @@ def setup_tclfmt_config_cli_args(parser):
 
     config_group.add_argument(
         "--indent",
-        type=_validator("style_indent"),
+        type=_argparsify(_validate_style_indent),
         metavar="<indent>",
         dest="style_indent",
     )
     config_group.add_argument(
         "--max-blank-lines",
-        type=_validator("style_max_blank_lines"),
+        type=_argparsify(_validate_style_max_blank_lines),
         metavar="<max_blank_lines>",
         dest="style_max_blank_lines",
     )
