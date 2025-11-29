@@ -90,8 +90,9 @@ class TclspServer(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.diagnostics = {}
-        self.global_config: RunConfig = None
-        # Maps workspace roots to configs.
+        # Maps roots to configs. Ordinarily "root" refers to workspace root, but if a
+        # file is open outside of a workspace then its config is stored in this
+        # dictionary with its parent dir considered a root.
         self.configs: Dict[Path, RunConfig] = {}
         self.client_supports_refresh = False
 
@@ -114,11 +115,11 @@ class TclspServer(LanguageServer):
 
         return roots
 
-    def get_root(self, path: Path) -> Optional[Path]:
-        """Returns workspace root folder that's closest to path.
+    def get_root(self, path: Path) -> Path:
+        """Returns root folder that's closest to path.
 
-        Returns None if path is not in a workspace folder or if there are no workspace
-        folders.
+        Returns workspace root if path is in a workspace folder. Otherwise, returns
+        parent directory of path.
         """
         roots = self.get_roots()
         closest_root = None
@@ -131,15 +132,18 @@ class TclspServer(LanguageServer):
             if len(relpath.parts) < distance:
                 distance = len(relpath.parts)
                 closest_root = root
+        if closest_root is None:
+            return path.parent
         return closest_root
 
-    def get_config_file(self, workspace_root: Path) -> Optional[Path]:
-        if workspace_root in self.workspace_settings:
-            settings = self.workspace_settings[workspace_root]
+    def get_config_file(self, root: Path) -> Optional[Path]:
+        if root in self.workspace_settings:
+            settings = self.workspace_settings[root]
             return settings.config_file
         return self.global_settings.config_file
 
     def load_configs(self):
+        """Preload configuration files that are found under workspace roots."""
         self.configs = {}
         for root in self.get_roots():
             try:
@@ -150,21 +154,22 @@ class TclspServer(LanguageServer):
             except ConfigError as e:
                 self.show_message(f"Error loading config file: {e}")
 
-        # If a global config file exists, we apply it to any file not under a workspace
-        # folder.
-        global_path = self.global_settings.config_file
-        if global_path is not None:
-            try:
-                config = get_config(global_path, global_path.parent)
-                self.global_config = config
-            except ConfigError as e:
-                self.show_message(f"Error loading config file: {e}")
+    def get_config(self, path: Path, root: Path) -> Config:
+        """Return config object for a given path.
 
-    def get_config(self, path: Path, root: Optional[Path]) -> Config:
+        If no config has already been loaded for root (either by calling this function
+        or load_configs), this function will search for and load a config file if found.
+        """
         if root in self.configs:
             return self.configs[root].get_for_path(path)
-        if self.global_config is not None:
-            return self.global_config.get_for_path(path)
+
+        config_path = self.get_config_file(root)
+        if config_path:
+            config = get_config(config_path, root)
+            if config:
+                self.configs[root] = config
+                return config.get_for_path(path)
+
         return Config()
 
     def _compute_diagnostics(self, document: TextDocument) -> List[lsp.Diagnostic]:
