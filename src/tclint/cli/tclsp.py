@@ -244,7 +244,7 @@ def did_open(ls: TclspServer, params: lsp.DidOpenTextDocumentParams):
 
 
 @server.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)
-def did_change(ls: TclspServer, params: lsp.DidOpenTextDocumentParams):
+def did_change(ls: TclspServer, params: lsp.DidChangeTextDocumentParams):
     """Parse each document when it is changed"""
     logging.debug("Received %s: %s", lsp.TEXT_DOCUMENT_DID_CHANGE, params)
     doc = ls.workspace.get_text_document(params.text_document.uri)
