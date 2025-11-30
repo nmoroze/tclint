@@ -251,6 +251,27 @@ def did_change(ls: TclspServer, params: lsp.DidChangeTextDocumentParams):
     ls.compute_diagnostics(doc)
 
 
+@server.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
+def did_close(ls: TclspServer, params: lsp.DidCloseTextDocumentParams):
+    """Free up resources when a document is closed."""
+    logging.debug("Received %s: %s", lsp.TEXT_DOCUMENT_DID_CLOSE, params)
+    doc = ls.workspace.get_text_document(params.text_document.uri)
+
+    try:
+        del ls.diagnostics[doc.uri]
+    except KeyError:
+        pass
+
+    path = Path(doc.path)
+    if path.parent in ls.get_roots():
+        # Preserve cached workspace configs
+        return
+    try:
+        del ls.configs[path.parent]
+    except KeyError:
+        pass
+
+
 @server.feature(
     lsp.TEXT_DOCUMENT_DIAGNOSTIC,
     lsp.DiagnosticOptions(
