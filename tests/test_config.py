@@ -30,7 +30,7 @@ def test_example_config():
     ]
     assert global_.ignore == [Rule("unbraced-expr")]
     assert global_.extensions == ["tcl"]
-    assert global_.commands == pathlib.Path("~/.tclint/openroad.json")
+    assert global_.commands == pathlib.Path("~/.tclint/openroad.json").expanduser()
 
     assert global_.style_indent == 2
     assert global_.style_line_length == 80
@@ -94,7 +94,7 @@ def test_tclint_config_args():
     ]
     assert args.extend_exclude == [ExcludePattern("extend_to_file", cwd)]
     assert args.extensions == ["sdc", "exp"]
-    assert args.commands == pathlib.Path("commands.json")
+    assert args.commands == pathlib.Path(cwd / "commands.json")
     assert args.style_line_length == 79
 
 
@@ -128,7 +128,7 @@ def test_tclfmt_config_args():
     ]
     assert args.extend_exclude == [ExcludePattern("extend_to_file", cwd)]
     assert args.extensions == ["sdc", "exp"]
-    assert args.commands == pathlib.Path("commands.json")
+    assert args.commands == pathlib.Path(cwd / "commands.json")
     assert args.style_indent == 5
     assert args.style_max_blank_lines == 4
     assert args.style_indent_namespace_eval is True
@@ -204,9 +204,8 @@ ignore = ["command-args"]"""
 
     config = run_config.get_for_path(pathlib.Path("file.tcl"))
     assert config.exclude == [ExcludePattern("/foo.tcl", pathlib.Path("root"))]
-    # TODO: uncomment once these are implemented
-    # assert config.commands == pathlib.Path("root/commands.json")
-    # assert config.ignore == []
+    assert config.commands == pathlib.Path("root/commands.json")
+    assert config.ignore == []
 
-    # config = run_config.get_for_path(pathlib.Path("root/fileset"))
-    # assert config.ignore == ["command-args"]
+    config = run_config.get_for_path(pathlib.Path("root/fileset"))
+    assert config.ignore == [Rule("command-args")]

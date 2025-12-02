@@ -103,6 +103,18 @@ def _str2list(s):
     return s
 
 
+def _add_root(root: pathlib.Path) -> Callable[[pathlib.Path], pathlib.Path]:
+    """Resolve path relative to `root.`"""
+
+    def _path(path: pathlib.Path) -> pathlib.Path:
+        path = path.expanduser()
+        if not path.is_absolute():
+            path = root / path
+        return path
+
+    return _path
+
+
 def parse_mixed(v: str) -> tuple[int, int]:
     """Parse --indent=mixed,<s>,<t>."""
     s = v.split(",")
@@ -126,7 +138,12 @@ _validate_ignore = And(
         Coerce(Rule, msg="invalid rule ID"),
     ],
 )
-_validate_commands = Coerce(pathlib.Path)
+
+
+def _validate_commands(root):
+    return And(Coerce(pathlib.Path), _add_root(root))
+
+
 _validate_extensions = _str2list
 _validate_style_indent = Coerce(
     lambda v: (
@@ -169,7 +186,7 @@ def _validate_config(config: dict, root: pathlib.Path):
         Optional("ignore"): _validate_ignore,
         # tclint rejects paths to dynamic plugins in the config file. This restriction
         # is designed to make it explicit when tclint is executing external code.
-        Optional("commands"): And(_validate_commands, _error_if_dynamic_plugin),
+        Optional("commands"): And(_validate_commands(root), _error_if_dynamic_plugin),
         Optional("style"): {
             Optional("indent"): _validate_style_indent,
             Optional("line-length"): _validate_style_line_length,
@@ -258,7 +275,7 @@ def setup_common_config_cli_args(config_group, cwd: pathlib.Path):
         metavar='"tcl, xdc, ..."',
     )
     config_group.add_argument(
-        "--commands", type=_argparsify(_validate_commands), metavar="<path>"
+        "--commands", type=_argparsify(_validate_commands(cwd)), metavar="<path>"
     )
 
 
