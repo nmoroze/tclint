@@ -9,6 +9,7 @@ from tclint.config import (
     ConfigError,
     setup_config_cli_args,
     setup_tclfmt_config_cli_args,
+    ExcludePattern,
 )
 from tclint.violations import Rule
 
@@ -17,11 +18,16 @@ MY_DIR = pathlib.Path(__file__).parent.resolve()
 
 def test_example_config():
     config_path = MY_DIR / "data" / "tclint.toml"
-    config = get_config(config_path, pathlib.Path.cwd())
+    cwd = pathlib.Path.cwd()
+    config = get_config(config_path, cwd)
 
     global_ = config.get_for_path(pathlib.Path())
 
-    assert global_.exclude == ["ignore_me/", "ignore*.tcl", "/ignore_from_here"]
+    assert global_.exclude == [
+        ExcludePattern("ignore_me/", cwd),
+        ExcludePattern("ignore*.tcl", cwd),
+        ExcludePattern("/ignore_from_here", cwd),
+    ]
     assert global_.ignore == [Rule("unbraced-expr")]
     assert global_.extensions == ["tcl"]
     assert global_.commands == pathlib.Path("~/.tclint/openroad.json")
@@ -58,7 +64,8 @@ def test_pyproject():
 
 def test_tclint_config_args():
     parser = argparse.ArgumentParser("tclint")
-    setup_config_cli_args(parser)
+    cwd = pathlib.Path.cwd()
+    setup_config_cli_args(parser, cwd)
 
     args = [
         "--ignore",
@@ -81,8 +88,11 @@ def test_tclint_config_args():
 
     assert args.ignore == [Rule("unbraced-expr"), Rule("line-length")]
     assert args.extend_ignore == [Rule("trailing-whitespace")]
-    assert args.exclude == ["my_dir", "my_file"]
-    assert args.extend_exclude == ["extend_to_file"]
+    assert args.exclude == [
+        ExcludePattern("my_dir", cwd),
+        ExcludePattern("my_file", cwd),
+    ]
+    assert args.extend_exclude == [ExcludePattern("extend_to_file", cwd)]
     assert args.extensions == ["sdc", "exp"]
     assert args.commands == pathlib.Path("commands.json")
     assert args.style_line_length == 79
@@ -90,7 +100,8 @@ def test_tclint_config_args():
 
 def test_tclfmt_config_args():
     parser = argparse.ArgumentParser("tclfmt")
-    setup_tclfmt_config_cli_args(parser)
+    cwd = pathlib.Path.cwd()
+    setup_tclfmt_config_cli_args(parser, cwd)
 
     args = [
         "--exclude",
@@ -111,8 +122,11 @@ def test_tclfmt_config_args():
 
     args = parser.parse_args(args)
 
-    assert args.exclude == ["my_dir", "my_file"]
-    assert args.extend_exclude == ["extend_to_file"]
+    assert args.exclude == [
+        ExcludePattern("my_dir", cwd),
+        ExcludePattern("my_file", cwd),
+    ]
+    assert args.extend_exclude == [ExcludePattern("extend_to_file", cwd)]
     assert args.extensions == ["sdc", "exp"]
     assert args.commands == pathlib.Path("commands.json")
     assert args.style_indent == 5
@@ -123,7 +137,7 @@ def test_tclfmt_config_args():
 
 def test_invalid_tclint_args():
     parser = argparse.ArgumentParser("tclint", exit_on_error=False)
-    setup_config_cli_args(parser)
+    setup_config_cli_args(parser, pathlib.Path.cwd())
 
     for arg, value in [
         ("--ignore", "unbraced-expr, line-length, invalid-rule"),
@@ -139,7 +153,7 @@ def test_invalid_tclint_args():
 
 def test_invalid_tclfmt_args():
     parser = argparse.ArgumentParser("tclfmt", exit_on_error=False)
-    setup_tclfmt_config_cli_args(parser)
+    setup_tclfmt_config_cli_args(parser, pathlib.Path.cwd())
 
     for arg, value in [
         ("--indent", "qwerty"),
@@ -170,3 +184,29 @@ def test_invalid_config():
 
         # For manually auditing error messages
         print(excinfo.value)
+
+
+def test_config_relative_paths(tmp_path):
+    """Make sure relative paths in config get resolved."""
+    config = """
+exclude = ["/foo.tcl"]
+commands = "commands.json"
+[[fileset]]
+paths = ["fileset/"]
+ignore = ["command-args"]"""
+
+    config_path = tmp_path / "tclint.toml"
+
+    with open(config_path, "w") as f:
+        f.write(config)
+
+    run_config = get_config(config_path, pathlib.Path("root"))
+
+    config = run_config.get_for_path(pathlib.Path("file.tcl"))
+    assert config.exclude == [ExcludePattern("/foo.tcl", pathlib.Path("root"))]
+    # TODO: uncomment once these are implemented
+    # assert config.commands == pathlib.Path("root/commands.json")
+    # assert config.ignore == []
+
+    # config = run_config.get_for_path(pathlib.Path("root/fileset"))
+    # assert config.ignore == ["command-args"]

@@ -1,7 +1,7 @@
 import argparse
 import pathlib
-from typing import Union, List
-from typing import Optional as OptionalType, NamedTuple, Callable
+from typing import Union, List, Callable
+from typing import Optional as OptionalType, NamedTuple
 import dataclasses
 import sys
 
@@ -32,8 +32,7 @@ class Config:
     validation (and normalization) is defined by `validators` below.
     """
 
-    # TODO: switch to `exclude: List[ExcludePattern]`
-    exclude: List[str] = dataclasses.field(default_factory=list)
+    exclude: List[ExcludePattern] = dataclasses.field(default_factory=list)
     ignore: List[Rule] = dataclasses.field(default_factory=list)
     commands: OptionalType[pathlib.Path] = dataclasses.field(default=None)
     extensions: List[str] = dataclasses.field(
@@ -115,9 +114,12 @@ def parse_mixed(v: str) -> tuple[int, int]:
 # Define validators as module variables so they can be reused for config file schema
 # validation and CLI argument parsing.
 
-# note: it's ok if paths don't exist - allows for generic
-# configurations with directories like .git/ excluded
-_validate_exclude = _str2list
+
+def _validate_exclude(root):
+    """Along with parsing the list, bundles exclude patterns with their root."""
+    return And(_str2list, [lambda p: ExcludePattern(p, root)])
+
+
 _validate_ignore = And(
     _str2list,
     [
@@ -156,10 +158,13 @@ def _error_if_dynamic_plugin(p: pathlib.Path):
     return p
 
 
-def _validate_config(config):
+def _validate_config(config: dict, root: pathlib.Path):
     """Validates dictionary read from TOML config file. Individual value validators
     are implemented in the module-level variables above; this defines the actual
-    structure of the schema."""
+    structure of the schema.
+
+    root is used to resolve values that may be relative to a certain path.
+    """
     base_config = {
         Optional("ignore"): _validate_ignore,
         # tclint rejects paths to dynamic plugins in the config file. This restriction
@@ -176,7 +181,7 @@ def _validate_config(config):
 
     schema = Schema({
         # exclude and extensions can only be used in global context
-        Optional("exclude"): _validate_exclude,
+        Optional("exclude"): _validate_exclude(root),
         Optional("extensions"): _validate_extensions,
         **base_config,
         Optional("fileset"): Schema(
@@ -191,7 +196,7 @@ def _validate_config(config):
             raise ConfigError(e.error_message)
 
         # Stringify error path to my own taste.
-        path = []
+        path: List[str] = []
         for item in e.path:
             if isinstance(item, int):
                 # Brackets around indices
@@ -225,13 +230,26 @@ def _add_bool(group, parser, dest, yes_flag, no_flag):
     parser.set_defaults(**{dest: None})
 
 
-def setup_common_config_cli_args(config_group):
+def setup_common_config_cli_args(config_group, cwd: pathlib.Path):
+    """
+    This method defines config-related CLI arguments common to both tclint and tclfmt.
+
+    The destvars of these switches should match the fields of Config.
+
+    Relative paths and exclude patterns will be resolved relative to `cwd`. It may seem
+    weird to specify this in a "setup" function (as opposed to Config.apply_cli_args),
+    but the paths are resolved by the validator functions configured here. For our use
+    case, this is fine since the setup and application of the CLI args are close
+    together in the application code.
+    """
     config_group.add_argument(
-        "--exclude", type=_argparsify(_validate_exclude), metavar='"path1, path2, ..."'
+        "--exclude",
+        type=_argparsify(_validate_exclude(cwd)),
+        metavar='"path1, path2, ..."',
     )
     config_group.add_argument(
         "--extend-exclude",
-        type=_argparsify(_validate_exclude),
+        type=_argparsify(_validate_exclude(cwd)),
         metavar='"path1, path2, ..."',
     )
     config_group.add_argument(
@@ -244,8 +262,8 @@ def setup_common_config_cli_args(config_group):
     )
 
 
-def setup_config_cli_args(parser):
-    """This method defines config-related CLI arguments.
+def setup_config_cli_args(parser, cwd: pathlib.Path):
+    """This method defines config-related CLI arguments used by tclint.
 
     The destvars of these switches should match the fields of Config.
     """
@@ -259,7 +277,7 @@ def setup_config_cli_args(parser):
         type=_argparsify(_validate_ignore),
         metavar='"rule1, rule2, ..."',
     )
-    setup_common_config_cli_args(config_group)
+    setup_common_config_cli_args(config_group, cwd)
     config_group.add_argument(
         "--style-line-length",
         type=_argparsify(_validate_style_line_length),
@@ -267,14 +285,14 @@ def setup_config_cli_args(parser):
     )
 
 
-def setup_tclfmt_config_cli_args(parser):
+def setup_tclfmt_config_cli_args(parser, cwd: pathlib.Path):
     """This method defines the subset of config-related CLI arguments used by tclfmt.
 
     The destvars of these switches should match the fields of Config.
     """
     config_group = parser.add_argument_group("configuration arguments")
 
-    setup_common_config_cli_args(config_group)
+    setup_common_config_cli_args(config_group, cwd)
 
     config_group.add_argument(
         "--indent",
@@ -347,7 +365,7 @@ class RunConfig:
 
     @classmethod
     def from_dict(cls, config_dict: dict, root: pathlib.Path):
-        config_dict = _validate_config(config_dict)
+        config_dict = _validate_config(config_dict, root)
         try:
             fileset_config_dicts = config_dict.pop("fileset")
         except KeyError:

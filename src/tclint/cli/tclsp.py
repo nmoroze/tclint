@@ -18,7 +18,6 @@ from tclint.config import (
     RunConfig,
     Config,
     ConfigError,
-    ExcludePattern,
 )
 from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
@@ -176,12 +175,7 @@ class TclspServer(LanguageServer):
         path = Path(document.path)
         root = self.get_root(path)
         config = self.get_config(path, root)
-
-        if root is None:
-            root = path.parent
-
-        exclude = [ExcludePattern(pattern, root) for pattern in config.exclude]
-        is_excluded = utils.make_exclude_filter(exclude)
+        is_excluded = utils.make_exclude_filter(config.exclude)
         if is_excluded(path):
             return []
 

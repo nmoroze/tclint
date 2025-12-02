@@ -11,7 +11,6 @@ from tclint.config import (
     setup_config_cli_args,
     Config,
     ConfigError,
-    ExcludePattern,
     RunConfig,
 )
 from tclint.parser import Parser, TclSyntaxError
@@ -106,11 +105,13 @@ def main():
         default=None,
         metavar="<path>",
     )
-    setup_config_cli_args(parser)
+
+    cwd = pathlib.Path.cwd()
+    setup_config_cli_args(parser, cwd)
     args = parser.parse_args()
 
     try:
-        config = get_config(args.config, pathlib.Path.cwd())
+        config = get_config(args.config, cwd)
     except ConfigError as e:
         print(f"Invalid config file: {e}")
         return EXIT_INPUT_ERROR
@@ -124,11 +125,9 @@ def main():
         # TODO: we should eventually allow tclint to find a config by walking up
         # directories, at which point exclude_root should be the parent dir of
         # the config file, unless -c is used (eslint rules)
-        exclude_root = pathlib.Path.cwd()
-        exclude = [ExcludePattern(pattern, exclude_root) for pattern in config.exclude]
         sources = resolve_sources(
             args.source,
-            exclude_patterns=exclude,
+            exclude_patterns=config.exclude,
             extensions=config.extensions,
         )
     except FileNotFoundError as e:
