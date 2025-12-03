@@ -1,7 +1,7 @@
 import codecs
 from collections import defaultdict
 import os
-import pathlib
+from pathlib import Path
 import re
 from typing import Callable, List, Optional
 
@@ -21,7 +21,7 @@ def register_codec_warning(name):
 
 def make_exclude_filter(
     exclude_patterns: List[ExcludePattern],
-) -> Callable[[pathlib.Path], bool]:
+) -> Callable[[Path], bool]:
     # Transform patterns into a data structure keyed on root.
     patterns_by_root = defaultdict(list)
     for pattern, root in exclude_patterns:
@@ -36,12 +36,12 @@ def make_exclude_filter(
         spec = pathspec.PathSpec.from_lines("gitwildmatch", patterns)
         compiled_patterns[root] = spec
 
-    def is_excluded(path: pathlib.Path) -> bool:
+    def is_excluded(path: Path) -> bool:
         abspath = path.resolve()
 
         for root, exclude_spec in compiled_patterns.items():
             try:
-                relpath = pathlib.Path(os.path.relpath(abspath, start=root))
+                relpath = Path(os.path.relpath(abspath, start=root))
             except ValueError:
                 # We get here if path and exclude_root are on different drives (on
                 # Windows).Things should still behave roughly as expected without
@@ -57,10 +57,10 @@ def make_exclude_filter(
 
 
 def resolve_sources(
-    paths: List[pathlib.Path],
+    paths: List[Path],
     exclude_patterns: List[ExcludePattern],
     extensions: List[str],
-) -> List[Optional[pathlib.Path]]:
+) -> List[Optional[Path]]:
     """Resolves paths passed via CLI to a list of filepaths to lint.
 
     `paths` is a list of paths that may be files or directories. Files are
@@ -74,7 +74,7 @@ def resolve_sources(
     extensions = [f".{ext}" if not ext.startswith(".") else ext for ext in extensions]
     is_excluded = make_exclude_filter(exclude_patterns)
 
-    sources: List[Optional[pathlib.Path]] = []
+    sources: List[Optional[Path]] = []
 
     for path in paths:
         if str(path) == "-":
@@ -95,7 +95,7 @@ def resolve_sources(
             for name in filenames:
                 _, ext = os.path.splitext(name)
                 if ext.lower() in extensions:
-                    child = pathlib.Path(dirpath) / name
+                    child = Path(dirpath) / name
                     if not is_excluded(child):
                         sources.append(child)
 
