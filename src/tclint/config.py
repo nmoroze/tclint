@@ -84,6 +84,18 @@ class Config:
             return self.style_indent[1]
         return 0
 
+    def diff(self) -> str:
+        """Return string representation of Config only showing fields that differ from
+        default instance."""
+        default_config = Config()
+        values = []
+        for field in dataclasses.fields(self):
+            value = getattr(self, field.name)
+            default = getattr(default_config, field.name)
+            if value != default:
+                values.append(f"{field.name}={value}")
+        return f"Config({', '.join(values)})"
+
 
 # Validators using `voluptuous` library that check and normalize config inputs.
 # Used for checking both config files as well as config-related CLI args.
@@ -413,7 +425,7 @@ class RunConfig:
     def from_path(cls, path: Union[str, pathlib.Path], root: pathlib.Path):
         path = pathlib.Path(path)
 
-        if not path.exists():
+        if not path.exists() or path.is_dir():
             raise FileNotFoundError
 
         with open(path, "rb") as f:
@@ -502,6 +514,26 @@ def get_config(
 
     try:
         return RunConfig.from_pyproject(directory=root)
+    except ConfigError as e:
+        raise e
+    except (FileNotFoundError, tomllib.TOMLDecodeError, KeyError):
+        # just skip if file doesn't exist, contains TOML errors, or tclint key not found
+        pass
+
+    return None
+
+
+def load_config_at(directory: pathlib.Path) -> OptionalType[Config]:
+    for path in DEFAULT_CONFIGS:
+        try:
+            rc = RunConfig.from_path(directory / path, directory)
+            return rc._global_config
+        except FileNotFoundError:
+            pass
+
+    try:
+        rc = RunConfig.from_pyproject(directory=directory)
+        return rc._global_config
     except ConfigError as e:
         raise e
     except (FileNotFoundError, tomllib.TOMLDecodeError, KeyError):

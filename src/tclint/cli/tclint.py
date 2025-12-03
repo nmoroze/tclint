@@ -7,17 +7,16 @@ from typing import Dict, List, Optional
 
 
 from tclint.config import (
-    get_config,
     setup_config_cli_args,
+    RunConfig,
     Config,
     ConfigError,
-    RunConfig,
 )
 from tclint.parser import Parser, TclSyntaxError
 from tclint.checks import get_checkers
 from tclint.violations import Violation, Rule
 from tclint.comments import CommentVisitor
-from tclint.cli.utils import resolve_sources, register_codec_warning
+from tclint.cli.utils import register_codec_warning, Resolver
 
 try:
     from tclint._version import __version__  # type: ignore
@@ -110,35 +109,34 @@ def main():
     setup_config_cli_args(parser, cwd)
     args = parser.parse_args()
 
+    global_config = None
+    if args.config is not None:
+        try:
+            rc = RunConfig.from_path(args.config, cwd)
+            rc.apply_cli_args(args)
+            global_config = rc._global_config
+        except FileNotFoundError:
+            print(f"Config file path doesn't exist: {args.config}")
+            return EXIT_INPUT_ERROR
+        except ConfigError as e:
+            print(f"Invalid config file: {e}")
+            return EXIT_INPUT_ERROR
+
+    resolver = Resolver(args, global_config)
     try:
-        config = get_config(args.config, cwd)
-    except ConfigError as e:
-        print(f"Invalid config file: {e}")
-        return EXIT_INPUT_ERROR
-
-    if config is None:
-        config = RunConfig()
-
-    config.apply_cli_args(args)
-
-    try:
-        # TODO: we should eventually allow tclint to find a config by walking up
-        # directories, at which point exclude_root should be the parent dir of
-        # the config file, unless -c is used (eslint rules)
-        sources = resolve_sources(
-            args.source,
-            exclude_patterns=config.exclude,
-            extensions=config.extensions,
-        )
+        sources = resolver.resolve_sources(args.source, cwd)
     except FileNotFoundError as e:
         print(f"Invalid path provided: {e}")
+        return EXIT_INPUT_ERROR
+    except ConfigError as e:
+        print(f"Invalid config file: {e}")
         return EXIT_INPUT_ERROR
 
     retcode = EXIT_OK
 
     register_codec_warning("replace_with_warning")
 
-    for path in sources:
+    for path, config in sources:
         if path is None:
             script = sys.stdin.read()
             out_prefix = "(stdin)"
@@ -150,7 +148,7 @@ def main():
         try:
             violations = lint(
                 script,
-                config.get_for_path(path),
+                config,
                 path,
                 debug=args.debug,
             )

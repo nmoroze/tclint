@@ -7,8 +7,14 @@ import subprocess
 MY_DIR = pathlib.Path(__file__).parent.resolve()
 
 
-def test_tclfmt():
-    cmd = ["tclfmt", MY_DIR / "data" / "dirty.tcl"]
+def test_tclfmt(tmp_path):
+    # Ensure that tclfmt doesn't pick up tclint.toml from tests directory.
+    # TODO: consider adding an --isolated flag that effectively implements this.
+    default_config = tmp_path / "tclint.toml"
+    with open(default_config, "w") as f:
+        f.write("")
+
+    cmd = ["tclfmt", MY_DIR / "data" / "dirty.tcl", "-c", default_config]
     p = subprocess.run(cmd, capture_output=True, cwd=MY_DIR)
 
     with open(MY_DIR / "data" / "dirty.formatted.tcl", "r") as f:

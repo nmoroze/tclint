@@ -2,7 +2,7 @@ import argparse
 import dataclasses
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Set
 import uuid
 
 from lsprotocol import types as lsp
@@ -13,11 +13,11 @@ from pygls.uris import to_fs_path
 
 from tclint.cli import tclint
 from tclint.config import (
-    get_config,
     DEFAULT_CONFIGS,
     RunConfig,
     Config,
     ConfigError,
+    load_config_at,
 )
 from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
@@ -31,6 +31,7 @@ except ModuleNotFoundError:
 
 
 DIAGNOSTIC_SOURCE = "tclint"
+_DEFAULT_CONFIG = Config()
 
 
 def lint(source, config, path):
@@ -89,10 +90,18 @@ class TclspServer(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.diagnostics = {}
-        # Maps roots to configs. Ordinarily "root" refers to workspace root, but if a
-        # file is open outside of a workspace then its config is stored in this
-        # dictionary with its parent dir considered a root.
-        self.configs: Dict[Path, RunConfig] = {}
+
+        # There are many config caches!!
+        # Caches loaded config files specified in LSP settings.
+        self.workspace_configs: Dict[Path, Config] = {}
+        # Caches loaded config files present in open workspaces.
+        self.config_files: Dict[Path, Config] = {}
+        # Caches which config is used by each open file.
+        self.source_configs: Dict[Path, Config] = {}
+        # Tracks which invalid configs we've already displayed an error for, to avoid
+        # spam.
+        self.invalid_configs: Set[Path] = set()
+
         self.client_supports_refresh = False
 
         self.global_settings = ExtensionSettings()
@@ -114,11 +123,9 @@ class TclspServer(LanguageServer):
 
         return roots
 
-    def get_root(self, path: Path) -> Path:
-        """Returns root folder that's closest to path.
-
-        Returns workspace root if path is in a workspace folder. Otherwise, returns
-        parent directory of path.
+    def get_root(self, path: Path) -> Optional[Path]:
+        """Returns workspace root if path is in a workspace folder. Otherwise, returns
+        None.
         """
         roots = self.get_roots()
         closest_root = None
@@ -131,8 +138,7 @@ class TclspServer(LanguageServer):
             if len(relpath.parts) < distance:
                 distance = len(relpath.parts)
                 closest_root = root
-        if closest_root is None:
-            return path.parent
+
         return closest_root
 
     def get_config_file(self, root: Path) -> Optional[Path]:
@@ -141,40 +147,84 @@ class TclspServer(LanguageServer):
             return settings.config_file
         return self.global_settings.config_file
 
-    def load_configs(self):
-        """Preload configuration files that are found under workspace roots."""
-        self.configs = {}
-        for root in self.get_roots():
-            try:
-                path = self.get_config_file(root)
-                config = get_config(path, root)
-                if config is not None:
-                    self.configs[root] = config
-            except ConfigError as e:
-                self.show_message(f"Error loading config file: {e}")
+    def show_config_error(self, msg: str, path: Path):
+        if path not in self.invalid_configs:
+            self.show_message(f"Error loading config file: {msg}")
+        self.invalid_configs.add(path)
 
-    def get_config(self, path: Path, root: Path) -> Config:
+    def load_config(self, path: Path, root: Path) -> Optional[Config]:
+        try:
+            return RunConfig.from_path(path, root)._global_config
+        except FileNotFoundError:
+            self.show_config_error(f"{path} doesn't exist", path)
+            return None
+        except ConfigError as e:
+            self.show_config_error(str(e), path)
+            return None
+
+    def load_workspace_setting_configs(self):
+        """These may be used a lot if specified, so cache specially."""
+        for root in self.get_roots():
+            path = self.get_config_file(root)
+            if path is None:
+                continue
+            config = self.load_config(path, root)
+            if config is None:
+                continue
+            self.workspace_configs[root] = config
+
+    def _get_config(self, path: Path) -> Config:
+        workspace_root = self.get_root(path)
+
+        # First, check for configs specified in the LSP settings.
+        # If not in a workspace, our only shot is to use a global config. Otherwise, we
+        # bail (no searching, since the LSP only searches up to the workspace root).
+        if workspace_root is None:
+            global_file = self.global_settings.config_file
+            if global_file is not None:
+                config = self.load_config(global_file, path.parent)
+                if config is not None:
+                    return config
+            return _DEFAULT_CONFIG
+
+        # If file is in a workspace, and we've got a workspace config configured, use
+        # that (this logic also handles global configs, since these are still
+        # instantiated once per workspace to resolve relative paths).
+        if workspace_root is not None and workspace_root in self.workspace_configs:
+            return self.workspace_configs[workspace_root]
+
+        # Otherwise, walk upwards until root.
+        # path is a file, which is a sneaky trick to guarantee we always run the first
+        # iteration. It becomes a directory after the first statement in the loop.
+        while path != workspace_root:
+            path = path.parent
+            try:
+                config = load_config_at(path)
+            except ConfigError as e:
+                self.show_config_error(str(e), path)
+                return _DEFAULT_CONFIG
+
+            if config is not None:
+                return config
+
+        return _DEFAULT_CONFIG
+
+    def get_config(self, path: Path) -> Config:
         """Return config object for a given path.
 
         If no config has already been loaded for root (either by calling this function
         or load_configs), this function will search for and load a config file if found.
         """
-        if root in self.configs:
-            return self.configs[root].get_for_path(path)
+        if path in self.source_configs:
+            return self.source_configs[path]
+        config = self._get_config(path)
+        self.source_configs[path] = config
 
-        config_path = self.get_config_file(root)
-        if config_path:
-            config = get_config(config_path, root)
-            if config:
-                self.configs[root] = config
-                return config.get_for_path(path)
-
-        return Config()
+        return config
 
     def _compute_diagnostics(self, document: TextDocument) -> List[lsp.Diagnostic]:
         path = Path(document.path)
-        root = self.get_root(path)
-        config = self.get_config(path, root)
+        config = self.get_config(path)
         is_excluded = utils.make_exclude_filter(config.exclude)
         if is_excluded(path):
             return []
@@ -199,8 +249,7 @@ class TclspServer(LanguageServer):
         range: Optional[Tuple[int, int]] = None,
     ):
         path = Path(document.path)
-        root = self.get_root(path)
-        config = self.get_config(path, root)
+        config = self.get_config(path)
 
         parser = Parser()
 
@@ -256,12 +305,8 @@ def did_close(ls: TclspServer, params: lsp.DidCloseTextDocumentParams):
     except KeyError:
         pass
 
-    path = Path(doc.path)
-    if path.parent in ls.get_roots():
-        # Preserve cached workspace configs
-        return
     try:
-        del ls.configs[path.parent]
+        del ls.source_configs[Path(doc.path)]
     except KeyError:
         pass
 
@@ -304,7 +349,11 @@ def change_watched_files(ls: TclspServer, params: lsp.DidChangeWatchedFilesParam
     # Clear diagnostics cache so they get recalculated when requested
     ls.diagnostics = {}
 
-    ls.load_configs()
+    # Config files changed, clear the many caches!
+    ls.config_files = {}
+    ls.source_configs = {}
+    ls.invalid_configs = set()
+
     if ls.client_supports_refresh:
         ls.lsp.send_request(lsp.WORKSPACE_DIAGNOSTIC_REFRESH, None)
 
@@ -437,7 +486,7 @@ def init(ls: TclspServer, params: lsp.InitializeParams):
             )
         )
 
-    ls.load_configs()
+    ls.load_workspace_setting_configs()
 
 
 def main():

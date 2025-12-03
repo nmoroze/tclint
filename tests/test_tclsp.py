@@ -352,6 +352,10 @@ async def test_invalid_config(client: pytest_lsp.LanguageClient, tmp_path_factor
         workspace_folders=[
             lsp.WorkspaceFolder(uri=ws.as_uri(), name=ws.name),
         ],
+        initialization_options={
+            "settings": [],
+            "globalSettings": {"cwd": "/", "configPath": config},
+        },
     )
     await client.initialize_session(params)
     await client.wait_for_notification(lsp.WINDOW_SHOW_MESSAGE)
