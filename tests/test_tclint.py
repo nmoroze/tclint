@@ -67,7 +67,7 @@ data/dirty.tcl:6:17: expression with substitutions should be enclosed by braces 
 
 
 def test_special_file():
-    p = subprocess.run(["tclint", "/dev/stdin"])
+    p = subprocess.run(["tclint", "/dev/stdin"], input=b"")
     assert p.returncode == 0
 
 
@@ -231,6 +231,7 @@ commands = {}
     # Validate setup can work
     p = subprocess.Popen(
         ["tclint", "--commands", plugin_path, "-"],
+        stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         cwd=tmp_path,
@@ -245,6 +246,7 @@ commands = {}
     # Make sure dynamic plugin is blocked
     p = subprocess.Popen(
         ["tclint", "--config", config_path, "-"],
+        stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         cwd=tmp_path,
