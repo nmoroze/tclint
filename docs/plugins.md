@@ -197,23 +197,6 @@ simplest is to pass the command spec to `tclint` via `--commands`:
 tclint or_place.tcl --commands openroad.json
 ```
 
-For codebases that contain scripts for multiple tools, it's best to use a configuration
-file that defines multiple filesets. For example, for a codebase like:
-
-```
-├── openroad_scripts/
-├── other_scripts/
-└── tclint.toml
-```
-
-You might add the following section to `tclint.toml`:
-
-```toml
-[[fileset]]
-paths = ["openroad_scripts/"]
-commands = "~/.tclint/openroad.json"
-```
-
 > [!NOTE]
 > For security reasons, you can't provide a path to a dynamic plugin Python file via a config file.
 > These paths must be provided on the CLI using `--commands` instead.

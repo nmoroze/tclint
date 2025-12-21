@@ -33,29 +33,6 @@ indent-namespace-eval = false
 spaces-in-braces = true
 ```
 
-## Filesets
-
-The configuration file can define an arbitrary number of sub-configurations that apply to a specific set of paths. These sub-configs support the same set of fields as the global configuration, with the exception of `exclude` and `extensions`.
-
-The following example shows how to add two fileset sub-configs that each override different configuration fields:
-
-```toml
-[[fileset]]
-paths = ["other_file_group1/"]
-ignore = ["command-args"]
-
-[fileset.style]
-indent = 3
-
-[[fileset]]
-paths = ["other_file_group2/"]
-
-[fileset.style]
-spaces-in-braces = false
-```
-
-At the moment, if a file being linted matches more than one fileset, `tclint` will use the configuration in the first fileset that applies.
-
 ## CLI arguments
 
 Each configuration field supports at least one command line argument that can be used to override its value. Values supplied using these switches always override values supplied in the config file, with the exception of `--extend-exclude` and `--extend-ignore`, which extends any previously configured list with the supplied values.

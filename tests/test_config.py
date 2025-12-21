@@ -37,15 +37,6 @@ def test_example_config():
     assert global_.style_indent_namespace_eval is False
     assert global_.style_spaces_in_braces is True
 
-    group1 = config.get_for_path(pathlib.Path("other_file_group1/file.tcl"))
-    assert group1.style_indent == 3
-    assert group1.ignore == [Rule("command-args")]
-    assert group1.style_line_length == 80
-
-    group2 = config.get_for_path(pathlib.Path("other_file_group2/foo/file.tcl"))
-    assert group2.style_indent == 2
-    assert group2.style_spaces_in_braces is False
-
 
 def test_invalid_rule():
     with pytest.raises(ConfigError) as excinfo:
@@ -175,8 +166,6 @@ def test_invalid_config():
         {"style": {"max-blank-lines": "ghi"}},
         {"style": {"indent-namespace-eval": "not-a-bool"}},
         {"style": {"spaces-in-braces": -1}},
-        {"fileset": [{"style": {"indent": 4}}]},  # missing key
-        {"fileset": [{"paths": ["dir"], "style": {"indent": "not-a-number"}}]},
         {"extra-key": "value"},
     ]:
         with pytest.raises(ConfigError) as excinfo:
@@ -191,9 +180,7 @@ def test_config_relative_paths(tmp_path):
     config = """
 exclude = ["/foo.tcl"]
 commands = "commands.json"
-[[fileset]]
-paths = ["fileset/"]
-ignore = ["command-args"]"""
+"""
 
     config_path = tmp_path / "tclint.toml"
 
@@ -206,6 +193,3 @@ ignore = ["command-args"]"""
     assert config.exclude == [ExcludePattern("/foo.tcl", pathlib.Path("root"))]
     assert config.commands == pathlib.Path("root/commands.json")
     assert config.ignore == []
-
-    config = run_config.get_for_path(pathlib.Path("root/fileset"))
-    assert config.ignore == [Rule("command-args")]

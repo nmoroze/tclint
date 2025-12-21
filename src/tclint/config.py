@@ -213,9 +213,6 @@ def _validate_config(config: dict, root: pathlib.Path):
         Optional("exclude"): _validate_exclude(root),
         Optional("extensions"): _validate_extensions,
         **base_config,
-        Optional("fileset"): Schema(
-            [{"paths": [Coerce(pathlib.Path)], **base_config}], required=True
-        ),
     })
 
     try:
