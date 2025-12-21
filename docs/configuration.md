@@ -33,6 +33,34 @@ indent-namespace-eval = false
 spaces-in-braces = true
 ```
 
+## Config discovery
+
+All tools in the `tclint` family discover configuration files by searching for files named `tclint.toml`, `.tclint`, or `pyproject.toml` in the directories above each analyzed source file.
+The configuration closest to a given source file is the one that gets applied.
+For example, if a project structure looks like the following:
+
+```
+├── scripts/
+├──── tclint.toml -> applies to bar.tcl
+├──── bar.tcl
+├── tclint.toml -> applies to foo.tcl
+└── foo.tcl
+```
+
+Then the configuration in `scripts/tclint.toml` applies to `scripts/bar.tcl`, and the configuration in `tclint.toml` applies to `foo.tcl`.
+
+`tclint` will search for config files up to the root of the filesystem, and config files will be resolved the same even if `tclint` is run within a subdirectory of a project.
+
+If multiple config files appear in a given directory, a file is picked according to this priority order:
+1) `tclint.toml`
+2) `.tclint`
+3) `pyproject.toml` (special case, see [here](#pyproject.toml) for more info)
+
+If `tclint` is traversing a directory to discover source files, it will load each config file it finds and apply the `exclude` and `extensions` settings as it further traverses the filesystem.
+
+All relative paths and exclude patterns that appear in config files are resolved relative to the parent directory of that config file.
+The exception are config files specified directly using `-c` or `--config`, in which case the paths are resolved relative to the current working directory.
+
 ## CLI arguments
 
 Each configuration field supports at least one command line argument that can be used to override its value. Values supplied using these switches always override values supplied in the config file, with the exception of `--extend-exclude` and `--extend-ignore`, which extends any previously configured list with the supplied values.

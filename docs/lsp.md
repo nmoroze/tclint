@@ -5,7 +5,8 @@ and formatting into editors.
 
 ## Configuration
 
-`tclsp` searches for `tclint` configuration files in the root of open workspaces.
+`tclsp` searches for `tclint` configuration files according to the rules in [config discovery](configuration.md#config-discovery).
+The one difference is that the LSP will not search for files above the root of the workspace.
 `tclsp` defaults to the client-provided setting for indentation, but this will be overridden by an explicit setting in a config file.
 
 On initialization, a client may provide `tclsp` with explicit paths to configuration files via [`InitializeParams.initializationOptions`][initialize-params].

@@ -52,7 +52,9 @@ Collected files will be checked for lint violations.  See the
 [Violations](docs/violations.md) documentation page for a description of all
 lint violations `tclint` may report.
 
-Aspects of `tclint`'s behavior can be controlled by a configuration file. By default, `tclint` will look for a file named `tclint.toml` or `.tclint` in the current working directory (in that order), but a path to an alternate configuration file can be provided using the `-c` or `--config` flag. See [Configuration](docs/configuration.md) for documentation on the configuration file.
+Aspects of `tclint`'s behavior can be controlled by a configuration file.
+By default, `tclint` will search for a file named `tclint.toml` or `.tclint` by walking the parent directories of source files, but a path to an alternate configuration file can be provided using the `-c` or `--config` flag.
+See [Configuration](docs/configuration.md) for documentation on the configuration file.
 
 `tclint` includes a plugin system for checking EDA tool-specific commands. See the [Plugins](docs/plugins.md) documentation page for more info.
 
