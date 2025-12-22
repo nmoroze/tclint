@@ -1,5 +1,4 @@
 import ply.lex as lex
-from typing import Tuple
 
 TOK_BACKSLASH_NEWLINE = "BACKSLASH_NEWLINE"
 TOK_BACKSLASH_SUB = "BACKSLASH_SUB"
@@ -28,7 +27,7 @@ STATE_BRACEDWORD = "bracedword"
 
 
 class TclSyntaxError(Exception):
-    def __init__(self, message, start: Tuple[int, int], end: Tuple[int, int]):
+    def __init__(self, message, start: tuple[int, int], end: tuple[int, int]):
         super().__init__(message)
         self.start = start
         self.end = end

@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from tclint.config import (
     Config,
@@ -48,9 +48,9 @@ class Resolver:
         return config
 
     def resolve_sources(
-        self, paths: List[Path], cwd: Path
-    ) -> List[tuple[Optional[Path], Config]]:
-        sources: List[tuple[Optional[Path], Config]] = []
+        self, paths: list[Path], cwd: Path
+    ) -> list[tuple[Optional[Path], Config]]:
+        sources: list[tuple[Optional[Path], Config]] = []
 
         for path in paths:
             if str(path) == "-":

@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Tuple
 
 
 class Rule(Enum):
@@ -26,7 +25,7 @@ ALL_RULES = [rule for rule in Rule]
 
 class Violation:
     def __init__(
-        self, id: Rule, message: str, start: Tuple[int, int], end: Tuple[int, int]
+        self, id: Rule, message: str, start: tuple[int, int], end: tuple[int, int]
     ):
         self.id = id
         self.message = message
@@ -44,7 +43,7 @@ class Violation:
 
     @classmethod
     def create(cls, id):
-        def func(message: str, start: Tuple[int, int], end: Tuple[int, int]):
+        def func(message: str, start: tuple[int, int], end: tuple[int, int]):
             return cls(id, message, start, end)
 
         return func

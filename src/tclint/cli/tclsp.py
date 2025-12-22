@@ -2,7 +2,7 @@ import argparse
 import dataclasses
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Optional
 import uuid
 
 from lsprotocol import types as lsp
@@ -92,21 +92,21 @@ class TclspServer(LanguageServer):
 
         # There are many config caches!!
         # Caches loaded config files specified in LSP settings.
-        self.workspace_configs: Dict[Path, Config] = {}
+        self.workspace_configs: dict[Path, Config] = {}
         # Caches loaded config files present in open workspaces.
-        self.config_files: Dict[Path, Config] = {}
+        self.config_files: dict[Path, Config] = {}
         # Caches which config is used by each open file.
-        self.source_configs: Dict[Path, Config] = {}
+        self.source_configs: dict[Path, Config] = {}
         # Tracks which invalid configs we've already displayed an error for, to avoid
         # spam.
-        self.invalid_configs: Set[Path] = set()
+        self.invalid_configs: set[Path] = set()
 
         self.client_supports_refresh = False
 
         self.global_settings = ExtensionSettings()
-        self.workspace_settings: Dict[Path, ExtensionSettings] = {}
+        self.workspace_settings: dict[Path, ExtensionSettings] = {}
 
-    def get_roots(self) -> List[Path]:
+    def get_roots(self) -> list[Path]:
         """Returns root folders currently open in the workspace."""
         roots = []
         for uri in self.workspace.folders.keys():
@@ -221,7 +221,7 @@ class TclspServer(LanguageServer):
 
         return config
 
-    def _compute_diagnostics(self, document: TextDocument) -> List[lsp.Diagnostic]:
+    def _compute_diagnostics(self, document: TextDocument) -> list[lsp.Diagnostic]:
         path = Path(document.path)
         config = self.get_config(path)
         is_excluded = utils.make_exclude_filter(config.exclude)
@@ -245,7 +245,7 @@ class TclspServer(LanguageServer):
         self,
         document: TextDocument,
         options: lsp.FormattingOptions,
-        range: Optional[Tuple[int, int]] = None,
+        range: Optional[tuple[int, int]] = None,
     ):
         path = Path(document.path)
         config = self.get_config(path)

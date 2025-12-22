@@ -1,6 +1,5 @@
 import dataclasses
 import itertools
-from typing import List, Tuple, Union
 import sys
 
 from tclint.syntax_tree import (
@@ -24,14 +23,14 @@ from tclint.syntax_tree import (
     Function,
 )
 from tclint.parser import Parser
-from tclint.syntax_tree import List as ListNode
+from tclint.syntax_tree import List
 
 
 @dataclasses.dataclass
 class LiteralBlock:
-    block: List[str]
-    pos: Tuple[int, int]
-    end_pos: Tuple[int, int]
+    block: list[str]
+    pos: tuple[int, int]
+    end_pos: tuple[int, int]
 
 
 @dataclasses.dataclass
@@ -48,7 +47,7 @@ class Formatter:
         self.opts = opts
         self.indent_mixed_tab_size = opts.indent_mixed_tab_size
 
-    def _indent(self, lines: List[str], indent: str) -> List[str]:
+    def _indent(self, lines: list[str], indent: str) -> list[str]:
         indented = []
         for line in lines:
             if line == "":
@@ -58,7 +57,7 @@ class Formatter:
 
         return indented
 
-    def _brace(self, lines: List[str]) -> List[str]:
+    def _brace(self, lines: list[str]) -> list[str]:
         spaces_in_braces = " " if self.opts.spaces_in_braces else ""
         if lines == [""]:
             return ["{" + spaces_in_braces + "}"]
@@ -68,7 +67,7 @@ class Formatter:
         braced_lines[-1] += spaces_in_braces + "}"
         return braced_lines
 
-    def format(self, *nodes: Union[Node, LiteralBlock]) -> List[str]:
+    def format(self, *nodes: Node | LiteralBlock) -> list[str]:
         formatted = []
         for node in nodes:
             if isinstance(node, Script):
@@ -91,7 +90,7 @@ class Formatter:
                 formatted += self.format_var_sub(node)
             elif isinstance(node, ArgExpansion):
                 formatted += self.format_arg_expansion(node)
-            elif isinstance(node, ListNode):
+            elif isinstance(node, List):
                 formatted += self.format_list(node)
             elif isinstance(node, Expression):
                 formatted += self.format_expression(node)
@@ -114,7 +113,7 @@ class Formatter:
 
         return formatted
 
-    def reindent(self, lines: List[str]) -> List[str]:
+    def reindent(self, lines: list[str]) -> list[str]:
         """Apply mixed space/tab indentation scheme.
 
         Apply the mixed space/tab indentation scheme as requested by
@@ -183,7 +182,7 @@ class Formatter:
 
         return leading + formatted + trailing
 
-    def format_script_contents(self, script: Union[Script, CommandSub]) -> List[str]:
+    def format_script_contents(self, script: Script | CommandSub) -> list[str]:
         to_format = []
         skip_formatting_start = None
         for child in script.children:
@@ -250,7 +249,7 @@ class Formatter:
 
         return formatted
 
-    def format_script(self, script: Script, should_indent=True) -> List[str]:
+    def format_script(self, script: Script, should_indent=True) -> list[str]:
         lines = self.format_script_contents(script)
         if script.pos[0] == script.end_pos[0]:
             return self._brace(lines)
@@ -273,7 +272,7 @@ class Formatter:
         else:
             return [open_brace] + lines + ["}"]
 
-    def format_command(self, command: Command) -> List[str]:
+    def format_command(self, command: Command) -> list[str]:
         is_namespace_eval = (
             command.routine.contents == "namespace"
             and len(command.args) > 0
@@ -307,7 +306,7 @@ class Formatter:
 
         return formatted
 
-    def format_comment(self, comment: Comment) -> List[str]:
+    def format_comment(self, comment: Comment) -> list[str]:
         return [f"#{comment.value}"]
 
     def format_command_sub(self, command_sub):
@@ -327,12 +326,12 @@ class Formatter:
 
         return formatted
 
-    def format_bare_word(self, word) -> List[str]:
+    def format_bare_word(self, word) -> list[str]:
         # Property enforced by parser
         assert word.contents is not None
         return [word.contents]
 
-    def format_quoted_word(self, word) -> List[str]:
+    def format_quoted_word(self, word) -> list[str]:
         if word.contents is not None:
             return [f'"{word.contents}"']
 
@@ -342,11 +341,11 @@ class Formatter:
 
         return [f'"{formatted}"']
 
-    def format_braced_word(self, word) -> List[str]:
+    def format_braced_word(self, word) -> list[str]:
         assert word.contents is not None
         return [f"{{{word.contents}}}"]
 
-    def format_compound_bare_word(self, word) -> List[str]:
+    def format_compound_bare_word(self, word) -> list[str]:
         formatted = [""]
         for child in word.children:
             child_lines = self.format(child)
@@ -355,7 +354,7 @@ class Formatter:
 
         return formatted
 
-    def format_var_sub(self, varsub) -> List[str]:
+    def format_var_sub(self, varsub) -> list[str]:
         # We might be able to make the formatter infer whether braces are required, and
         # remove them from the syntax tree. For now it's easier to just mimic the
         # original format.
@@ -377,13 +376,13 @@ class Formatter:
 
         return formatted
 
-    def format_arg_expansion(self, arg_expansion) -> List[str]:
+    def format_arg_expansion(self, arg_expansion) -> list[str]:
         lines = self.format(arg_expansion.list)
         lines[0] = "{*}" + lines[0]
 
         return lines
 
-    def format_list(self, list_node) -> List[str]:
+    def format_list(self, list_node) -> list[str]:
         # Similar to Script, but the contents are a bit more straightforward.
         contents = [""]
         last_line = None
@@ -407,7 +406,7 @@ class Formatter:
 
         return ["{"] + self._indent(contents, self.opts.indent) + ["}"]
 
-    def format_expression(self, expr) -> List[str]:
+    def format_expression(self, expr) -> list[str]:
         formatted = [""]
         for child in expr.children:
             lines = self.format(child)
@@ -425,7 +424,7 @@ class Formatter:
 
         return formatted
 
-    def format_braced_expression(self, expr) -> List[str]:
+    def format_braced_expression(self, expr) -> list[str]:
         formatted = [""]
         for child in expr.children:
             lines = self.format(child)
@@ -437,7 +436,7 @@ class Formatter:
 
         return ["{"] + self._indent(formatted, self.opts.indent) + ["}"]
 
-    def format_paren_expression(self, expr) -> List[str]:
+    def format_paren_expression(self, expr) -> list[str]:
         body = expr.body
 
         formatted = ["("]
@@ -465,7 +464,7 @@ class Formatter:
         lines[0] = op[0] + lines[0]
         return lines
 
-    def _format_op(self, expr) -> List[str]:
+    def _format_op(self, expr) -> list[str]:
         nodes = expr.children
         formatted = self.format(nodes[0])
 
@@ -482,10 +481,10 @@ class Formatter:
 
         return formatted
 
-    def format_binary_op(self, expr) -> List[str]:
+    def format_binary_op(self, expr) -> list[str]:
         return self._format_op(expr)
 
-    def format_ternary_op(self, expr) -> List[str]:
+    def format_ternary_op(self, expr) -> list[str]:
         return self._format_op(expr)
 
     def format_function(self, function):

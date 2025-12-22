@@ -1,6 +1,6 @@
 import argparse
 import pathlib
-from typing import Union, List, Callable
+from typing import Callable
 from typing import Optional as OptionalType, NamedTuple
 import dataclasses
 import sys
@@ -32,13 +32,13 @@ class Config:
     validation (and normalization) is defined by `validators` below.
     """
 
-    exclude: List[ExcludePattern] = dataclasses.field(default_factory=list)
-    ignore: List[Rule] = dataclasses.field(default_factory=list)
+    exclude: list[ExcludePattern] = dataclasses.field(default_factory=list)
+    ignore: list[Rule] = dataclasses.field(default_factory=list)
     commands: OptionalType[pathlib.Path] = dataclasses.field(default=None)
-    extensions: List[str] = dataclasses.field(
+    extensions: list[str] = dataclasses.field(
         default_factory=lambda: ["tcl", "sdc", "xdc", "upf"]
     )
-    style_indent: OptionalType[Union[str, int]] = dataclasses.field(default=None)
+    style_indent: OptionalType[str | int] = dataclasses.field(default=None)
     style_line_length: int = dataclasses.field(default=100)
     style_max_blank_lines: int = dataclasses.field(default=2)
     style_indent_namespace_eval: bool = dataclasses.field(default=True)
@@ -103,7 +103,7 @@ class Config:
         return cls(**config_dict)
 
     @classmethod
-    def from_path(cls, path: Union[str, pathlib.Path], root: pathlib.Path):
+    def from_path(cls, path: str | pathlib.Path, root: pathlib.Path):
         path = pathlib.Path(path)
 
         if not path.exists() or path.is_dir():
@@ -263,7 +263,7 @@ def _validate_config(config: dict, root: pathlib.Path):
             raise ConfigError(e.error_message)
 
         # Stringify error path to my own taste.
-        path: List[str] = []
+        path: list[str] = []
         for item in e.path:
             if isinstance(item, int):
                 # Brackets around indices

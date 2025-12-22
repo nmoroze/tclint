@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 import pathlib
-from typing import List, Dict, Union
 
 from tclint.commands import builtin as _builtin
 from tclint.commands.plugins import PluginManager
@@ -11,7 +10,7 @@ from tclint.commands.checks import CommandArgError
 __all__ = ["CommandArgError", "validate_command_plugins", "get_commands"]
 
 
-def validate_command_plugins(plugins: List[str]) -> List[str]:
+def validate_command_plugins(plugins: list[str]) -> list[str]:
     valid_plugins = []
     for plugin in set(plugins):
         if PluginManager.load(plugin) is not None:
@@ -20,7 +19,7 @@ def validate_command_plugins(plugins: List[str]) -> List[str]:
     return valid_plugins
 
 
-def get_commands(plugins: Sequence[Union[str, pathlib.Path]]) -> Dict:
+def get_commands(plugins: Sequence[str | pathlib.Path]) -> dict:
     commands = {}
     commands.update(_builtin.commands)
 

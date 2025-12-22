@@ -3,7 +3,7 @@
 import argparse
 import pathlib
 import sys
-from typing import Dict, List, Optional
+from typing import Optional
 
 
 from tclint.config import (
@@ -31,10 +31,10 @@ EXIT_INPUT_ERROR = 4
 
 
 def filter_violations(
-    violations: List[Violation],
-    config_ignore: List[Rule],
-    inline_ignore: Dict[int, List[Rule]],
-) -> List[Violation]:
+    violations: list[Violation],
+    config_ignore: list[Rule],
+    inline_ignore: dict[int, list[Rule]],
+) -> list[Violation]:
     filtered_violations = []
 
     for violation in violations:
@@ -54,7 +54,7 @@ def lint(
     config: Config,
     path: Optional[pathlib.Path],
     debug=0,
-) -> List[Violation]:
+) -> list[Violation]:
     plugins = [config.commands] if config.commands is not None else []
     parser = Parser(debug=(debug > 0), command_plugins=plugins)
 

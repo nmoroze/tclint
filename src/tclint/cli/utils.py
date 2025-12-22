@@ -3,7 +3,7 @@ from collections import defaultdict
 import os
 from pathlib import Path
 import re
-from typing import Callable, List
+from typing import Callable
 
 import pathspec
 
@@ -22,7 +22,7 @@ def register_codec_warning(name):
 
 
 def make_exclude_filter(
-    exclude_patterns: List[ExcludePattern],
+    exclude_patterns: list[ExcludePattern],
 ) -> Callable[[Path], bool]:
     # Transform patterns into a data structure keyed on root.
     patterns_by_root = defaultdict(list)

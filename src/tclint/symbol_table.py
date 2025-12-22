@@ -1,6 +1,5 @@
 import logging
 from collections import defaultdict
-from typing import List, DefaultDict, Union
 
 from tclint.syntax_tree import Visitor, Command, CommandSub, Node, Script
 
@@ -9,7 +8,7 @@ class SymbolTable:
     """Holds a symbol table (links symbols to nodes)."""
 
     def __init__(self):
-        self.proc_def: DefaultDict[str, list[Node]] = defaultdict(list)
+        self.proc_def: defaultdict[str, list[Node]] = defaultdict(list)
 
     def add_proc_definition(self, command: Command) -> None:
         """Add definition of procedure"""
@@ -23,7 +22,7 @@ class SymbolTable:
         )
         self.proc_def[proc_name].append(proc_name_node)
 
-    def lookup_proc_definitions(self, symbol_text: str) -> List[Node]:
+    def lookup_proc_definitions(self, symbol_text: str) -> list[Node]:
         """Lookup definitions of the procedure pointed at by node"""
         if symbol_text is None or symbol_text not in self.proc_def:
             return []
@@ -36,7 +35,7 @@ class SymbolTableBuilder(Visitor):
     def __init__(self):
         self.table = SymbolTable()
 
-    def build(self, tree: Union[CommandSub, Script]) -> SymbolTable:
+    def build(self, tree: CommandSub | Script) -> SymbolTable:
         """Run the builder visitor through the syntax tree, building a table."""
         tree.accept(self, recurse=True)
         return self.table

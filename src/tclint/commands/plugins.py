@@ -1,7 +1,7 @@
 from importlib_metadata import entry_points
 import json
 import pathlib
-from typing import Dict, Optional
+from typing import Optional
 from types import ModuleType
 from importlib.util import spec_from_file_location, module_from_spec
 
@@ -21,7 +21,7 @@ class _PluginManager:
                 print(f"Warning: found duplicate definitions for plugin {plugin.name}")
             self._installed[plugin.name] = plugin
 
-    def load(self, name: str) -> Optional[Dict]:
+    def load(self, name: str) -> Optional[dict]:
         if name in self._loaded:
             return self._loaded[name]
 
@@ -29,7 +29,7 @@ class _PluginManager:
         self._loaded[name] = mod
         return mod
 
-    def load_from_spec(self, path: pathlib.Path) -> Optional[Dict]:
+    def load_from_spec(self, path: pathlib.Path) -> Optional[dict]:
         if path in self._loaded_specs:
             return self._loaded_specs[path]
 
@@ -37,7 +37,7 @@ class _PluginManager:
         self._loaded_specs[path] = spec
         return spec
 
-    def _load_from_spec(self, path: pathlib.Path) -> Optional[Dict]:
+    def _load_from_spec(self, path: pathlib.Path) -> Optional[dict]:
         try:
             with open(path.expanduser(), "r") as f:
                 spec = json.load(f)
@@ -96,7 +96,7 @@ class _PluginManager:
         module = self.get_mod(name)
         return self._load_module(name, module)
 
-    def load_from_py(self, path: pathlib.Path) -> Optional[Dict]:
+    def load_from_py(self, path: pathlib.Path) -> Optional[dict]:
         if path in self._loaded_py:
             return self._loaded_py[path]
 
@@ -104,7 +104,7 @@ class _PluginManager:
         self._loaded_py[path] = spec
         return spec
 
-    def _load_from_py(self, path: pathlib.Path) -> Optional[Dict]:
+    def _load_from_py(self, path: pathlib.Path) -> Optional[dict]:
         mod = None
         name = path.stem
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from collections.abc import Callable
-from typing import List, Optional, Union, Tuple, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from tclint.syntax_tree import ArgExpansion, QuotedWord, BracedWord, BareWord, Node
 
@@ -15,7 +15,7 @@ class CommandArgError(Exception):
     pass
 
 
-def arg_count(args: List[Node], parser: Parser) -> Tuple[int, bool]:
+def arg_count(args: list[Node], parser: Parser) -> tuple[int, bool]:
     """Returns the number of arguments in args, taking {*} into account.
 
     If an argument list contains an argument expansion operator that cannot be
@@ -81,7 +81,7 @@ def check_count(command, min=None, max=None, args_name="args"):
     return check
 
 
-def eval(args: List[Node], parser: Parser, command: str) -> List[Node]:
+def eval(args: list[Node], parser: Parser, command: str) -> list[Node]:
     if len(args) > 1 and any(isinstance(arg, (QuotedWord, BracedWord)) for arg in args):
         # Slightly odd restriction, but our syntax tree doesn't have a great way
         # to handle this case. We require each command argument to correspond to
@@ -131,10 +131,10 @@ def eval(args: List[Node], parser: Parser, command: str) -> List[Node]:
 
 def check_command(
     command: str,
-    args: List[Node],
+    args: list[Node],
     parser: Parser,
-    command_spec: Union[Callable, dict, None],
-) -> Optional[List[Node]]:
+    command_spec: Callable | dict | None,
+) -> Optional[list[Node]]:
     if command_spec is None:
         return None
 
@@ -145,8 +145,8 @@ def check_command(
 
 
 def check_arg_spec(
-    command: str, args: List[Node], parser: Parser, arg_spec: dict
-) -> Optional[List[Node]]:
+    command: str, args: list[Node], parser: Parser, arg_spec: dict
+) -> Optional[list[Node]]:
     if "subcommands" in arg_spec:
         subcommands = arg_spec["subcommands"]
         try:
