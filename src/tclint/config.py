@@ -96,6 +96,52 @@ class Config:
                 values.append(f"{field.name}={value}")
         return f"Config({', '.join(values)})"
 
+    @classmethod
+    def from_dict(cls, config_dict: dict, root: pathlib.Path):
+        config_dict = _validate_config(config_dict, root)
+        config_dict = _flatten(config_dict)
+        return cls(**config_dict)
+
+    @classmethod
+    def from_path(cls, path: Union[str, pathlib.Path], root: pathlib.Path):
+        path = pathlib.Path(path)
+
+        if not path.exists() or path.is_dir():
+            raise FileNotFoundError
+
+        with open(path, "rb") as f:
+            try:
+                data = tomllib.load(f)
+            except tomllib.TOMLDecodeError as e:
+                raise ConfigError(f"{path}: {e}")
+
+        try:
+            return cls.from_dict(data, root)
+        except ConfigError as e:
+            raise ConfigError(f"{path}: {e}")
+
+    @classmethod
+    def from_pyproject(cls, directory=None):
+        if directory is None:
+            directory = pathlib.Path(".")
+        else:
+            directory = pathlib.Path(directory)
+
+        path = directory / "pyproject.toml"
+
+        if not path.exists():
+            raise FileNotFoundError
+
+        with open(path, "rb") as f:
+            data = tomllib.load(f)
+
+        tclint_config = data.get("tool", {})["tclint"]
+
+        try:
+            return cls.from_dict(tclint_config, directory)
+        except ConfigError as e:
+            raise ConfigError(f"pyproject.toml: {e}")
+
 
 # Validators using `voluptuous` library that check and normalize config inputs.
 # Used for checking both config files as well as config-related CLI args.
@@ -364,118 +410,6 @@ def _flatten(d, prefix=None):
     return flat
 
 
-class RunConfig:
-    """Class that holds information about both global and fileset configs. User
-    code can get a Config object that applies to a particular file by calling
-    get_from_path() and supplying that file's path."""
-
-    def __init__(self, global_config=None, fileset_configs=None):
-        if global_config is not None:
-            self._global_config = global_config
-        else:
-            self._global_config = Config()
-
-        self._fileset_configs = [
-            # ([pathlib.Path...], Config])
-        ]
-        if fileset_configs is not None:
-            self._fileset_configs = fileset_configs
-
-    @property
-    def exclude(self):
-        return self._global_config.exclude
-
-    @property
-    def extensions(self):
-        return self._global_config.extensions
-
-    @classmethod
-    def from_dict(cls, config_dict: dict, root: pathlib.Path):
-        config_dict = _validate_config(config_dict, root)
-        try:
-            fileset_config_dicts = config_dict.pop("fileset")
-        except KeyError:
-            fileset_config_dicts = []
-
-        config_dict = _flatten(config_dict)
-        global_config = Config(**config_dict)
-
-        fileset_configs = []
-        for fileset_config in fileset_config_dicts:
-            paths = []
-            for path in fileset_config.pop("paths"):
-                if not path.is_absolute():
-                    path = root / path
-                paths.append(path.resolve())
-
-            fileset_config = _flatten(fileset_config)
-
-            # pull in default values from global config
-            full_fileset_config = config_dict.copy()
-            full_fileset_config.update(fileset_config)
-
-            fileset_configs.append((paths, Config(**full_fileset_config)))
-
-        return cls(global_config, fileset_configs)
-
-    @classmethod
-    def from_path(cls, path: Union[str, pathlib.Path], root: pathlib.Path):
-        path = pathlib.Path(path)
-
-        if not path.exists() or path.is_dir():
-            raise FileNotFoundError
-
-        with open(path, "rb") as f:
-            try:
-                data = tomllib.load(f)
-            except tomllib.TOMLDecodeError as e:
-                raise ConfigError(f"{path}: {e}")
-
-        try:
-            return cls.from_dict(data, root)
-        except ConfigError as e:
-            raise ConfigError(f"{path}: {e}")
-
-    @classmethod
-    def from_pyproject(cls, directory=None):
-        if directory is None:
-            directory = pathlib.Path(".")
-        else:
-            directory = pathlib.Path(directory)
-
-        path = directory / "pyproject.toml"
-
-        if not path.exists():
-            raise FileNotFoundError
-
-        with open(path, "rb") as f:
-            data = tomllib.load(f)
-
-        tclint_config = data.get("tool", {})["tclint"]
-
-        try:
-            return cls.from_dict(tclint_config, directory)
-        except ConfigError as e:
-            raise ConfigError(f"pyproject.toml: {e}")
-
-    def get_for_path(self, path) -> Config:
-        if path is None:
-            return self._global_config
-
-        path = path.resolve()
-        for fileset_paths, config in self._fileset_configs:
-            for fileset_path in fileset_paths:
-                if path.is_relative_to(fileset_path):
-                    return config
-
-        return self._global_config
-
-    def apply_cli_args(self, args):
-        self._global_config.apply_cli_args(args)
-        for _, fileset_config in self._fileset_configs:
-            fileset_config.apply_cli_args(args)
-
-
 class ConfigError(Exception):
     pass
 
@@ -485,7 +419,7 @@ DEFAULT_CONFIGS = ("tclint.toml", ".tclint")
 
 def get_config(
     config_path: OptionalType[pathlib.Path], root: pathlib.Path
-) -> OptionalType[RunConfig]:
+) -> OptionalType[Config]:
     """Loads a config file.
 
     If `config_path` is supplied, attempts to read config file from this path. If the
@@ -499,18 +433,18 @@ def get_config(
     # user-supplied
     if config_path is not None:
         try:
-            return RunConfig.from_path(config_path, root)
+            return Config.from_path(config_path, root)
         except FileNotFoundError:
             raise ConfigError(f"path {config_path} doesn't exist")
 
     for path in DEFAULT_CONFIGS:
         try:
-            return RunConfig.from_path(root / path, root)
+            return Config.from_path(root / path, root)
         except FileNotFoundError:
             pass
 
     try:
-        return RunConfig.from_pyproject(directory=root)
+        return Config.from_pyproject(directory=root)
     except ConfigError as e:
         raise e
     except (FileNotFoundError, tomllib.TOMLDecodeError, KeyError):
@@ -523,14 +457,12 @@ def get_config(
 def load_config_at(directory: pathlib.Path) -> OptionalType[Config]:
     for path in DEFAULT_CONFIGS:
         try:
-            rc = RunConfig.from_path(directory / path, directory)
-            return rc._global_config
+            return Config.from_path(directory / path, directory)
         except FileNotFoundError:
             pass
 
     try:
-        rc = RunConfig.from_pyproject(directory=directory)
-        return rc._global_config
+        return Config.from_pyproject(directory=directory)
     except ConfigError as e:
         raise e
     except (FileNotFoundError, tomllib.TOMLDecodeError, KeyError):

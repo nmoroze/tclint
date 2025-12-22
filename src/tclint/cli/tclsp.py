@@ -14,7 +14,6 @@ from pygls.uris import to_fs_path
 from tclint.cli import tclint
 from tclint.config import (
     DEFAULT_CONFIGS,
-    RunConfig,
     Config,
     ConfigError,
     load_config_at,
@@ -154,7 +153,7 @@ class TclspServer(LanguageServer):
 
     def load_config(self, path: Path, root: Path) -> Optional[Config]:
         try:
-            return RunConfig.from_path(path, root)._global_config
+            return Config.from_path(path, root)
         except FileNotFoundError:
             self.show_config_error(f"{path} doesn't exist", path)
             return None

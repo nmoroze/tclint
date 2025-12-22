@@ -5,7 +5,7 @@ import pytest
 
 from tclint.config import (
     get_config,
-    RunConfig,
+    Config,
     ConfigError,
     setup_config_cli_args,
     setup_tclfmt_config_cli_args,
@@ -21,36 +21,33 @@ def test_example_config():
     cwd = pathlib.Path.cwd()
     config = get_config(config_path, cwd)
 
-    global_ = config.get_for_path(pathlib.Path())
-
-    assert global_.exclude == [
+    assert config.exclude == [
         ExcludePattern("ignore_me/", cwd),
         ExcludePattern("ignore*.tcl", cwd),
         ExcludePattern("/ignore_from_here", cwd),
     ]
-    assert global_.ignore == [Rule("unbraced-expr")]
-    assert global_.extensions == ["tcl"]
-    assert global_.commands == pathlib.Path("~/.tclint/openroad.json").expanduser()
+    assert config.ignore == [Rule("unbraced-expr")]
+    assert config.extensions == ["tcl"]
+    assert config.commands == pathlib.Path("~/.tclint/openroad.json").expanduser()
 
-    assert global_.style_indent == 2
-    assert global_.style_line_length == 80
-    assert global_.style_indent_namespace_eval is False
-    assert global_.style_spaces_in_braces is True
+    assert config.style_indent == 2
+    assert config.style_line_length == 80
+    assert config.style_indent_namespace_eval is False
+    assert config.style_spaces_in_braces is True
 
 
 def test_invalid_rule():
     with pytest.raises(ConfigError) as excinfo:
-        RunConfig.from_dict({"ignore": ["asdf"]}, pathlib.Path.cwd())
+        Config.from_dict({"ignore": ["asdf"]}, pathlib.Path.cwd())
 
     if excinfo is not None:
         print(str(excinfo.value))
 
 
 def test_pyproject():
-    config = RunConfig.from_pyproject(MY_DIR / "data")
-    global_ = config.get_for_path(pathlib.Path())
-    assert global_.style_indent == 2
-    assert global_.ignore == [Rule("unbraced-expr")]
+    config = Config.from_pyproject(MY_DIR / "data")
+    assert config.style_indent == 2
+    assert config.ignore == [Rule("unbraced-expr")]
 
 
 def test_tclint_config_args():
@@ -169,7 +166,7 @@ def test_invalid_config():
         {"extra-key": "value"},
     ]:
         with pytest.raises(ConfigError) as excinfo:
-            RunConfig.from_dict(config, pathlib.Path.cwd())
+            Config.from_dict(config, pathlib.Path.cwd())
 
         # For manually auditing error messages
         print(excinfo.value)
@@ -187,9 +184,7 @@ commands = "commands.json"
     with open(config_path, "w") as f:
         f.write(config)
 
-    run_config = get_config(config_path, pathlib.Path("root"))
-
-    config = run_config.get_for_path(pathlib.Path("file.tcl"))
+    config = get_config(config_path, pathlib.Path("root"))
     assert config.exclude == [ExcludePattern("/foo.tcl", pathlib.Path("root"))]
     assert config.commands == pathlib.Path("root/commands.json")
     assert config.ignore == []

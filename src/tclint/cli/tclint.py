@@ -8,7 +8,6 @@ from typing import Dict, List, Optional
 
 from tclint.config import (
     setup_config_cli_args,
-    RunConfig,
     Config,
     ConfigError,
 )
@@ -112,9 +111,8 @@ def main():
     global_config = None
     if args.config is not None:
         try:
-            rc = RunConfig.from_path(args.config, cwd)
-            rc.apply_cli_args(args)
-            global_config = rc._global_config
+            global_config = Config.from_path(args.config, cwd)
+            global_config.apply_cli_args(args)
         except FileNotFoundError:
             print(f"Config file path doesn't exist: {args.config}")
             return EXIT_INPUT_ERROR
