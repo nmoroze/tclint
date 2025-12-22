@@ -15,7 +15,8 @@ from tclint.parser import Parser, TclSyntaxError
 from tclint.checks import get_checkers
 from tclint.violations import Violation, Rule
 from tclint.comments import CommentVisitor
-from tclint.cli.utils import register_codec_warning, Resolver
+from tclint.cli.utils import register_codec_warning
+from tclint.cli.resolver import Resolver
 
 try:
     from tclint._version import __version__  # type: ignore
