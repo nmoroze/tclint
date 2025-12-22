@@ -240,7 +240,9 @@ def _validate_config(config: dict, root: pathlib.Path):
 
     root is used to resolve values that may be relative to a certain path.
     """
-    base_config = {
+    schema = Schema({
+        Optional("exclude"): _validate_exclude(root),
+        Optional("extensions"): _validate_extensions,
         Optional("ignore"): _validate_ignore,
         # tclint rejects paths to dynamic plugins in the config file. This restriction
         # is designed to make it explicit when tclint is executing external code.
@@ -252,13 +254,6 @@ def _validate_config(config: dict, root: pathlib.Path):
             Optional("indent-namespace-eval"): _validate_style_indent_namespace_eval,
             Optional("spaces-in-braces"): _validate_style_spaces_in_braces,
         },
-    }
-
-    schema = Schema({
-        # exclude and extensions can only be used in global context
-        Optional("exclude"): _validate_exclude(root),
-        Optional("extensions"): _validate_extensions,
-        **base_config,
     })
 
     try:
