@@ -1,5 +1,4 @@
 import pytest
-
 from voluptuous import Invalid
 
 from tclint.commands.schema import schema

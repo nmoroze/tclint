@@ -6,9 +6,9 @@ import pytest
 from tclint.config import (
     Config,
     ConfigError,
+    ExcludePattern,
     setup_config_cli_args,
     setup_tclfmt_config_cli_args,
-    ExcludePattern,
 )
 from tclint.violations import Rule
 

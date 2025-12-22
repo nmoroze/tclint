@@ -1,11 +1,11 @@
-from collections.abc import Sequence
 import pathlib
+from collections.abc import Sequence
 
 from tclint.commands import builtin as _builtin
-from tclint.commands.plugins import PluginManager
 
 # import to expose in package
 from tclint.commands.checks import CommandArgError
+from tclint.commands.plugins import PluginManager
 
 __all__ = ["CommandArgError", "validate_command_plugins", "get_commands"]
 

@@ -28,3 +28,10 @@ repos:
       language: python
       entry: codespell
       files: '^.*$'
+  - repo: local
+    hooks:
+      - id: isort
+        name: isort
+        language: python
+        entry: isort
+        files: '^.*\.py$'

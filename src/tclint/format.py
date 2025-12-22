@@ -2,28 +2,28 @@ import dataclasses
 import itertools
 import sys
 
-from tclint.syntax_tree import (
-    Node,
-    Script,
-    Command,
-    Comment,
-    CommandSub,
-    BareWord,
-    QuotedWord,
-    BracedWord,
-    CompoundBareWord,
-    VarSub,
-    ArgExpansion,
-    Expression,
-    BracedExpression,
-    ParenExpression,
-    UnaryOp,
-    BinaryOp,
-    TernaryOp,
-    Function,
-)
 from tclint.parser import Parser
-from tclint.syntax_tree import List
+from tclint.syntax_tree import (
+    ArgExpansion,
+    BareWord,
+    BinaryOp,
+    BracedExpression,
+    BracedWord,
+    Command,
+    CommandSub,
+    Comment,
+    CompoundBareWord,
+    Expression,
+    Function,
+    List,
+    Node,
+    ParenExpression,
+    QuotedWord,
+    Script,
+    TernaryOp,
+    UnaryOp,
+    VarSub,
+)
 
 
 @dataclasses.dataclass

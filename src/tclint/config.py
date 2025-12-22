@@ -1,16 +1,16 @@
 import argparse
-import pathlib
-from typing import Callable
-from typing import Optional as OptionalType, NamedTuple
 import dataclasses
+import pathlib
 import sys
+from typing import Callable, NamedTuple
+from typing import Optional as OptionalType
 
 if sys.version_info >= (3, 11):
     import tomllib
 else:
     import tomli as tomllib
 
-from voluptuous import Schema, Optional, And, Coerce, Invalid, Range
+from voluptuous import And, Coerce, Invalid, Optional, Range, Schema
 
 from tclint.violations import Rule
 

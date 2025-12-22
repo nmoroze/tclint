@@ -1,10 +1,11 @@
 """Helpers for checking command arguments."""
 
 from __future__ import annotations
-from collections.abc import Callable
-from typing import Optional, TYPE_CHECKING
 
-from tclint.syntax_tree import ArgExpansion, QuotedWord, BracedWord, BareWord, Node
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Optional
+
+from tclint.syntax_tree import ArgExpansion, BareWord, BracedWord, Node, QuotedWord
 
 # This lets us use Parser in type annotations without introducing a cyclic dependency.
 if TYPE_CHECKING:

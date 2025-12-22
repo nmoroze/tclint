@@ -2,17 +2,16 @@ import re
 
 from tclint.commands import get_commands
 from tclint.config import Config
-from tclint.violations import Rule, Violation
-
 from tclint.syntax_tree import (
-    Visitor,
-    Script,
     BracedExpression,
-    Expression,
     BracedWord,
-    QuotedWord,
     CommandSub,
+    Expression,
+    QuotedWord,
+    Script,
+    Visitor,
 )
+from tclint.violations import Rule, Violation
 
 
 class LineLengthChecker:

@@ -1,7 +1,7 @@
 import pytest
 
 from tclint.parser import Parser
-from tclint.syntax_tree import Script, Command, BareWord, QuotedWord
+from tclint.syntax_tree import BareWord, Command, QuotedWord, Script
 
 
 @pytest.mark.parametrize(

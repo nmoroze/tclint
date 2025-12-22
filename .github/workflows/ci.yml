@@ -77,3 +77,7 @@ jobs:
       - name: Spell check
         run: |
           git ls-files | xargs codespell
+
+      - name: Check import organization
+        run: |
+          isort . --check --diff

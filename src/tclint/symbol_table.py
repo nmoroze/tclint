@@ -1,7 +1,7 @@
 import logging
 from collections import defaultdict
 
-from tclint.syntax_tree import Visitor, Command, CommandSub, Node, Script
+from tclint.syntax_tree import Command, CommandSub, Node, Script, Visitor
 
 
 class SymbolTable:

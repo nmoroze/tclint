@@ -1,6 +1,6 @@
+from tclint import syntax_tree as ast
 from tclint.commands.checks import arg_count
 from tclint.parser import Parser
-from tclint import syntax_tree as ast
 
 
 def test_arg_count():

@@ -1,6 +1,4 @@
-from tclint.commands.checks import (
-    CommandArgError,
-)
+from tclint.commands.checks import CommandArgError
 
 
 def _foo(args, parser):

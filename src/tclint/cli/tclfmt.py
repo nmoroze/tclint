@@ -4,15 +4,11 @@ import argparse
 import pathlib
 import sys
 
-from tclint.cli.utils import register_codec_warning
 from tclint.cli.resolver import Resolver
-from tclint.config import (
-    setup_tclfmt_config_cli_args,
-    Config,
-    ConfigError,
-)
-from tclint.parser import Parser, TclSyntaxError
+from tclint.cli.utils import register_codec_warning
+from tclint.config import Config, ConfigError, setup_tclfmt_config_cli_args
 from tclint.format import Formatter, FormatterOpts
+from tclint.parser import Parser, TclSyntaxError
 
 try:
     from tclint._version import __version__  # type: ignore

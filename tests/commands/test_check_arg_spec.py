@@ -1,9 +1,10 @@
 import contextlib
+
 import pytest
 
 from tclint.commands import CommandArgError
 from tclint.commands.checks import check_arg_spec
-from tclint.syntax_tree import BareWord, ArgExpansion, VarSub, BracedWord
+from tclint.syntax_tree import ArgExpansion, BareWord, BracedWord, VarSub
 
 
 def test_repeated_switch_allowed():

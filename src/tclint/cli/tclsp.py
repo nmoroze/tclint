@@ -1,27 +1,20 @@
 import argparse
 import dataclasses
 import logging
+import uuid
 from pathlib import Path
 from typing import Optional
-import uuid
 
 from lsprotocol import types as lsp
-
 from pygls.server import LanguageServer
-from pygls.workspace import TextDocument
 from pygls.uris import to_fs_path
+from pygls.workspace import TextDocument
 
-from tclint.cli import tclint
-from tclint.config import (
-    DEFAULT_CONFIGS,
-    Config,
-    ConfigError,
-    load_config_at,
-)
+from tclint.cli import tclint, utils
+from tclint.config import DEFAULT_CONFIGS, Config, ConfigError, load_config_at
 from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
 from tclint.parser import Parser
-from tclint.cli import utils
 
 try:
     from tclint._version import __version__  # type: ignore

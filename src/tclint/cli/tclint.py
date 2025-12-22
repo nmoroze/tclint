@@ -5,18 +5,13 @@ import pathlib
 import sys
 from typing import Optional
 
-
-from tclint.config import (
-    setup_config_cli_args,
-    Config,
-    ConfigError,
-)
-from tclint.parser import Parser, TclSyntaxError
 from tclint.checks import get_checkers
-from tclint.violations import Violation, Rule
-from tclint.comments import CommentVisitor
-from tclint.cli.utils import register_codec_warning
 from tclint.cli.resolver import Resolver
+from tclint.cli.utils import register_codec_warning
+from tclint.comments import CommentVisitor
+from tclint.config import Config, ConfigError, setup_config_cli_args
+from tclint.parser import Parser, TclSyntaxError
+from tclint.violations import Rule, Violation
 
 try:
     from tclint._version import __version__  # type: ignore

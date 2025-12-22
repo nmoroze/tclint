@@ -2,11 +2,8 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from tclint.config import (
-    Config,
-    load_config_at,
-)
 from tclint.cli.utils import make_exclude_filter
+from tclint.config import Config, load_config_at
 
 
 class Resolver:

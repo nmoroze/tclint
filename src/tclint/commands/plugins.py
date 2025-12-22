@@ -1,11 +1,11 @@
-from importlib_metadata import entry_points
 import json
 import pathlib
-from typing import Optional
+from importlib.util import module_from_spec, spec_from_file_location
 from types import ModuleType
-from importlib.util import spec_from_file_location, module_from_spec
+from typing import Optional
 
 import voluptuous
+from importlib_metadata import entry_points
 
 from tclint.commands import schema
 

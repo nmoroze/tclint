@@ -1,7 +1,7 @@
 import os
 
-from tclint.cli.resolver import Resolver
 from tclint import config
+from tclint.cli.resolver import Resolver
 
 
 def test_resolve_sources(tmp_path_factory):

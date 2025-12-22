@@ -1,56 +1,56 @@
-from collections.abc import Sequence
 import io
-from pathlib import Path
-import string
 import re
+import string
+from collections.abc import Sequence
+from pathlib import Path
 from typing import Optional, Tuple
 
-from tclint.lexer import (
-    Lexer,
-    TclSyntaxError,
-    STATE_BRACEDWORD,
-    TOK_BACKSLASH_NEWLINE,
-    TOK_NEWLINE,
-    TOK_SEMI,
-    TOK_WS,
-    TOK_QUOTE,
-    TOK_ARG_EXPANSION,
-    TOK_LBRACE,
-    TOK_RBRACE,
-    TOK_LBRACKET,
-    TOK_RBRACKET,
-    TOK_DOLLAR,
-    TOK_LPAREN,
-    TOK_RPAREN,
-    TOK_HASH,
-    TOK_ALPHA_CHARS,
-    TOK_NUM_CHARS,
-    TOK_NAMESPACE_SEP,
-    TOK_EOF,
-)
-from tclint.syntax_tree import (
-    Node,
-    Script,
-    Comment,
-    Command,
-    CommandSub,
-    ArgExpansion,
-    VarSub,
-    BareWord,
-    BracedWord,
-    QuotedWord,
-    CompoundBareWord,
-    List,
-    Expression,
-    BracedExpression,
-    ParenExpression,
-    UnaryOp,
-    BinaryOp,
-    TernaryOp,
-    Function,
-)
 from tclint.commands import CommandArgError, get_commands
 from tclint.commands.checks import check_command
+from tclint.lexer import (
+    STATE_BRACEDWORD,
+    TOK_ALPHA_CHARS,
+    TOK_ARG_EXPANSION,
+    TOK_BACKSLASH_NEWLINE,
+    TOK_DOLLAR,
+    TOK_EOF,
+    TOK_HASH,
+    TOK_LBRACE,
+    TOK_LBRACKET,
+    TOK_LPAREN,
+    TOK_NAMESPACE_SEP,
+    TOK_NEWLINE,
+    TOK_NUM_CHARS,
+    TOK_QUOTE,
+    TOK_RBRACE,
+    TOK_RBRACKET,
+    TOK_RPAREN,
+    TOK_SEMI,
+    TOK_WS,
+    Lexer,
+    TclSyntaxError,
+)
+from tclint.syntax_tree import (
+    ArgExpansion,
+    BareWord,
+    BinaryOp,
+    BracedExpression,
+    BracedWord,
+    Command,
+    CommandSub,
+    Comment,
+    CompoundBareWord,
+    Expression,
+    Function,
+    List,
+    Node,
+    ParenExpression,
+    QuotedWord,
+    Script,
+    TernaryOp,
+    UnaryOp,
+    VarSub,
+)
 from tclint.violations import Rule, Violation
 
 

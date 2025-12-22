@@ -32,12 +32,7 @@ these would be helpful for your use case, please file an issue.
   - https://www.tcl.tk/man/tcl/TclCmd/mathop.html
 """
 
-from tclint.commands.checks import (
-    CommandArgError,
-    arg_count,
-    check_count,
-    eval,
-)
+from tclint.commands.checks import CommandArgError, arg_count, check_count, eval
 from tclint.commands.schema import commands_schema
 from tclint.syntax_tree import BareWord
 

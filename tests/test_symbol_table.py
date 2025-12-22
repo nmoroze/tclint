@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from tclint.symbol_table import SymbolTable, SymbolTableBuilder
 import tclint.syntax_tree as ast
 from tclint.parser import Parser
+from tclint.symbol_table import SymbolTable, SymbolTableBuilder
 
 MY_DIR = Path(__file__).parent.resolve()
 

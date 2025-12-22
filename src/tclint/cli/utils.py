@@ -1,15 +1,13 @@
 import codecs
-from collections import defaultdict
 import os
-from pathlib import Path
 import re
+from collections import defaultdict
+from pathlib import Path
 from typing import Callable
 
 import pathspec
 
-from tclint.config import (
-    ExcludePattern,
-)
+from tclint.config import ExcludePattern
 
 
 def register_codec_warning(name):

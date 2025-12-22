@@ -1,10 +1,10 @@
-from pathlib import Path
 import shutil
 import sys
+from pathlib import Path
 
-from lsprotocol import types as lsp
 import pytest
 import pytest_lsp
+from lsprotocol import types as lsp
 
 MY_DIR = Path(__file__).parent.resolve()
 LSP_BIN = MY_DIR / ".." / "src" / "tclint" / "cli" / "tclsp.py"

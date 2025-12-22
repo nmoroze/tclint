@@ -1,5 +1,6 @@
 from collections.abc import Callable
-from voluptuous import Schema, Optional, Or, Self
+
+from voluptuous import Optional, Or, Schema, Self
 
 # Need to define this as a Schema with required=True to ensure that this requirement
 # persists through the Or in the main schema definition.
