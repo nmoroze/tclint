@@ -4,7 +4,6 @@ import pathlib
 import pytest
 
 from tclint.config import (
-    get_config,
     Config,
     ConfigError,
     setup_config_cli_args,
@@ -19,7 +18,7 @@ MY_DIR = pathlib.Path(__file__).parent.resolve()
 def test_example_config():
     config_path = MY_DIR / "data" / "tclint.toml"
     cwd = pathlib.Path.cwd()
-    config = get_config(config_path, cwd)
+    config = Config.from_path(config_path, cwd)
 
     assert config.exclude == [
         ExcludePattern("ignore_me/", cwd),
@@ -184,7 +183,7 @@ commands = "commands.json"
     with open(config_path, "w") as f:
         f.write(config)
 
-    config = get_config(config_path, pathlib.Path("root"))
+    config = Config.from_path(config_path, pathlib.Path("root"))
     assert config.exclude == [ExcludePattern("/foo.tcl", pathlib.Path("root"))]
     assert config.commands == pathlib.Path("root/commands.json")
     assert config.ignore == []

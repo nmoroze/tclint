@@ -417,43 +417,6 @@ class ConfigError(Exception):
 DEFAULT_CONFIGS = ("tclint.toml", ".tclint")
 
 
-def get_config(
-    config_path: OptionalType[pathlib.Path], root: pathlib.Path
-) -> OptionalType[Config]:
-    """Loads a config file.
-
-    If `config_path` is supplied, attempts to read config file from this path. If the
-    path can't be found, raises a ConfigError.
-
-    Otherwise, attempts to read config from `root`/{tclint.toml, .tclint,
-    pyproject.toml} (in that order). If none of these files can be found, returns None.
-
-    `root` is also used to resolve some relative paths in the config file.
-    """
-    # user-supplied
-    if config_path is not None:
-        try:
-            return Config.from_path(config_path, root)
-        except FileNotFoundError:
-            raise ConfigError(f"path {config_path} doesn't exist")
-
-    for path in DEFAULT_CONFIGS:
-        try:
-            return Config.from_path(root / path, root)
-        except FileNotFoundError:
-            pass
-
-    try:
-        return Config.from_pyproject(directory=root)
-    except ConfigError as e:
-        raise e
-    except (FileNotFoundError, tomllib.TOMLDecodeError, KeyError):
-        # just skip if file doesn't exist, contains TOML errors, or tclint key not found
-        pass
-
-    return None
-
-
 def load_config_at(directory: pathlib.Path) -> OptionalType[Config]:
     for path in DEFAULT_CONFIGS:
         try:
