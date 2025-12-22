@@ -11,7 +11,7 @@ authors = [
     {name = "Noah Moroze", email = "me@noahmoroze.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "ply==3.11",
     "tomli~=2.0.1; python_version < '3.11'",
