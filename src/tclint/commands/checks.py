@@ -292,7 +292,7 @@ def dispatch_subcommands(
 
 
 def map_positionals(
-    args: list[Node], spec: list[dict]
+    args: list[Node], spec: list[dict], command_name: str
 ) -> list[tuple[Node, ...] | Node | None]:
     """Maps a list of nodes representing positional command arguments to the specific
     positional arguments of a command. spec represents the "positionals" entry of the
@@ -305,10 +305,12 @@ def map_positionals(
     mapping indicates no corresponding Node (e.g. for an optional argument).
 
     If the arguments do not map correctly to the spec, this function raises
-    CommandArgsError.
+    CommandArgError.
 
     Given a set of args and a spec, there may be multiple possible mappings. This
     function will return some mapping if one exists.
+
+    The `command_name` argument is used to generate descriptive error messages.
     """
 
     if len(args) == len(spec):
@@ -334,14 +336,18 @@ def map_positionals(
 
         if extra > 0:
             # We never found a variadic to save us, so raise an error.
-            raise CommandArgError("too many args")
+            raise CommandArgError(
+                f"too many arguments for {command_name}: got {len(args)}, expected no"
+                f" more than {len(spec)}"
+            )
 
         return mapping
 
-    num_required = 0
+    required = []
     for argspec in spec:
         if argspec["required"]:
-            num_required += 1
+            required.append(argspec["name"])
+    num_required = len(required)
 
     if len(args) < num_required:
         # If there are fewer arguments than required positionals, we map only required
@@ -354,7 +360,11 @@ def map_positionals(
                 continue
 
             if i >= len(args):
-                raise CommandArgError("insufficient args")
+                missing_names = ", ".join(required[-missing:])
+                raise CommandArgError(
+                    f"missing required argument{'s' if missing > 1 else ''} for"
+                    f" {command_name}: {missing_names}"
+                )
 
             if isinstance(args[i], ArgExpansion):
                 mapping.append(args[i])
