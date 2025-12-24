@@ -28,25 +28,25 @@ def test_map_positionals():
     # `puts -nonewline $channel "Hello"``
     args = [ast.BareWord("-nonewline"), ast.VarSub("channel"), ast.QuotedWord("Hello")]
     mapping = map_positionals(args, spec, "puts")
-    assert mapping == args
+    assert mapping == [[0], [1], [2]]
 
     # `puts $channel "Hello"``
     args = [ast.VarSub("channel"), ast.QuotedWord("Hello")]
     mapping = map_positionals(args, spec, "puts")
-    assert mapping == [args[0], None, args[1]]
+    assert mapping == [[0], [2]]
     # TODO: We'd expect the following. However, I don't think we can get here until an
     # "options" type is implemented in the positionals spec.
-    # assert mapping == [None, args[0], args[1]]
+    # assert mapping == [(1,), (2,)]
 
     # `puts -nonewline "Hello"``
     args = [ast.BareWord("-nonewline"), ast.QuotedWord("Hello")]
     mapping = map_positionals(args, spec, "puts")
-    assert mapping == [args[0], None, args[1]]
+    assert mapping == [[0], [2]]
 
     # `puts "Hello"``
     args = [ast.QuotedWord("Hello")]
     mapping = map_positionals(args, spec, "puts")
-    assert mapping == [None, None, args[0]]
+    assert mapping == [[2]]
 
     # `puts this has too many args`
     args = [
@@ -70,7 +70,7 @@ def test_map_positionals():
     # # `foreach {*}$iters { cmd }`
     args = [ast.ArgExpansion(ast.VarSub("iters")), ast.BracedWord("cmd")]
     mapping = map_positionals(args, foreach_spec, "foreach")
-    assert mapping == [args[0], args[0], None, args[1]]
+    assert mapping == [[0, 1], [3]]
 
     # `foreach i {0 1} j {0 1} k {0 1} { cmd }`
     args = [
@@ -83,7 +83,7 @@ def test_map_positionals():
         ast.BracedWord("cmd"),
     ]
     mapping = map_positionals(args, foreach_spec, "foreach")
-    assert mapping == [args[0], args[1], (args[2], args[3], args[4], args[5]), args[6]]
+    assert mapping == [[0], [1], [2], [2], [2], [2], [3]]
 
     # `foreach i { cmd }`
     args = [ast.BareWord("i"), ast.BracedWord("cmd")]
@@ -100,7 +100,7 @@ def test_map_positionals():
     ]
     args = [ast.BareWord("a"), ast.BareWord("b")]
     mapping = map_positionals(args, spec, "foo")
-    assert mapping == [args[0], None, args[1]]
+    assert mapping == [[0], [2]]
 
     spec = [
         {"name": "foo", "value": {"type": "any"}, "required": True},
@@ -109,7 +109,7 @@ def test_map_positionals():
     ]
     args = [ast.BareWord("a"), ast.BareWord("b")]
     mapping = map_positionals(args, spec, "foo")
-    assert mapping == [args[0], args[1], None]
+    assert mapping == [[0], [1]]
 
     # An arg expansion of zero args may be legal, but we should probably flag since
     # there's no reason to do it. Ideally, capture this as a specific violation.
@@ -127,7 +127,7 @@ def test_map_positionals():
     # `catch { cmd } {*}$catchopts`
     args = [ast.BracedWord("cmd"), ast.ArgExpansion(ast.VarSub("catchopts"))]
     mapping = map_positionals(args, catch_spec, "foo")
-    assert mapping == [args[0], args[1], None]
+    assert mapping == [[0], [1]]
 
     # Check message for missing two arguments.
     spec = [

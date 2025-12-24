@@ -255,16 +255,18 @@ def dispatch_subcommands(
 
 def map_positionals(
     args: list[Node], spec: list[dict], command_name: str
-) -> list[tuple[Node, ...] | Node | None]:
+) -> list[list[int]]:
     """Maps a list of nodes representing positional command arguments to the specific
     positional arguments of a command. spec represents the "positionals" entry of the
     spec for the given command.
 
-    The return value is a list where the Node at index i corresponds to the ith
-    positional in the spec. A given Node instance may appear multiple times in the
-    mapping (e.g. an arg expansion), and a tuple of multiple nodes indicates multiple
-    arguments correspond to the entry (e.g. for a variadic argument). A None in the
-    mapping indicates no corresponding Node (e.g. for an optional argument).
+    The return value is a list whose entries correspond one-to-one to the entries in
+    `args`. Each item in the return value is a list of indices into `spec`, indicating
+    which argument(s) in the spec the corresponding argument maps to.
+
+    A given index into `spec` may appear multiple times in the list (e.g. if it's a
+    variadic argument), and a list may contain more than one index for the mapping of an
+    arg expansion.
 
     If the arguments do not map correctly to the spec, this function raises
     CommandArgError.
@@ -277,31 +279,27 @@ def map_positionals(
 
     if len(args) == len(spec):
         # Self explanatory: a 1:1 match in argument count should be a legal mapping.
-        return list(args)
+        return [[i] for i in range(len(args))]
 
-    mapping: list[tuple[Node, ...] | Node | None] = []
+    mapping: list[list[int]] = []
     i = 0
     if len(args) > len(spec):
         # If there are more arguments than specified positionals, we map every argument
         # greedily and assign the extra # of arguments to the first variadic we find.
         extra = len(args) - len(spec)
-        for argspec in spec:
-            if argspec["value"]["type"] == "variadic":
-                # Map current argument plus the extras.
-                to_map = extra + 1
-                mapping.append(tuple(args[i : i + to_map]))
-                i += to_map
-                extra = 0
-            else:
-                mapping.append(args[i])
-                i += 1
+        for arg in args:
+            if i >= len(spec):
+                # We never found a variadic to save us, raise an error.
+                raise CommandArgError(
+                    f"too many arguments for {command_name}: got {len(args)}, expected"
+                    f" no more than {len(spec)}"
+                )
 
-        if extra > 0:
-            # We never found a variadic to save us, so raise an error.
-            raise CommandArgError(
-                f"too many arguments for {command_name}: got {len(args)}, expected no"
-                f" more than {len(spec)}"
-            )
+            mapping.append([i])
+            if spec[i]["value"]["type"] == "variadic" and extra > 0:
+                extra -= 1
+            else:
+                i += 1
 
         return mapping
 
@@ -316,45 +314,44 @@ def map_positionals(
         # arguments and expand the first arg expansion we find to account for what's
         # missing.
         missing = num_required - len(args)
-        for argspec in spec:
-            if not argspec["required"]:
-                mapping.append(None)
-                continue
-
-            if i >= len(args):
-                missing_names = ", ".join(required[-missing:])
-                raise CommandArgError(
-                    f"missing required argument{'s' if missing > 1 else ''} for"
-                    f" {command_name}: {missing_names}"
-                )
-
-            if isinstance(args[i], ArgExpansion):
-                mapping.append(args[i])
-                if missing > 0:
-                    missing -= 1
-                else:
-                    i += 1
-            else:
-                mapping.append(args[i])
+        for arg in args:
+            while not spec[i]["required"]:
                 i += 1
+
+            if isinstance(arg, ArgExpansion):
+                # Map current argument plus missing ones.
+                to_map = missing + 1
+                mapping.append(list(range(i, i + to_map)))
+                i += to_map
+                missing = 0
+            else:
+                mapping.append([i])
+                i += 1
+
+        if missing > 0:
+            missing_names = ", ".join(required[-missing:])
+            raise CommandArgError(
+                f"missing required argument{'s' if missing > 1 else ''} for"
+                f" {command_name}: {missing_names}"
+            )
 
         return mapping
 
     optionals = len(args) - num_required
-    for argspec in spec:
+    for arg in args:
         # If our argument count falls somewhere in between the required and total
         # specified numbers of positionals, we map all required arguments and map as
         # many optionals as needed (as we find them).
-        if argspec["required"]:
-            mapping.append(args[i])
-            i += 1
-        elif optionals > 0:
-            mapping.append(args[i])
+        if not spec[i]["required"] and optionals > 0:
+            mapping.append([i])
             i += 1
             optionals -= 1
-        else:
-            mapping.append(None)
+            continue
 
-    assert len(args) == i
+        while not spec[i]["required"]:
+            i += 1
+
+        mapping.append([i])
+        i += 1
 
     return mapping
