@@ -66,8 +66,10 @@ For example:
             "name": "arg1",
             // Whether the argument must be supplied.
             "required": true,
-            // Type of argument value. May be `{"type": "variadic"}` if
-            // argument may be an infinite number of args.
+            // Type of argument value. Legal values:
+            // - "any": argument takes a single value.
+            // - "variadic": argument may take an infinite number of values.
+            // - "script": argument is a Tcl script that should be further parsed.
             "value": {"type": "any"},
         },
     ],

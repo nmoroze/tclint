@@ -154,15 +154,18 @@ def check_arg_spec(
     switches = arg_spec["switches"]
     args_allowed = set(switches)
     args_required = {switch for switch in switches if switches[switch]["required"]}
-    positional_args = []
 
-    args = list(args)
+    # indices into args
+    positional_args: list[int] = []
+    arg_i = 0
+
     if not switches:
-        positional_args = args
-        args = []
+        positional_args = list(range(len(args)))
+        arg_i = len(args)
 
-    while len(args) > 0:
-        arg = args.pop(0)
+    while arg_i < len(args):
+        arg = args[arg_i]
+        arg_i += 1
 
         # To facilitate better error messages, we expect that switches are always
         # specified as BareWords that start with "-" or ">". This lets us throw an
@@ -173,15 +176,14 @@ def check_arg_spec(
         # any switches should be BareWords.
         contents = arg.contents
         if not (isinstance(arg, BareWord) and contents and contents[0] in {"-", ">"}):
-            positional_args.append(arg)
+            positional_args.append(arg_i - 1)
             continue
 
         # TODO check required arguments
         if contents in args_allowed:
             if switches[contents]["value"]:
-                try:
-                    args.pop(0)
-                except IndexError:
+                arg_i += 1
+                if arg_i > len(args):
                     raise CommandArgError(
                         f"invalid arguments for {command}: expected value after"
                         f" {contents}"
@@ -221,9 +223,16 @@ def check_arg_spec(
             f"missing required argument for {command}: {args_required.pop()}"
         )
 
-    map_positionals(positional_args, arg_spec["positionals"], command)
+    positionals = [args[i] for i in positional_args]
+    mapping = map_positionals(positionals, arg_spec["positionals"], command)
+    args = list(args)
+    for arg_i, map_to_spec in zip(positional_args, mapping):
+        if any([
+            arg_spec["positionals"][i]["value"]["type"] == "script" for i in map_to_spec
+        ]):
+            args[arg_i] = parser.parse_script(args[arg_i])
 
-    return None
+    return args
 
 
 def dispatch_subcommands(

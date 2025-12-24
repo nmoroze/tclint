@@ -2,8 +2,10 @@ import contextlib
 
 import pytest
 
+import tclint.syntax_tree as ast
 from tclint.commands import CommandArgError
 from tclint.commands.checks import check_arg_spec
+from tclint.parser import Parser
 from tclint.syntax_tree import ArgExpansion, BareWord, BracedWord, VarSub
 
 
@@ -194,3 +196,35 @@ def test_no_switches():
         "switches": {},
     }
     check_arg_spec("command", args, None, spec)
+
+
+def test_script():
+    args = [
+        BareWord("-myswitch"),
+        BareWord("value"),
+        ast.BareWord("optional_value"),
+        BracedWord('puts "hello"', pos=(1, 0), end_pos=(1, 13)),
+    ]
+    spec = {
+        "positionals": [
+            {"name": "optional", "value": {"type": "any"}, "required": False},
+            {"name": "body", "value": {"type": "script"}, "required": True},
+        ],
+        "switches": {
+            "-myswitch": {
+                "required": True,
+                "value": {"type": "any"},
+                "repeated": False,
+            },
+        },
+    }
+    parser = Parser()
+    parsed = check_arg_spec("command", args, parser, spec)
+    assert parsed == [
+        args[0],
+        args[1],
+        args[2],
+        ast.Script(
+            ast.Command(ast.BareWord("puts"), ast.QuotedWord(ast.BareWord("hello")))
+        ),
+    ]
