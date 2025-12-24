@@ -1,5 +1,6 @@
 import pytest
 
+from tclint import syntax_tree as ast
 from tclint.parser import Parser
 from tclint.syntax_tree import BareWord, Command, QuotedWord, Script
 
@@ -19,7 +20,6 @@ from tclint.syntax_tree import BareWord, Command, QuotedWord, Script
         ("break asdf", False),
         ("foreach", False),
         (r"foreach $iters {}", False),
-        (r"foreach {*}$iters {}", True),
     ],
 )
 def test_validation(command, valid):
@@ -27,6 +27,19 @@ def test_validation(command, valid):
     parser.parse(command)
 
     assert len(parser.violations) == 0 if valid else 1
+
+
+def test_foreach_arg_expansion_valid():
+    parser = Parser()
+    tree = parser.parse(r"foreach {*}$iters {foo}")
+    assert len(parser.violations) == 0
+    assert tree == Script(
+        Command(
+            BareWord("foreach"),
+            ast.ArgExpansion(ast.VarSub("iters")),
+            ast.Script(ast.Command(ast.BareWord("foo"))),
+        )
+    )
 
 
 def test_foreach_arg_expansion_only():

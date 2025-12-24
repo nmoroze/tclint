@@ -32,7 +32,7 @@ these would be helpful for your use case, please file an issue.
   - https://www.tcl.tk/man/tcl/TclCmd/mathop.html
 """
 
-from tclint.commands.checks import CommandArgError, arg_count, check_count, eval
+from tclint.commands.checks import CommandArgError, check_arg_spec, check_count, eval
 from tclint.commands.schema import commands_schema
 from tclint.syntax_tree import BareWord
 
@@ -443,18 +443,23 @@ def _for(args, parser):
     ]
 
 
-def _foreach(args, parser):
-    # ref: https://www.tcl.tk/man/tcl/TclCmd/foreach.html
-    count, has_arg_expansion = arg_count(args, parser)
-    # Second condition uses len(args) rather than count since we need to guard the
-    # args[-1] index and count < 0 is technically stricter than necessary.
-    if (not has_arg_expansion and count < 3) or (has_arg_expansion and len(args) < 1):
-        raise CommandArgError(
-            f"insufficient args to foreach: got {len(args)}, expected at least 3"
-        )
+def foreach(args, parser):
+    """
+    foreach varname list ?varlist list ...? body
 
-    # last argument is script body
-    return args[0:-1] + [parser.parse_script(args[-1])]
+    ref: https://www.tcl-lang.org/man/tcl8.6/TclCmd/foreach.htm
+    """
+    spec = {
+        "positionals": [
+            {"name": "varname", "value": {"type": "any"}, "required": True},
+            {"name": "list", "value": {"type": "any"}, "required": True},
+            {"name": "varlist list", "value": {"type": "variadic"}, "required": False},
+            {"name": "body", "value": {"type": "script"}, "required": True},
+        ],
+        "switches": {},
+    }
+    # TODO: check that "varlist list" comes in pairs.
+    return check_arg_spec("foreach", args, parser, spec)
 
 
 def _if(args, parser):
@@ -1020,7 +1025,7 @@ commands = commands_schema({
     "fileevent": _fileevent,
     "flush": check_count("flush", 1, 1),
     "for": _for,
-    "foreach": _foreach,
+    "foreach": foreach,
     "format": check_count("format", 1, None),
     "gets": check_count("gets", 1, 2),
     "glob": check_count("glob"),
