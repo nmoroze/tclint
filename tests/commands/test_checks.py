@@ -72,6 +72,11 @@ def test_map_positionals():
     mapping = map_positionals(args, foreach_spec, "foreach")
     assert mapping == [[0, 1], [3]]
 
+    # `foreach {*}$args`
+    args = [ast.ArgExpansion(ast.VarSub("args"))]
+    mapping = map_positionals(args, foreach_spec, "foreach")
+    assert mapping == [[0, 1, 3]]
+
     # `foreach i {0 1} j {0 1} k {0 1} { cmd }`
     args = [
         ast.BareWord("i"),

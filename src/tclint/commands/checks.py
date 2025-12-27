@@ -327,15 +327,16 @@ def map_positionals(
             while not spec[i]["required"]:
                 i += 1
 
+            mapping.append([i])
+            i += 1
+
             if isinstance(arg, ArgExpansion):
-                # Map current argument plus missing ones.
-                to_map = missing + 1
-                mapping.append(list(range(i, i + to_map)))
-                i += to_map
-                missing = 0
-            else:
-                mapping.append([i])
-                i += 1
+                # Map missing arguments.
+                while missing > 0:
+                    if spec[i]["required"]:
+                        mapping[-1] += [i]
+                        missing -= 1
+                    i += 1
 
         if missing > 0:
             missing_names = ", ".join(required[-missing:])
