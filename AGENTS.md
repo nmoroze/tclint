@@ -15,6 +15,10 @@
 - Python 3.10+; follow Black style and isort ordering for Python sources; keep files ASCII unless needed.
 - Use descriptive function and variable names; command specs and schema entries mirror Tcl semantics.
 - Tcl output rules (indent, spaces-in-braces, etc.) live in `format.py`/`config.py`; follow those patterns when adjusting formatter or config behavior. Indentation defaults to 4 spaces unless tests/config specify otherwise.
+- Add type hints when adding functions or updating function signatures. Use generics for collections (e.g. prefer `list[int]` to `typing.List[int]`), and use `typing.Optional[type]` rather than `type | None` for indicating optional types.
+
+## Problem Solving Approach
+- Make the minimum changes required to fulfill the request. Prefer incremental changes to large-scale ones.
 
 ## Testing Guidelines
 - Pytest is the framework; tests mirror features (parser, CLI, commands). Add fixtures under `tests/data/` when possible.
