@@ -177,20 +177,6 @@ _array = {
 }
 
 
-def _catch(args, parser):
-    """catch script [resultVarName] [optionsVarName]"""
-    if len(args) < 1:
-        raise CommandArgError(
-            f"not enough args to catch: got {len(args)}, expected at least 1"
-        )
-    if len(args) > 3:
-        raise CommandArgError(
-            f"too many args to catch: got {len(args)}, expected no more than 3"
-        )
-
-    return [parser.parse_script(args[0])] + args[1:]
-
-
 _chan = {
     "subcommands": {
         "blocked": {
@@ -346,43 +332,36 @@ def _dict_filter(args, parser):
 
 def _dict_map_for(cmd):
     def check(args, parser):
-        if len(args) != 3:
-            raise CommandArgError(
-                f"wrong # of args to '{cmd}': got {len(args)}, expected 3"
-            )
-
+        spec = {
+            "positionals": [
+                {"name": "keyValueList", "value": {"type": "any"}, "required": True},
+                {"name": "dictionaryValue", "value": {"type": "any"}, "required": True},
+                {"name": "body", "value": {"type": "script"}, "required": True},
+            ],
+            "switches": {},
+        }
         # TODO: might be worth checking that arg[0] is a pair?
-
-        return args[0:2] + [parser.parse_script(args[2])]
+        return check_arg_spec(cmd, args, parser, spec)
 
     return check
 
 
 def _dict_update(args, parser):
-    # ref: https://www.tcl.tk/man/tcl/TclCmd/dict.html#M25
+    """dict update dictionaryVariable key varName ?key varName ...? body
 
-    if len(args) < 4:
-        raise CommandArgError(
-            f"not enough args to 'dict update': got {len(args)}, expected at least 4"
-        )
-
-    if len(args) % 2 != 0:
-        raise CommandArgError(
-            "invalid # of args to 'dict update': expected an even number"
-        )
-
-    return args[0:-1] + [parser.parse_script(args[-1])]
-
-
-def _dict_with(args, parser):
-    # ref: https://www.tcl.tk/man/tcl/TclCmd/dict.html#M27
-
-    if len(args) < 2:
-        raise CommandArgError(
-            f"not enough args to 'dict with': got {len(args)}, expected at least 2"
-        )
-
-    return args[0:-1] + [parser.parse_script(args[-1])]
+    ref: https://www.tcl-lang.org/man/tcl8.6/TclCmd/dict.htm#M25
+    """
+    spec = {
+        "positionals": [
+            {"name": "dictionaryVariable", "value": {"type": "any"}, "required": True},
+            {"name": "key", "value": {"type": "any"}, "required": True},
+            {"name": "varName", "value": {"type": "any"}, "required": True},
+            {"name": "key varName", "value": {"type": "variadic"}, "required": False},
+            {"name": "body", "value": {"type": "script"}, "required": True},
+        ]
+    }
+    # TODO: Check that number of variadic words is even.
+    return check_arg_spec("dict update", args, parser, spec)
 
 
 def _eval(args, parser):
@@ -548,13 +527,21 @@ def _interp_eval(args, parser):
 
 
 def _lmap(args, parser):
-    # ref: https://www.tcl.tk/man/tcl/TclCmd/lmap.html
-    if len(args) < 3:
-        raise CommandArgError(
-            f"not enough args to lmap: got {len(args)}, expected at least 3"
-        )
+    """
+    lmap varlist1 list1 ?varlist2 list2 ...? body
 
-    return args[:-1] + [parser.parse_script(args[-1])]
+    ref: https://www.tcl-lang.org/man/tcl8.6/TclCmd/lmap.htm
+    """
+    spec = {
+        "positionals": [
+            {"name": "varlist1", "value": {"type": "any"}, "required": True},
+            {"name": "list1", "value": {"type": "any"}, "required": True},
+            {"name": "varlist list", "value": {"type": "variadic"}, "required": False},
+            {"name": "body", "value": {"type": "script"}, "required": True},
+        ]
+    }
+    # TODO: Check that number of variadic words is even.
+    return check_arg_spec("lmap", args, parser, spec)
 
 
 def _namespace_code(args, parser):
@@ -579,19 +566,6 @@ def _namespace_inscope(args, parser):
         "'namespace inscope' is not meant to be called directly, consider using"
         " 'namespace code' or 'namespace eval' instead"
     )
-
-
-def _namespace_unknown(args, parser):
-    if len(args) > 1:
-        raise CommandArgError(
-            f"too many args to 'namespace unknown': got {len(args)}, expected no more"
-            " than 1"
-        )
-
-    if len(args) == 1:
-        return [parser.parse_script(args[0])]
-
-    return None
 
 
 def _package_ifneeded(args, parser):
@@ -950,7 +924,13 @@ commands = commands_schema({
         },
     },
     "break": {},
-    "catch": _catch,
+    "catch": {
+        "positionals": [
+            {"name": "script", "value": {"type": "script"}, "required": True},
+            {"name": "resultVarName", "value": {"type": "any"}, "required": False},
+            {"name": "optionsVarName", "value": {"type": "any"}, "required": False},
+        ]
+    },
     "cd": {
         "positionals": [
             {"name": "dirName", "value": {"type": "any"}, "required": False}
@@ -999,7 +979,17 @@ commands = commands_schema({
             "unset": check_count("dict unset", 2, None),
             "update": _dict_update,
             "values": check_count("dict values", 1, 2),
-            "with": _dict_with,
+            "with": {
+                "positionals": [
+                    {
+                        "name": "dictionaryVariable",
+                        "value": {"type": "any"},
+                        "required": True,
+                    },
+                    {"name": "key", "value": {"type": "variadic"}, "required": False},
+                    {"name": "script", "value": {"type": "script"}, "required": True},
+                ]
+            },
         },
     },
     "encoding": {
@@ -1100,7 +1090,11 @@ commands = commands_schema({
             },
             "qualifiers": check_count("namespace qualifiers", 1, 1),
             "tail": check_count("namespace tail", 1, 1),
-            "unknown": _namespace_unknown,
+            "unknown": {
+                "positionals": [
+                    {"name": "script", "value": {"type": "script"}, "required": False}
+                ]
+            },
             "upvar": {
                 "positionals": [
                     {"name": "namespace", "value": {"type": "any"}, "required": True},
