@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class CommandArgError(Exception):
+    """Exception raised by command handlers to indicate invalid arguments."""
+
     pass
 
 
