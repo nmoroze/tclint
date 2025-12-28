@@ -958,7 +958,7 @@ commands = commands_schema({
     },
     "chan": _chan,
     # TODO: check subcommands
-    "clock": check_count("clock"),
+    "clock": {},
     "close": {
         "positionals": [
             {"name": "channelId", "value": {"type": "any"}, "required": True},
@@ -981,7 +981,7 @@ commands = commands_schema({
     "dict": {
         "subcommands": {
             "append": check_count("dict append", 2, None),
-            "create": check_count("dict create"),
+            "create": {},
             "exists": check_count("dict exists", 2, None),
             "filter": _dict_filter,
             "for": _dict_map_for("dict for"),
@@ -991,7 +991,7 @@ commands = commands_schema({
             "keys": check_count("dict keys", 1, 2),
             "lappend": check_count("dict lappend", 2, None),
             "map": _dict_map_for("dict map"),
-            "merge": check_count("dict merge"),
+            "merge": {},
             "remove": check_count("dict remove", 1, None),
             "replace": check_count("dict replace", 1, None),
             "set": check_count("dict set", 3, None),
@@ -1028,9 +1028,9 @@ commands = commands_schema({
     "foreach": foreach,
     "format": check_count("format", 1, None),
     "gets": check_count("gets", 1, 2),
-    "glob": check_count("glob"),
-    "global": check_count("global"),
-    "history": check_count("history"),
+    "glob": {},
+    "global": {},
+    "history": {},
     "if": _if,
     "incr": check_count("incr", 1, 2),
     # TODO: check subcommands
@@ -1176,17 +1176,17 @@ commands = commands_schema({
     "timerate": _timerate,
     "tcl::tm::path": {
         "subcommands": {
-            "add": check_count("tcl::tm::path add"),
-            "remove": check_count("tcl::tm::path remove"),
+            "add": {},
+            "remove": {},
             "list": check_count("tcl::tm::path list", 0, 0),
         },
     },
-    "tcl::tm::roots": check_count("tcl::tm::roots"),
+    "tcl::tm::roots": {},
     # TODO: check subcommands
     "trace": check_count("trace", 2, None),
     "try": _try,
     "unload": check_count("unload", 1, 6),
-    "unset": check_count("unset"),
+    "unset": {},
     "update": check_count("update", 0, 1),
     "uplevel": check_count("uplevel", 1, None),
     "upvar": check_count("upvar", 2, None),
