@@ -73,7 +73,7 @@ def _after(args, parser):
 def _after_cancel(args, parser):
     """after id|(script...)"""
     # ref: https://www.tcl.tk/man/tcl/TclCmd/after.html
-    check_count("after cancel", 1, None)
+    check_count("after cancel", 1, None)(args, parser)
 
     # TODO: raise warning about not checking code
 

@@ -20,6 +20,7 @@ from tclint.syntax_tree import BareWord, Command, QuotedWord, Script
         ("break asdf", False),
         ("foreach", False),
         (r"foreach $iters {}", False),
+        ("after cancel", False),
     ],
 )
 def test_validation(command, valid):
