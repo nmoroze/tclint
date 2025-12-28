@@ -53,7 +53,7 @@ def arg_count(args: list[Node], parser: Parser) -> tuple[int, bool]:
     return arg_count, has_arg_expansion
 
 
-def check_count(command, min=None, max=None, args_name="args"):
+def check_count(command, min=None, max=None):
     def check(args, parser):
         if min is None and max is None:
             return None
@@ -62,19 +62,17 @@ def check_count(command, min=None, max=None, args_name="args"):
 
         if not has_arg_expansion and min == max and count != min:
             raise CommandArgError(
-                f"wrong # of {args_name} for {command}: got {count}, expected {min}"
+                f"wrong # of args for {command}: got {count}, expected {min}"
             )
 
         if not has_arg_expansion and min is not None and count < min:
             raise CommandArgError(
-                f"not enough {args_name} for {command}: got {count}, expected at least"
-                f" {min}"
+                f"not enough args for {command}: got {count}, expected at least {min}"
             )
 
         if max is not None and count > max:
             raise CommandArgError(
-                f"too many {args_name} for {command}: got {count}, expected no more"
-                f" than {max}"
+                f"too many args for {command}: got {count}, expected no more than {max}"
             )
 
         return None
