@@ -10,7 +10,11 @@ _command_args = Schema(
             {
                 "name": str,
                 "required": bool,
-                "value": Or({"type": "any"}, {"type": "variadic"}),
+                "value": Or(
+                    {"type": "any"},
+                    {"type": "variadic"},
+                    {"type": "script"},
+                ),
             }
         ],
         Optional("switches", default={}): {
