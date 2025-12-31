@@ -358,7 +358,8 @@ def _dict_update(args, parser):
             {"name": "varName", "value": {"type": "any"}, "required": True},
             {"name": "key varName", "value": {"type": "variadic"}, "required": False},
             {"name": "body", "value": {"type": "script"}, "required": True},
-        ]
+        ],
+        "switches": {},
     }
     # TODO: Check that number of variadic words is even.
     return check_arg_spec("dict update", args, parser, spec)
@@ -538,7 +539,8 @@ def _lmap(args, parser):
             {"name": "list1", "value": {"type": "any"}, "required": True},
             {"name": "varlist list", "value": {"type": "variadic"}, "required": False},
             {"name": "body", "value": {"type": "script"}, "required": True},
-        ]
+        ],
+        "switches": {},
     }
     # TODO: Check that number of variadic words is even.
     return check_arg_spec("lmap", args, parser, spec)
