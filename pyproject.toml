@@ -50,6 +50,9 @@ tclint = "tclint.cli.tclint:main"
 tclfmt = "tclint.cli.tclfmt:main"
 tclsp = "tclint.cli.tclsp:main"
 
+[project.entry-points."tclint.plugins"]
+expect = "tclint.plugins.expect"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 timeout = 10

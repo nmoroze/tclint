@@ -103,7 +103,9 @@ class _Word:
 
 
 class Parser:
-    def __init__(self, debug=False, command_plugins: Optional[Sequence[Path]] = None):
+    def __init__(
+        self, debug=False, command_plugins: Optional[Sequence[str | Path]] = None
+    ):
         self._debug = debug
         self._debug_indent = 0
         # TODO: better way to handle this?
