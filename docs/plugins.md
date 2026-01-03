@@ -70,6 +70,8 @@ For example:
             // - "any": argument takes a single value.
             // - "variadic": argument may take an infinite number of values.
             // - "script": argument is a Tcl script that should be further parsed.
+            // - "expression": argument is a Tcl expression that should be further
+            // parsed.
             "value": {"type": "any"},
         },
     ],

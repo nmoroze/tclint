@@ -145,6 +145,10 @@ def check_command(
     return command_spec(args, parser)
 
 
+def _positional_has_type(type: str, arg_spec: dict, indices: list[int]) -> bool:
+    return any([arg_spec["positionals"][i]["value"]["type"] == type for i in indices])
+
+
 def check_arg_spec(
     command: str, args: list[Node], parser: Parser, arg_spec: dict
 ) -> Optional[list[Node]]:
@@ -227,10 +231,10 @@ def check_arg_spec(
     mapping = map_positionals(positionals, arg_spec["positionals"], command)
     args = list(args)
     for arg_i, map_to_spec in zip(positional_args, mapping):
-        if any([
-            arg_spec["positionals"][i]["value"]["type"] == "script" for i in map_to_spec
-        ]):
+        if _positional_has_type("script", arg_spec, map_to_spec):
             args[arg_i] = parser.parse_script(args[arg_i])
+        elif _positional_has_type("expression", arg_spec, map_to_spec):
+            args[arg_i] = parser.parse_expression(args[arg_i])
 
     return args
 

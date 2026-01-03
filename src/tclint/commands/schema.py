@@ -14,6 +14,7 @@ _command_args = Schema(
                     {"type": "any"},
                     {"type": "variadic"},
                     {"type": "script"},
+                    {"type": "expression"},
                 ),
             }
         ],
