@@ -21,6 +21,8 @@ from tclint.syntax_tree import BareWord, Command, QuotedWord, Script
         ("foreach", False),
         (r"foreach $iters {}", False),
         ("after cancel", False),
+        ('zlib decompress "hello"', True),
+        ("string cat", True),
     ],
 )
 def test_validation(command, valid):

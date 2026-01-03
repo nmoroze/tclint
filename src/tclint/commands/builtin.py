@@ -1155,7 +1155,7 @@ commands = commands_schema({
     "source": check_count("source", 1, 3),
     "split": check_count("split", 1, 2),
     # TODO: check subcommands
-    "string": check_count("string", 2, None),
+    "string": check_count("string", 1, None),
     "subst": check_count("subst", 1, 4),
     "switch": _switch,
     "tailcall": check_count("tailcall", 1, None),
@@ -1201,5 +1201,5 @@ commands = commands_schema({
         ]
     },
     # TODO: check subcommands
-    "zlib": check_count("zlib", 3, None),
+    "zlib": check_count("zlib", 2, None),
 })
