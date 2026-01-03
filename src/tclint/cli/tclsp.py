@@ -11,6 +11,7 @@ from pygls.uris import to_fs_path
 from pygls.workspace import TextDocument
 
 from tclint.cli import tclint, utils
+from tclint.commands.plugins import PluginManager
 from tclint.config import DEFAULT_CONFIGS, Config, ConfigError, load_config_at
 from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
@@ -26,11 +27,11 @@ DIAGNOSTIC_SOURCE = "tclint"
 _DEFAULT_CONFIG = Config()
 
 
-def lint(source, config, path):
+def lint(source, config, plugin_manager, path):
     diagnostics = []
 
     try:
-        violations = tclint.lint(source, config, path)
+        violations = tclint.lint(source, config, plugin_manager, path)
     except TclSyntaxError as e:
         return [
             lsp.Diagnostic(
@@ -98,6 +99,8 @@ class TclspServer(LanguageServer):
 
         self.global_settings = ExtensionSettings()
         self.workspace_settings: dict[Path, ExtensionSettings] = {}
+
+        self.plugin_manager = PluginManager()
 
     def get_roots(self) -> list[Path]:
         """Returns root folders currently open in the workspace."""
@@ -221,7 +224,7 @@ class TclspServer(LanguageServer):
         if is_excluded(path):
             return []
 
-        return lint(document.source, config, path)
+        return lint(document.source, config, self.plugin_manager, path)
 
     def compute_diagnostics(self, document: TextDocument):
         # `None` sentinel ensures that `diagnostics` gets updated if the URI is not

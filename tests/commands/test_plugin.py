@@ -1,8 +1,6 @@
 from pathlib import Path
 
-# Not clean, but we import the _PluginManager class instead of using the singleton so we
-# have isolation between tests.
-from tclint.commands.plugins import _PluginManager as PluginManager
+from tclint.commands.plugins import PluginManager
 
 MY_DIR = Path(__file__).parent.resolve()
 TEST_DATA_DIR = MY_DIR / "data"

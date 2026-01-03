@@ -8,6 +8,7 @@ from typing import Optional
 from tclint.checks import get_checkers
 from tclint.cli.resolver import Resolver
 from tclint.cli.utils import register_codec_warning
+from tclint.commands.plugins import PluginManager
 from tclint.comments import CommentVisitor
 from tclint.config import Config, ConfigError, setup_config_cli_args
 from tclint.parser import Parser, TclSyntaxError
@@ -47,11 +48,12 @@ def filter_violations(
 def lint(
     script: str,
     config: Config,
+    plugins: PluginManager,
     path: Optional[pathlib.Path],
     debug=0,
 ) -> list[Violation]:
-    plugins = [config.commands] if config.commands is not None else []
-    parser = Parser(debug=(debug > 0), command_plugins=plugins)
+    _plugins = [config.commands] if config.commands is not None else []
+    parser = Parser(debug=(debug > 0), commands=plugins.get_commands(_plugins))
 
     violations = []
     tree = parser.parse(script)
@@ -60,7 +62,7 @@ def lint(
     if debug > 0:
         print(tree.pretty(positions=(debug > 1)))
 
-    for checker in get_checkers():
+    for checker in get_checkers(plugins):
         violations += checker.check(script, tree, config)
 
     v = CommentVisitor()
@@ -126,6 +128,8 @@ def main():
         print(f"Invalid config file: {e}")
         return EXIT_INPUT_ERROR
 
+    plugin_manager = PluginManager()
+
     retcode = EXIT_OK
 
     register_codec_warning("replace_with_warning")
@@ -143,6 +147,7 @@ def main():
             violations = lint(
                 script,
                 config,
+                plugin_manager,
                 path,
                 debug=args.debug,
             )

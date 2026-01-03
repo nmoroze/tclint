@@ -1,9 +1,15 @@
 import json
 from pathlib import Path
 
-from tclint.cli.tclint import lint
+from tclint.cli.tclint import lint as _lint
+from tclint.commands.plugins import PluginManager
 from tclint.config import Config
 from tclint.violations import Rule
+
+
+def lint(script, config, path):
+    plugin_manager = PluginManager()
+    return _lint(script, config, plugin_manager, path)
 
 
 def test_cmd_args_in_sub():

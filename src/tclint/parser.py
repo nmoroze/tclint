@@ -1,11 +1,10 @@
 import io
 import re
 import string
-from collections.abc import Sequence
-from pathlib import Path
 from typing import Optional, Tuple
 
-from tclint.commands import CommandArgError, get_commands
+from tclint.commands import CommandArgError
+from tclint.commands import builtin as _builtin
 from tclint.commands.checks import check_command
 from tclint.lexer import (
     STATE_BRACEDWORD,
@@ -103,17 +102,15 @@ class _Word:
 
 
 class Parser:
-    def __init__(
-        self, debug=False, command_plugins: Optional[Sequence[str | Path]] = None
-    ):
+    def __init__(self, debug=False, commands: Optional[dict] = None):
         self._debug = debug
         self._debug_indent = 0
         # TODO: better way to handle this?
         self.violations: list[Violation] = []
 
-        if command_plugins is None:
-            command_plugins = []
-        self._commands = get_commands(command_plugins)
+        if commands is None:
+            commands = _builtin.commands
+        self._commands = commands
 
         # Used to normalize newlines consistently with open()'s universal newlines mode.
         self._decoder = io.IncrementalNewlineDecoder(None, True)

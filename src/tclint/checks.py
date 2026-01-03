@@ -1,6 +1,6 @@
 import re
 
-from tclint.commands import get_commands
+from tclint.commands.plugins import PluginManager
 from tclint.config import Config
 from tclint.syntax_tree import (
     BracedExpression,
@@ -82,11 +82,14 @@ class RedefinedBuiltinChecker(Visitor):
     Reports 'redefined-builtin' violations.
     """
 
+    def __init__(self, plugin_manager: PluginManager):
+        self._plugin_manager = plugin_manager
+
     def check(self, _, tree: Script, config: Config) -> list[Violation]:
         self._violations: list[Violation] = []
 
         plugins = [config.commands] if config.commands is not None else []
-        commands = get_commands(plugins)
+        commands = self._plugin_manager.get_commands(plugins)
         self._commands = commands.keys()
 
         tree.accept(self, recurse=True)
@@ -216,9 +219,9 @@ class RedundantExprChecker(Visitor):
             self._check_operand(arg)
 
 
-def get_checkers():
+def get_checkers(plugin_manager: PluginManager):
     checkers = (
-        RedefinedBuiltinChecker(),
+        RedefinedBuiltinChecker(plugin_manager),
         UnbracedExprChecker(),
         RedundantExprChecker(),
         LineLengthChecker(),

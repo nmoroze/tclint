@@ -1,5 +1,6 @@
 import json
 import pathlib
+from collections.abc import Sequence
 from importlib.util import module_from_spec, spec_from_file_location
 from types import ModuleType
 from typing import Optional
@@ -7,10 +8,11 @@ from typing import Optional
 import voluptuous
 from importlib_metadata import entry_points
 
+from tclint.commands import builtin as _builtin
 from tclint.commands import schema
 
 
-class _PluginManager:
+class PluginManager:
     def __init__(self):
         self._loaded = {}
         self._installed = {}
@@ -123,8 +125,22 @@ class _PluginManager:
 
         return self._load_module(name, mod)
 
+    def get_commands(self, plugins: Sequence[str | pathlib.Path]) -> dict:
+        commands = {}
+        commands.update(_builtin.commands)
 
-# TODO: we'll probably want to construct this in the tclint entry point and pass
-# it around rather than using a singleton instance, but this made for an easier
-# refactor.
-PluginManager = _PluginManager()
+        for plugin in plugins:
+            if isinstance(plugin, str):
+                plugin_commands = self.load(plugin)
+            elif isinstance(plugin, pathlib.Path):
+                if plugin.suffix == ".py":
+                    plugin_commands = self.load_from_py(plugin)
+                else:
+                    plugin_commands = self.load_from_spec(plugin)
+            else:
+                raise TypeError(f"Plugins must be strings or paths, got {type(plugin)}")
+
+            if plugin_commands is not None:
+                commands.update(plugin_commands)
+
+        return commands

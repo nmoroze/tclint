@@ -6,6 +6,7 @@ import sys
 
 from tclint.cli.resolver import Resolver
 from tclint.cli.utils import register_codec_warning
+from tclint.commands.plugins import PluginManager
 from tclint.config import Config, ConfigError, setup_tclfmt_config_cli_args
 from tclint.format import Formatter, FormatterOpts
 from tclint.parser import Parser, TclSyntaxError
@@ -22,9 +23,11 @@ EXIT_SYNTAX_ERROR = 2
 EXIT_INPUT_ERROR = 4
 
 
-def format(script: str, config: Config, debug=False, partial=False) -> str:
-    plugins = [config.commands] if config.commands is not None else []
-    parser = Parser(debug=debug, command_plugins=plugins)
+def format(
+    script: str, config: Config, plugins: PluginManager, debug=False, partial=False
+) -> str:
+    _plugins = [config.commands] if config.commands is not None else []
+    parser = Parser(debug=debug, commands=plugins.get_commands(_plugins))
 
     formatter = Formatter(
         FormatterOpts(
@@ -125,6 +128,8 @@ def main():
         print(f"Invalid config file: {e}")
         return EXIT_INPUT_ERROR
 
+    plugin_manager = PluginManager()
+
     retcode = EXIT_OK
 
     register_codec_warning("replace_with_warning")
@@ -143,6 +148,7 @@ def main():
             formatted = format(
                 script,
                 config,
+                plugin_manager,
                 debug=(args.debug > 1),
                 partial=args.partial,
             )
