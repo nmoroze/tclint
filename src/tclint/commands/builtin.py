@@ -410,19 +410,6 @@ def _fileevent(args, parser):
     )
 
 
-def _for(args, parser):
-    # ref: https://www.tcl.tk/man/tcl/TclCmd/for.html
-    if len(args) != 4:
-        raise CommandArgError(f"wrong # of args to for: got {len(args)}, expected 4")
-
-    return [
-        parser.parse_script(args[0]),
-        parser.parse_expression(args[1]),
-        parser.parse_script(args[2]),
-        parser.parse_script(args[3]),
-    ]
-
-
 def foreach(args, parser):
     """
     foreach varname list ?varlist list ...? body
@@ -843,16 +830,6 @@ def _try(args, parser):
     return new_args
 
 
-def _while(args, parser):
-    if len(args) != 2:
-        raise CommandArgError(f"wrong # of args to while: got {len(args)}, expected 2")
-
-    return [
-        parser.parse_expression(args[0]),
-        parser.parse_script(args[1]),
-    ]
-
-
 commands = commands_schema({
     "after": {
         "subcommands": {
@@ -1016,7 +993,14 @@ commands = commands_schema({
     "file": check_count("file", 1, None),
     "fileevent": _fileevent,
     "flush": check_count("flush", 1, 1),
-    "for": _for,
+    "for": {
+        "positionals": [
+            {"name": "start", "value": {"type": "script"}, "required": True},
+            {"name": "test", "value": {"type": "expression"}, "required": True},
+            {"name": "next", "value": {"type": "script"}, "required": True},
+            {"name": "body", "value": {"type": "script"}, "required": True},
+        ],
+    },
     "foreach": foreach,
     "format": check_count("format", 1, None),
     "gets": check_count("gets", 1, 2),
@@ -1188,7 +1172,12 @@ commands = commands_schema({
     "upvar": check_count("upvar", 2, None),
     "variable": check_count("variable", 1, None),
     "vwait": check_count("vwait", 1, 1),
-    "while": _while,
+    "while": {
+        "positionals": [
+            {"name": "test", "value": {"type": "expression"}, "required": True},
+            {"name": "body", "value": {"type": "script"}, "required": True},
+        ],
+    },
     "yield": {
         "positionals": [
             {"name": "value", "value": {"type": "any"}, "required": False},
