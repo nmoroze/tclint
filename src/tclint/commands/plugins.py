@@ -13,7 +13,7 @@ from tclint.commands import schema
 
 
 class PluginManager:
-    def __init__(self):
+    def __init__(self, trust_uninstalled=False):
         self._loaded = {}
         self._installed = {}
         self._loaded_specs = {}
@@ -22,6 +22,8 @@ class PluginManager:
             if plugin.name in self._installed:
                 print(f"Warning: found duplicate definitions for plugin {plugin.name}")
             self._installed[plugin.name] = plugin
+
+        self._trust_uninstalled = trust_uninstalled
 
     def load(self, name: str) -> Optional[dict]:
         if name in self._loaded:
@@ -101,6 +103,15 @@ class PluginManager:
     def load_from_py(self, path: pathlib.Path) -> Optional[dict]:
         if path in self._loaded_py:
             return self._loaded_py[path]
+
+        # By default, reject paths to dynamic plugins. This restriction is designed to
+        # make it explicit when tclint is executing external code.
+        if not self._trust_uninstalled:
+            print(
+                f"Warning: skipping untrusted plugin {path}. If you trust the code at"
+                " this path, re-run with --trust-plugins to load the plugin"
+            )
+            return None
 
         spec = self._load_from_py(path)
         self._loaded_py[path] = spec

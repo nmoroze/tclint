@@ -226,15 +226,6 @@ _validate_style_spaces_in_braces = bool
 _validate_style_emacs = bool
 
 
-def _error_if_dynamic_plugin(p: pathlib.Path):
-    if p.suffix == ".py":
-        raise Invalid(
-            "dynamic plugins cannot be specified via config file for security"
-            " reasons. Use --commands instead."
-        )
-    return p
-
-
 def _validate_config(config: dict, root: pathlib.Path):
     """Validates dictionary read from TOML config file. Individual value validators
     are implemented in the module-level variables above; this defines the actual
@@ -246,9 +237,7 @@ def _validate_config(config: dict, root: pathlib.Path):
         Optional("exclude"): _validate_exclude(root),
         Optional("extensions"): _validate_extensions,
         Optional("ignore"): _validate_ignore,
-        # tclint rejects paths to dynamic plugins in the config file. This restriction
-        # is designed to make it explicit when tclint is executing external code.
-        Optional("commands"): And(_validate_commands(root), _error_if_dynamic_plugin),
+        Optional("commands"): _validate_commands(root),
         Optional("style"): {
             Optional("indent"): _validate_style_indent,
             Optional("line-length"): _validate_style_line_length,
@@ -311,6 +300,11 @@ def setup_common_config_cli_args(config_group, cwd: pathlib.Path):
     case, this is fine since the setup and application of the CLI args are close
     together in the application code.
     """
+    config_group.add_argument(
+        "--trust-plugins",
+        action="store_true",
+        help="enables execution of uninstalled Python-based command plugins",
+    )
     config_group.add_argument(
         "--exclude",
         type=_argparsify(_validate_exclude(cwd)),

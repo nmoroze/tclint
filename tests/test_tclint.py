@@ -117,7 +117,7 @@ commands = {}
 
     # Validate setup can work
     p = subprocess.Popen(
-        ["tclint", "--commands", plugin_path, "-"],
+        ["tclint", "--commands", plugin_path, "--trust-plugins", "-"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -141,6 +141,6 @@ commands = {}
     stdout, stderr = p.communicate()
 
     output = stdout.decode("utf-8").strip()
-    assert output.startswith("Invalid config file")
-    assert "dynamic plugins cannot be specified via config file" in output
-    assert p.returncode > 0
+    assert output.startswith("Warning: skipping untrusted plugin")
+    assert "plugin ran" not in output
+    assert p.returncode == 0

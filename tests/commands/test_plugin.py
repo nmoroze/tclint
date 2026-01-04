@@ -19,9 +19,13 @@ def test_load_invalid():
 
 
 def test_load_py():
-    plugins = PluginManager()
+    plugins = PluginManager(trust_uninstalled=True)
     loaded = plugins.load_from_py(TEST_DATA_DIR / "dynamic.py")
     assert isinstance(loaded, dict)
+
+    plugins = PluginManager(trust_uninstalled=False)
+    loaded = plugins.load_from_py(TEST_DATA_DIR / "dynamic.py")
+    assert loaded is None
 
 
 def test_load_py_invalid():

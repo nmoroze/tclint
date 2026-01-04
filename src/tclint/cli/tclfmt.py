@@ -129,7 +129,7 @@ def main():
         print(f"Invalid config file: {e}")
         return EXIT_INPUT_ERROR
 
-    plugin_manager = PluginManager()
+    plugin_manager = PluginManager(trust_uninstalled=args.trust_plugins)
 
     retcode = EXIT_OK
 
