@@ -222,8 +222,26 @@ _validate_style_max_blank_lines = And(
     Range(min=1),
 )
 _validate_style_indent_namespace_eval = bool
-_validate_style_spaces_in_braces = bool
 _validate_style_emacs = bool
+
+
+def parse_spaces_in_braces(v: str | bool) -> bool:
+    if isinstance(v, bool):
+        # Handle spaces-in-braces = true/false in config file.
+        return v
+    if v == "never":
+        return False
+    if v == "always":
+        return True
+    raise ValueError()
+
+
+_validate_style_spaces_in_braces = Coerce(
+    lambda v: (parse_spaces_in_braces(v)),
+    msg="expected always or never",
+)
+
+_validate_style_no_spaces_in_braces = Coerce(lambda v: (v))
 
 
 def _validate_config(config: dict, root: pathlib.Path):
@@ -376,12 +394,17 @@ def setup_tclfmt_config_cli_args(parser, cwd: pathlib.Path):
         "--indent-namespace-eval",
         "--no-indent-namespace-eval",
     )
-    _add_bool(
-        config_group,
-        parser,
-        "style_spaces_in_braces",
+    config_group.add_argument(
         "--spaces-in-braces",
+        type=_argparsify(_validate_style_spaces_in_braces),
+        metavar="<always|never>",
+        dest="style_spaces_in_braces",
+    )
+    # Alias for --spaces-in-braces never.
+    config_group.add_argument(
         "--no-spaces-in-braces",
+        action="store_false",
+        dest="style_spaces_in_braces",
     )
     _add_bool(
         config_group,
