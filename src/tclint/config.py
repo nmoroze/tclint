@@ -21,6 +21,8 @@ class SpacesInBraces(IntEnum):
 
     NEVER = 0
     ALWAYS = 1
+    BALANCED_NO = 2
+    BALANCED_YES = 3
 
 
 class ExcludePattern(NamedTuple):
@@ -243,12 +245,16 @@ def parse_spaces_in_braces(v: str | bool) -> SpacesInBraces:
         return SpacesInBraces.NEVER
     if v == "always":
         return SpacesInBraces.ALWAYS
+    if v == "balanced-no":
+        return SpacesInBraces.BALANCED_NO
+    if v == "balanced-yes":
+        return SpacesInBraces.BALANCED_YES
     raise ValueError()
 
 
 _validate_style_spaces_in_braces = Coerce(
     lambda v: (parse_spaces_in_braces(v)),
-    msg="expected always or never",
+    msg="always, never, balanced-yes, or balanced-no",
 )
 
 _validate_style_no_spaces_in_braces = Coerce(lambda v: (v))
@@ -407,7 +413,7 @@ def setup_tclfmt_config_cli_args(parser, cwd: pathlib.Path):
     config_group.add_argument(
         "--spaces-in-braces",
         type=_argparsify(_validate_style_spaces_in_braces),
-        metavar="<always|never>",
+        metavar="<always|never|balanced-yes|balanced-no>",
         dest="style_spaces_in_braces",
     )
     # Alias for --spaces-in-braces never.

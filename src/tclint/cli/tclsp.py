@@ -263,7 +263,14 @@ class TclspServer(LanguageServer):
             FormatterOpts(
                 indent=indent,
                 indent_mixed_tab_size=config.get_indent_mixed_tab_size(),
-                spaces_in_braces=config.style_spaces_in_braces == SpacesInBraces.ALWAYS,
+                spaces_in_braces=(
+                    config.style_spaces_in_braces == SpacesInBraces.ALWAYS
+                    or config.style_spaces_in_braces == SpacesInBraces.BALANCED_YES
+                ),
+                balanced_spaces_in_braces=(
+                    config.style_spaces_in_braces == SpacesInBraces.BALANCED_NO
+                    or config.style_spaces_in_braces == SpacesInBraces.BALANCED_YES
+                ),
                 max_blank_lines=config.style_max_blank_lines,
                 indent_namespace_eval=config.style_indent_namespace_eval,
                 emacs=False,

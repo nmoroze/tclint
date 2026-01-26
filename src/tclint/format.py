@@ -37,6 +37,7 @@ class LiteralBlock:
 class FormatterOpts:
     indent: str
     spaces_in_braces: bool
+    balanced_spaces_in_braces: bool
     max_blank_lines: int
     indent_namespace_eval: bool
     indent_mixed_tab_size: int
