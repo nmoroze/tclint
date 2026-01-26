@@ -7,7 +7,12 @@ import sys
 from tclint.cli.resolver import Resolver
 from tclint.cli.utils import register_codec_warning
 from tclint.commands.plugins import PluginManager
-from tclint.config import Config, ConfigError, setup_tclfmt_config_cli_args
+from tclint.config import (
+    Config,
+    ConfigError,
+    SpacesInBraces,
+    setup_tclfmt_config_cli_args,
+)
 from tclint.format import Formatter, FormatterOpts
 from tclint.parser import Parser, TclSyntaxError
 
@@ -33,7 +38,7 @@ def format(
         FormatterOpts(
             indent=config.get_indent(),
             indent_mixed_tab_size=config.get_indent_mixed_tab_size(),
-            spaces_in_braces=config.style_spaces_in_braces,
+            spaces_in_braces=config.style_spaces_in_braces == SpacesInBraces.ALWAYS,
             max_blank_lines=config.style_max_blank_lines,
             indent_namespace_eval=config.style_indent_namespace_eval,
             emacs=config.style_emacs,

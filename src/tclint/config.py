@@ -2,6 +2,7 @@ import argparse
 import dataclasses
 import pathlib
 import sys
+from enum import IntEnum
 from typing import Callable, NamedTuple
 from typing import Optional as OptionalType
 
@@ -13,6 +14,13 @@ else:
 from voluptuous import And, Coerce, Invalid, Optional, Range, Schema
 
 from tclint.violations import Rule
+
+
+class SpacesInBraces(IntEnum):
+    """Enum listing valid values for --spaces-in-braces."""
+
+    NEVER = 0
+    ALWAYS = 1
 
 
 class ExcludePattern(NamedTuple):
@@ -42,7 +50,9 @@ class Config:
     style_line_length: int = dataclasses.field(default=100)
     style_max_blank_lines: int = dataclasses.field(default=2)
     style_indent_namespace_eval: bool = dataclasses.field(default=True)
-    style_spaces_in_braces: bool = dataclasses.field(default=False)
+    style_spaces_in_braces: SpacesInBraces = dataclasses.field(
+        default=SpacesInBraces.NEVER
+    )
     style_emacs: bool = dataclasses.field(default=False)
 
     def apply_cli_args(self, args):
@@ -225,14 +235,14 @@ _validate_style_indent_namespace_eval = bool
 _validate_style_emacs = bool
 
 
-def parse_spaces_in_braces(v: str | bool) -> bool:
+def parse_spaces_in_braces(v: str | bool) -> SpacesInBraces:
     if isinstance(v, bool):
         # Handle spaces-in-braces = true/false in config file.
-        return v
+        return SpacesInBraces.ALWAYS if v else SpacesInBraces.NEVER
     if v == "never":
-        return False
+        return SpacesInBraces.NEVER
     if v == "always":
-        return True
+        return SpacesInBraces.ALWAYS
     raise ValueError()
 
 
@@ -403,7 +413,8 @@ def setup_tclfmt_config_cli_args(parser, cwd: pathlib.Path):
     # Alias for --spaces-in-braces never.
     config_group.add_argument(
         "--no-spaces-in-braces",
-        action="store_false",
+        action="store_const",
+        const=SpacesInBraces.NEVER,
         dest="style_spaces_in_braces",
     )
     _add_bool(
