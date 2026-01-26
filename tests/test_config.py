@@ -7,6 +7,7 @@ from tclint.config import (
     Config,
     ConfigError,
     ExcludePattern,
+    SpacesInBraces,
     setup_config_cli_args,
     setup_tclfmt_config_cli_args,
 )
@@ -32,7 +33,7 @@ def test_example_config():
     assert config.style_indent == 2
     assert config.style_line_length == 80
     assert config.style_indent_namespace_eval is False
-    assert config.style_spaces_in_braces is True
+    assert config.style_spaces_in_braces == SpacesInBraces.ALWAYS
 
 
 def test_invalid_rule():
@@ -119,7 +120,7 @@ def test_tclfmt_config_args():
     assert args.style_indent == 5
     assert args.style_max_blank_lines == 4
     assert args.style_indent_namespace_eval is True
-    assert args.style_spaces_in_braces is False
+    assert args.style_spaces_in_braces == SpacesInBraces.NEVER
 
 
 def test_invalid_tclint_args():

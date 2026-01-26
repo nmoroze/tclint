@@ -12,7 +12,13 @@ from pygls.workspace import TextDocument
 
 from tclint.cli import tclint, utils
 from tclint.commands.plugins import PluginManager
-from tclint.config import DEFAULT_CONFIGS, Config, ConfigError, load_config_at
+from tclint.config import (
+    DEFAULT_CONFIGS,
+    Config,
+    ConfigError,
+    SpacesInBraces,
+    load_config_at,
+)
 from tclint.format import Formatter, FormatterOpts
 from tclint.lexer import TclSyntaxError
 from tclint.parser import Parser
@@ -257,7 +263,7 @@ class TclspServer(LanguageServer):
             FormatterOpts(
                 indent=indent,
                 indent_mixed_tab_size=config.get_indent_mixed_tab_size(),
-                spaces_in_braces=config.style_spaces_in_braces,
+                spaces_in_braces=config.style_spaces_in_braces == SpacesInBraces.ALWAYS,
                 max_blank_lines=config.style_max_blank_lines,
                 indent_namespace_eval=config.style_indent_namespace_eval,
                 emacs=False,
