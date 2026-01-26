@@ -59,10 +59,45 @@ class Formatter:
 
         return indented
 
-    def _brace(self, lines: list[str]) -> list[str]:
+    def _brace(self, lines: list[str], space: tuple[int, int]) -> list[str]:
+        """Format content between braces.
+
+        The space argument indicates the amount of space in the input, for
+        instance:
+        - (1, 0) to represent 1 space before and no space after, for "{ 1}", and
+        - (0, -1) to represent no space, for "{}".
+        """
+
         spaces_in_braces = " " if self.opts.spaces_in_braces else ""
         if lines == [""]:
+            # Empty braces.
+
+            if self.opts.balanced_spaces_in_braces:
+                # Since we've got empty braces, there's no space before and
+                # after, so check that we have just one space argument.
+                assert space[0] != -1 and space[1] == -1
+                # Keep "{}" and "{ }" as is, but normalize more than one
+                # space to a single space.
+                spaces_in_braces = min(space[0], 1) * " "
+
             return ["{" + spaces_in_braces + "}"]
+
+        # Not empty braces.
+        if self.opts.balanced_spaces_in_braces:
+            # Check that we have a space before and space after argument.
+            assert space[0] != -1 and space[1] != -1
+            # Normalize more than one space to a single space.
+            before = min(space[0], 1)
+            after = min(space[1], 1)
+            if before + after == 1:
+                # If we have an unbalanced expression like "{1 }" or "{ 1}",
+                # transform it to either "{1}" or "{ 1 }", using spaces_in_braces.
+                pass
+            else:
+                # Check that we have a balanced expression.
+                assert before == after
+                # Keep either "{1}" or "{ 1 }".
+                spaces_in_braces = before * " "
 
         braced_lines = lines[:]
         braced_lines[0] = "{" + spaces_in_braces + lines[0]
@@ -254,7 +289,14 @@ class Formatter:
     def format_script(self, script: Script, should_indent=True) -> list[str]:
         lines = self.format_script_contents(script)
         if script.pos[0] == script.end_pos[0]:
-            return self._brace(lines)
+            space_before = -1
+            space_after = -1
+            if len(script.children) != 0:
+                space_before = script.children[0].pos[1] - script.pos[1] - 1
+                space_after = script.end_pos[1] - script.children[-1].end_pos[1] - 1
+            else:
+                space_before = script.end_pos[1] - script.pos[1] - 2
+            return self._brace(lines, (space_before, space_after))
 
         # Usually, we enforce that multi-line scripts start on a new line after the open
         # brace. However, if a comment was originally on the same line as the open brace
@@ -412,7 +454,16 @@ class Formatter:
             last_line = child.end_pos[0]
 
         if list_node.pos[0] == list_node.end_pos[0]:
-            return self._brace(contents)
+            space_before = -1
+            space_after = -1
+            if len(list_node.children) != 0:
+                space_before = list_node.children[0].pos[1] - list_node.pos[1] - 1
+                space_after = (
+                    list_node.end_pos[1] - list_node.children[-1].end_pos[1] - 1
+                )
+            else:
+                space_before = list_node.end_pos[1] - list_node.pos[1] - 2
+            return self._brace(contents, (space_before, space_after))
 
         return ["{"] + self._indent(contents, self.opts.indent) + ["}"]
 
@@ -442,7 +493,9 @@ class Formatter:
             formatted.extend(lines[1:])
 
         if expr.pos[0] == expr.end_pos[0]:
-            return self._brace(formatted)
+            space_before = expr.children[0].pos[1] - expr.pos[1] - 1
+            space_after = expr.end_pos[1] - expr.children[-1].end_pos[1] - 1
+            return self._brace(formatted, (space_before, space_after))
 
         return ["{"] + self._indent(formatted, self.opts.indent) + ["}"]
 

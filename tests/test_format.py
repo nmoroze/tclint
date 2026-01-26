@@ -12,6 +12,7 @@ def _test(
     indent="  ",
     indent_mixed_tab_size=0,
     spaces_in_braces=True,
+    balanced_spaces_in_braces=False,
     max_blank_lines=2,
     indent_namespace_eval=True,
     emacs=False,
@@ -22,7 +23,7 @@ def _test(
             indent=indent,
             indent_mixed_tab_size=indent_mixed_tab_size,
             spaces_in_braces=spaces_in_braces,
-            balanced_spaces_in_braces=False,
+            balanced_spaces_in_braces=balanced_spaces_in_braces,
             max_blank_lines=max_blank_lines,
             indent_namespace_eval=indent_namespace_eval,
             emacs=emacs,
@@ -534,6 +535,54 @@ def test_empty_braces():
 
     expected = r"if { 1 } { }"
     _test(script, expected, spaces_in_braces=True)
+
+
+def test_balanced_spaces_in_braces():
+    idem = [
+        r"if { 1 } { }",
+        r"if {1} { }",
+        r"if { 1 } {}",
+        r"if {1} {}",
+        r"if { 1 } { a }",
+        r"if {1} { a }",
+        r"if { 1 } {a}",
+        r"if {1} {a}",
+        r"proc foo {} {}",
+        r"proc foo {} { }",
+        r"proc foo { } {}",
+        r"proc foo { } { }",
+        r"proc foo {a} {}",
+        r"proc foo {a} { }",
+        r"proc foo { a } {}",
+        r"proc foo { a } { }",
+    ]
+    for script in idem:
+        _test(script, script, spaces_in_braces=False, balanced_spaces_in_braces=True)
+        _test(script, script, spaces_in_braces=True, balanced_spaces_in_braces=True)
+
+    balanced_same_for_never_and_always = [
+        (r"if {1} {  }", r"if {1} { }"),
+        (r"if {1} {  a  }", r"if {1} { a }"),
+        (r"proc foo {  } {}", r"proc foo { } {}"),
+        (r"proc foo {  a  } {}", r"proc foo { a } {}"),
+    ]
+    for item in balanced_same_for_never_and_always:
+        _test(item[0], item[1], spaces_in_braces=False, balanced_spaces_in_braces=True)
+        _test(item[0], item[1], spaces_in_braces=True, balanced_spaces_in_braces=True)
+
+    balanced_never_vs_always = [
+        (r"if { 1} {}", r"if {1} {}", r"if { 1 } {}"),
+        (r"if {1 } {}", r"if {1} {}", r"if { 1 } {}"),
+        (r"if {  1} {}", r"if {1} {}", r"if { 1 } {}"),
+        (r"if {1  } {}", r"if {1} {}", r"if { 1 } {}"),
+        (r"proc foo { a} {}", r"proc foo {a} {}", r"proc foo { a } {}"),
+        (r"proc foo {a } {}", r"proc foo {a} {}", r"proc foo { a } {}"),
+        (r"proc foo {  a} {}", r"proc foo {a} {}", r"proc foo { a } {}"),
+        (r"proc foo {a  } {}", r"proc foo {a} {}", r"proc foo { a } {}"),
+    ]
+    for item in balanced_never_vs_always:
+        _test(item[0], item[1], spaces_in_braces=False, balanced_spaces_in_braces=True)
+        _test(item[0], item[2], spaces_in_braces=True, balanced_spaces_in_braces=True)
 
 
 def test_function_line_breaks():
