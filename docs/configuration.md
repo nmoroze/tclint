@@ -31,6 +31,8 @@ indent-namespace-eval = false
 # whether to expect a single space (true) or no spaces (false) surrounding the contents of a braced expression or script argument.
 # defaults to false.
 spaces-in-braces = true
+# (experimental) make formatting similar to emacs tcl mode.
+emacs = false
 ```
 
 ## Config discovery

@@ -14,6 +14,7 @@ def _test(
     spaces_in_braces=True,
     max_blank_lines=2,
     indent_namespace_eval=True,
+    emacs=False,
 ):
     parser = Parser()
     format = Formatter(
@@ -23,6 +24,7 @@ def _test(
             spaces_in_braces=spaces_in_braces,
             max_blank_lines=max_blank_lines,
             indent_namespace_eval=indent_namespace_eval,
+            emacs=emacs,
         )
     )
     out = format.format_top(script, parser)
@@ -677,6 +679,7 @@ def test_partial():
             spaces_in_braces=True,
             max_blank_lines=2,
             indent_namespace_eval=True,
+            emacs=False,
         )
     )
 
@@ -714,6 +717,7 @@ puts "three"
             spaces_in_braces=True,
             max_blank_lines=2,
             indent_namespace_eval=True,
+            emacs=False,
         )
     )
 
@@ -745,6 +749,7 @@ def test_partial_mixed():
             spaces_in_braces=True,
             max_blank_lines=2,
             indent_namespace_eval=True,
+            emacs=False,
         )
     )
 
@@ -780,6 +785,7 @@ puts "foo"
             spaces_in_braces=True,
             max_blank_lines=2,
             indent_namespace_eval=True,
+            emacs=False,
         )
     )
 
@@ -805,3 +811,18 @@ switch a {
 }
 """.strip()
     _test(script, script, spaces_in_braces=True)
+
+
+def test_hanging_indent():
+    script = r"""
+set options [list a \
+                 b c \
+                 d \
+                 e]
+set options \
+    [list a \
+         b c \
+         d \
+         e]
+""".strip()
+    _test(script, script, indent="    ", emacs=True)

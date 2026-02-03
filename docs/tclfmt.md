@@ -161,6 +161,12 @@ set foo [
 ]
 ```
 
+### Emacs Indentation
+
+An experimental mode (`--emacs`) is available to make indentation style similar
+to emacs tcl mode.  The goal is to minimize changes in code written in this
+editing mode.
+
 ### Line length
 
 `tclfmt` does not (yet) reformat lines to stay under a certain length. However, it

@@ -43,6 +43,7 @@ class Config:
     style_max_blank_lines: int = dataclasses.field(default=2)
     style_indent_namespace_eval: bool = dataclasses.field(default=True)
     style_spaces_in_braces: bool = dataclasses.field(default=False)
+    style_emacs: bool = dataclasses.field(default=False)
 
     def apply_cli_args(self, args):
         args_dict = vars(args)
@@ -222,6 +223,7 @@ _validate_style_max_blank_lines = And(
 )
 _validate_style_indent_namespace_eval = bool
 _validate_style_spaces_in_braces = bool
+_validate_style_emacs = bool
 
 
 def _error_if_dynamic_plugin(p: pathlib.Path):
@@ -386,6 +388,13 @@ def setup_tclfmt_config_cli_args(parser, cwd: pathlib.Path):
         "style_spaces_in_braces",
         "--spaces-in-braces",
         "--no-spaces-in-braces",
+    )
+    _add_bool(
+        config_group,
+        parser,
+        "style_emacs",
+        "--emacs",
+        "--no-emacs",
     )
 
 
