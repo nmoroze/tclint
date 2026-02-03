@@ -36,6 +36,7 @@ def format(
             spaces_in_braces=config.style_spaces_in_braces,
             max_blank_lines=config.style_max_blank_lines,
             indent_namespace_eval=config.style_indent_namespace_eval,
+            emacs=config.style_emacs,
         )
     )
     if partial:

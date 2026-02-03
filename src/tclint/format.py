@@ -40,6 +40,7 @@ class FormatterOpts:
     max_blank_lines: int
     indent_namespace_eval: bool
     indent_mixed_tab_size: int
+    emacs: bool
 
 
 class Formatter:
@@ -291,6 +292,10 @@ class Formatter:
 
             if last_line == child.pos[0]:
                 formatted[-1] += " "
+                if self.opts.emacs and child_lines[0][-1] == "\\":
+                    base_indent = (len(formatted[-1])) * " "
+                else:
+                    base_indent = ""
                 formatted[-1] += child_lines[0]
             else:
                 formatted[-1] += " \\"
@@ -300,7 +305,7 @@ class Formatter:
             if hanging_indent:
                 formatted.extend(self._indent(child_lines[1:], self.opts.indent))
             else:
-                formatted.extend(child_lines[1:])
+                formatted.extend(self._indent(child_lines[1:], base_indent))
 
             last_line = child.end_pos[0]
 
@@ -321,7 +326,11 @@ class Formatter:
             formatted.append("]")
         else:
             formatted.append("[" + contents[0])
-            formatted.extend(contents[1:])
+            if self.opts.emacs:
+                indent = " "
+            else:
+                indent = ""
+            formatted.extend(self._indent(contents[1:], indent))
             formatted[-1] += "]"
 
         return formatted
