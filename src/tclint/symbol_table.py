@@ -7,7 +7,7 @@ from tclint.syntax_tree import Command, CommandSub, Node, Script, Visitor
 class SymbolTable:
     """Holds a symbol table (links symbols to nodes)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.proc_def: defaultdict[str, list[Node]] = defaultdict(list)
 
     def add_proc_definition(self, command: Command) -> None:
