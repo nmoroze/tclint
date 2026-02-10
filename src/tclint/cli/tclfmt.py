@@ -45,7 +45,7 @@ def format(
         return formatter.format_top(script, parser)
 
 
-def check(path: pathlib.Path, script: str, formatted: str):
+def check(path: str, script: str, formatted: str):
     parser = Parser()
     original_tree = parser.parse(script)
     formatted_tree = parser.parse(formatted)
@@ -167,7 +167,7 @@ def main():
                 print(formatted, end="")
 
             if args.debug > 0:
-                check(path, script, formatted)
+                check(out_prefix, script, formatted)
         except TclSyntaxError as e:
             line, col = e.start
             print(f"{out_prefix}:{line}:{col}: syntax error: {e}", file=sys.stderr)

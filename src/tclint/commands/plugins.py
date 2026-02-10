@@ -6,7 +6,7 @@ from types import ModuleType
 from typing import Optional
 
 import voluptuous
-from importlib_metadata import entry_points
+from importlib_metadata import EntryPoint, entry_points
 
 from tclint.commands import builtin as _builtin
 from tclint.commands import schema
@@ -14,10 +14,10 @@ from tclint.commands import schema
 
 class PluginManager:
     def __init__(self, trust_uninstalled=False):
-        self._loaded = {}
-        self._installed = {}
-        self._loaded_specs = {}
-        self._loaded_py = {}
+        self._loaded: dict[str, Optional[dict]] = {}
+        self._installed: dict[str, EntryPoint] = {}
+        self._loaded_specs: dict[pathlib.Path, Optional[dict]] = {}
+        self._loaded_py: dict[pathlib.Path, Optional[dict]] = {}
         for plugin in entry_points(group="tclint.plugins"):
             if plugin.name in self._installed:
                 print(f"Warning: found duplicate definitions for plugin {plugin.name}")

@@ -119,8 +119,8 @@ class RedefinedBuiltinChecker(Visitor):
 
 
 class UnbracedExprChecker(Visitor):
-    def check(self, _, tree, __):
-        self._violations = []
+    def check(self, _, tree, __) -> list[Violation]:
+        self._violations: list[Violation] = []
         tree.accept(self, recurse=True)
         return self._violations
 
@@ -174,8 +174,8 @@ class UnbracedExprChecker(Visitor):
 
 
 class RedundantExprChecker(Visitor):
-    def check(self, _, tree, __):
-        self._violations = []
+    def check(self, _, tree, __) -> list[Violation]:
+        self._violations: list[Violation] = []
         tree.accept(self, recurse=True)
         return self._violations
 

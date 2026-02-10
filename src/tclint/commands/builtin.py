@@ -34,7 +34,7 @@ these would be helpful for your use case, please file an issue.
 
 from tclint.commands.checks import CommandArgError, check_arg_spec, check_count, eval
 from tclint.commands.schema import commands_schema
-from tclint.syntax_tree import BareWord
+from tclint.syntax_tree import BareWord, Node
 
 
 def _check_code(arg):
@@ -432,7 +432,7 @@ def foreach(args, parser):
 def _if(args, parser):
     # ref: https://www.tcl-lang.org/man/tcl8.6/TclCmd/if.htm
 
-    new_args = []
+    new_args: list[Node] = []
 
     # Parse if condition.
     if len(new_args) == len(args):

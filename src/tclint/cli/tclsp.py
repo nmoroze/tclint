@@ -62,7 +62,7 @@ def lint(source, config, plugin_manager, path):
                     start=start,
                     end=end,
                 ),
-                code=violation.id,
+                code=str(violation.id),
                 source=DIAGNOSTIC_SOURCE,
             )
         )
@@ -443,7 +443,7 @@ def init(ls: TclspServer, params: lsp.InitializeParams):
     capabilities = ls.client_capabilities.workspace
 
     try:
-        ls.client_supports_refresh = (
+        ls.client_supports_refresh = bool(
             capabilities.diagnostics.refresh_support  # type: ignore[union-attr]
         )
     except AttributeError:
@@ -465,7 +465,7 @@ def init(ls: TclspServer, params: lsp.InitializeParams):
         for settings in (ls.global_settings, *ls.workspace_settings.values()):
             if settings.config_file is not None:
                 watchers.append(
-                    lsp.FileSystemWatcher(glob_pattern=settings.config_file)
+                    lsp.FileSystemWatcher(glob_pattern=str(settings.config_file))
                 )
 
         ls.register_capability(
