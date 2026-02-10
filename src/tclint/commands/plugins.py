@@ -13,7 +13,7 @@ from tclint.commands import schema
 
 
 class PluginManager:
-    def __init__(self, trust_uninstalled=False):
+    def __init__(self, trust_uninstalled=False) -> None:
         self._loaded: dict[str, Optional[dict]] = {}
         self._installed: dict[str, EntryPoint] = {}
         self._loaded_specs: dict[pathlib.Path, Optional[dict]] = {}

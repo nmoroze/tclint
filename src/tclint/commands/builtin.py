@@ -429,7 +429,7 @@ def foreach(args, parser):
     return check_arg_spec("foreach", args, parser, spec)
 
 
-def _if(args, parser):
+def _if(args, parser) -> list[Node]:
     # ref: https://www.tcl-lang.org/man/tcl8.6/TclCmd/if.htm
 
     new_args: list[Node] = []
