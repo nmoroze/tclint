@@ -169,7 +169,7 @@ def main():
             if args.debug > 0:
                 check(path, script, formatted)
         except TclSyntaxError as e:
-            line, col = e.pos
+            line, col = e.start
             print(f"{out_prefix}:{line}:{col}: syntax error: {e}", file=sys.stderr)
             retcode |= EXIT_SYNTAX_ERROR
             continue
