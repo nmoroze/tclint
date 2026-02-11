@@ -59,6 +59,35 @@ class Formatter:
 
         return indented
 
+    def get_spaces_in_braces(self, space: tuple[int, int]):
+        spaces_in_braces = " " if self.opts.spaces_in_braces else ""
+        if not self.opts.balanced_spaces_in_braces:
+            # No balancing.
+            return spaces_in_braces
+
+        if space[0] == -1 and space[1] == -1:
+            # No info to do balancing.
+            return spaces_in_braces
+
+        assert not (space[0] == -1 and space[1] != -1)
+        if space[0] != -1 and space[1] == -1:
+            # we've got empty braces.  Keep "{}" and "{ }" as is, but normalize
+            # more than one space to a single space.
+            return min(space[0], 1) * " "
+
+        # Normalize more than one space to a single space.
+        before = min(space[0], 1)
+        after = min(space[1], 1)
+        if before + after == 1:
+            # If we have an unbalanced expression like "{1 }" or "{ 1}",
+            # transform it to either "{1}" or "{ 1 }", using spaces_in_braces.
+            return spaces_in_braces
+
+        # Check that we have a balanced expression.
+        assert before == after
+        # Keep either "{1}" or "{ 1 }".
+        return before * " "
+
     def _brace(self, lines: list[str], space: tuple[int, int]) -> list[str]:
         """Format content between braces.
 
@@ -68,37 +97,12 @@ class Formatter:
         - (0, -1) to represent no space, for "{}".
         """
 
-        spaces_in_braces = " " if self.opts.spaces_in_braces else ""
+        spaces_in_braces = self.get_spaces_in_braces(space)
         if lines == [""]:
             # Empty braces.
-
-            if self.opts.balanced_spaces_in_braces:
-                # Since we've got empty braces, there's no space before and
-                # after, so check that we have just one space argument.
-                assert space[0] != -1 and space[1] == -1
-                # Keep "{}" and "{ }" as is, but normalize more than one
-                # space to a single space.
-                spaces_in_braces = min(space[0], 1) * " "
-
             return ["{" + spaces_in_braces + "}"]
 
         # Not empty braces.
-        if self.opts.balanced_spaces_in_braces:
-            # Check that we have a space before and space after argument.
-            assert space[0] != -1 and space[1] != -1
-            # Normalize more than one space to a single space.
-            before = min(space[0], 1)
-            after = min(space[1], 1)
-            if before + after == 1:
-                # If we have an unbalanced expression like "{1 }" or "{ 1}",
-                # transform it to either "{1}" or "{ 1 }", using spaces_in_braces.
-                pass
-            else:
-                # Check that we have a balanced expression.
-                assert before == after
-                # Keep either "{1}" or "{ 1 }".
-                spaces_in_braces = before * " "
-
         braced_lines = lines[:]
         braced_lines[0] = "{" + spaces_in_braces + lines[0]
         braced_lines[-1] += spaces_in_braces + "}"
