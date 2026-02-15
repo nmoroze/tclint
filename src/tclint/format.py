@@ -555,9 +555,9 @@ class Formatter:
         return self._format_op(expr)
 
     def format_function(self, function):
-        name = self.format(function.name)
-        assert len(name) == 1
-        name = name[0]
+        name_parts = self.format(function.name)
+        assert len(name_parts) == 1
+        name = name_parts[0]
 
         formatted = [f"{name}("]
 

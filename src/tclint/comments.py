@@ -37,24 +37,25 @@ class CommentVisitor(Visitor):
 
         command = split[0]
 
-        rule_strs = []
+        rule_strs: list[str] = []
         if len(split) > 1:
             rest = split[-1]
-            rule_strs = rest.split("--", 1)[0]
-            rule_strs = rule_strs.replace(" ", "")
-            rule_strs = rule_strs.split(",")
+            s = rest.split("--", 1)[0]
+            s = s.replace(" ", "")
+            rule_strs = s.split(",")
 
-        rules = []
+        rules: list[Rule] = []
         if not rule_strs:
             # default if no rules specified is all violation types
             rules = ALL_RULES
         else:
-            for rule in rule_strs:
+            for rule_str in rule_strs:
                 try:
-                    rules.append(Rule(rule))
+                    rules.append(Rule(rule_str))
                 except ValueError:
                     self._warning(
-                        f"unknown rule '{rule}' provided to '{command}'", comment.pos
+                        f"unknown rule '{rule_str}' provided to '{command}'",
+                        comment.pos,
                     )
 
         if command == "tclint-disable":

@@ -238,5 +238,5 @@ class Lexer:
         self.next()
 
     def assert_(self, *tokens):
-        assert self.current.type in tokens
+        assert self.type() in tokens
         self.next()

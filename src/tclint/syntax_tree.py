@@ -263,6 +263,11 @@ class Script(Node):
 
 
 class Comment(Node):
+    value: str
+
+    def __init__(self, value: str, pos=None, end_pos=None):
+        super().__init__(value, pos=pos, end_pos=end_pos)
+
     def accept(self, visitor, recurse=False):
         if recurse:
             self._recurse(visitor)
@@ -315,6 +320,8 @@ class BracedWord(Node):
 
     @property
     def contents_pos(self):
+        if self.line is None or self.col is None:
+            return None
         return (self.line, self.col + 1)
 
 
@@ -341,6 +348,8 @@ class QuotedWord(Node):
     @property
     def contents_pos(self):
         if self.contents is None:
+            return None
+        if self.line is None or self.col is None:
             return None
         return (self.line, self.col + 1)
 

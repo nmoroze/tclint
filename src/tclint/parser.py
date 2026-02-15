@@ -199,6 +199,7 @@ class Parser:
         self._debug_indent += 1
         pos = ts.pos()
 
+        script: Script | CommandSub
         if in_command_sub:
             script = CommandSub(pos=pos)
         else:

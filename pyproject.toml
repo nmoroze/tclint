@@ -64,6 +64,9 @@ asyncio_default_fixture_loop_scope = "function"
 [tool.setuptools_scm]
 version_file = "src/tclint/_version.py"
 
+[tool.mypy]
+check_untyped_defs = true
+
 [[tool.mypy.overrides]]
 module = [
     "ply.*",
