@@ -42,6 +42,7 @@ class FormatterOpts:
     indent_namespace_eval: bool
     indent_mixed_tab_size: int
     emacs: bool
+    debug_whitespace: bool
 
 
 class Formatter:
@@ -59,8 +60,22 @@ class Formatter:
 
         return indented
 
+    def space(self, debug_char, space=None):
+        """Returns a string required for indentation or separation.
+
+        By default, just returns a string of space. If enabled using
+        `--debug-whitespace`, returns a string of debug_char.
+        """
+        assert len(debug_char) == 1
+        if space is None:
+            space = self.opts.indent
+        if self.opts.debug_whitespace:
+            # Enable this to return a string of debug_char.
+            return len(space) * debug_char
+        return space
+
     def get_spaces_in_braces(self, space: tuple[int, int]):
-        spaces_in_braces = " " if self.opts.spaces_in_braces else ""
+        spaces_in_braces = self.space("A", " ") if self.opts.spaces_in_braces else ""
         if not self.opts.balanced_spaces_in_braces:
             # No balancing.
             return spaces_in_braces
@@ -73,7 +88,7 @@ class Formatter:
         if space[0] != -1 and space[1] == -1:
             # we've got empty braces.  Keep "{}" and "{ }" as is, but normalize
             # more than one space to a single space.
-            return min(space[0], 1) * " "
+            return min(space[0], 1) * self.space("B", " ")
 
         # Normalize more than one space to a single space.
         before = min(space[0], 1)
@@ -86,7 +101,7 @@ class Formatter:
         # Check that we have a balanced expression.
         assert before == after
         # Keep either "{1}" or "{ 1 }".
-        return before * " "
+        return before * self.space("C", " ")
 
     def _brace(self, lines: list[str], space: tuple[int, int]) -> list[str]:
         """Format content between braces.
@@ -312,11 +327,11 @@ class Formatter:
             and isinstance(script.children[0], Comment)
             and script.pos[0] == script.children[0].pos[0]
         ):
-            open_brace += " " + lines[0]
+            open_brace += self.space("D", " ") + lines[0]
             lines = lines[1:]
 
         if should_indent:
-            return [open_brace] + self._indent(lines, self.opts.indent) + ["}"]
+            return [open_brace] + self._indent(lines, self.space("E")) + ["}"]
         else:
             return [open_brace] + lines + ["}"]
 
@@ -338,19 +353,19 @@ class Formatter:
                 child_lines = self.format(child)
 
             if last_line == child.pos[0]:
-                formatted[-1] += " "
+                formatted[-1] += self.space("F", " ")
                 if self.opts.emacs and child_lines[0][-1] == "\\":
-                    base_indent = (len(formatted[-1])) * " "
+                    base_indent = (len(formatted[-1])) * self.space("G", " ")
                 else:
                     base_indent = ""
                 formatted[-1] += child_lines[0]
             else:
-                formatted[-1] += " \\"
-                formatted.append(self.opts.indent + child_lines[0])
+                formatted[-1] += self.space("H", " ") + "\\"
+                formatted.append(self.space("I") + child_lines[0])
                 hanging_indent = True
 
             if hanging_indent:
-                formatted.extend(self._indent(child_lines[1:], self.opts.indent))
+                formatted.extend(self._indent(child_lines[1:], self.space("J")))
             else:
                 formatted.extend(self._indent(child_lines[1:], base_indent))
 
@@ -369,12 +384,12 @@ class Formatter:
         contents = self.format_script_contents(command_sub)
         if len(command_sub.children) > 1 and len(contents) > 1:
             formatted.append("[")
-            formatted.extend(self._indent(contents, self.opts.indent))
+            formatted.extend(self._indent(contents, self.space("K")))
             formatted.append("]")
         else:
             formatted.append("[" + contents[0])
             if self.opts.emacs:
-                indent = " "
+                indent = self.space("L", " ")
             else:
                 indent = ""
             formatted.extend(self._indent(contents[1:], indent))
@@ -445,7 +460,7 @@ class Formatter:
         for child in list_node.children:
             if last_line is not None:
                 if last_line == child.pos[0]:
-                    contents[-1] += " "
+                    contents[-1] += self.space("M", " ")
                 else:
                     newlines = child.pos[0] - last_line
                     newlines = min(newlines, 3)
@@ -469,7 +484,7 @@ class Formatter:
                 space_before = list_node.end_pos[1] - list_node.pos[1] - 2
             return self._brace(contents, (space_before, space_after))
 
-        return ["{"] + self._indent(contents, self.opts.indent) + ["}"]
+        return ["{"] + self._indent(contents, self.space("N")) + ["}"]
 
     def format_expression(self, expr) -> list[str]:
         formatted = [""]
@@ -478,7 +493,7 @@ class Formatter:
             formatted[-1] += lines[0]
             for line in lines[1:]:
                 formatted[-1] += " \\"
-                formatted += self._indent([line], self.opts.indent)
+                formatted += self._indent([line], self.space("O"))
 
         # Trick: we know there are quotes around the expression if the start of the
         # expression is a different column than its first child.
@@ -501,7 +516,7 @@ class Formatter:
             space_after = expr.end_pos[1] - expr.children[-1].end_pos[1] - 1
             return self._brace(formatted, (space_before, space_after))
 
-        return ["{"] + self._indent(formatted, self.opts.indent) + ["}"]
+        return ["{"] + self._indent(formatted, self.space("P")) + ["}"]
 
     def format_paren_expression(self, expr) -> list[str]:
         body = expr.body
@@ -514,7 +529,7 @@ class Formatter:
             formatted[-1] += lines[0]
             formatted.extend(lines[1:])
 
-        formatted = formatted[0:1] + self._indent(formatted[1:], self.opts.indent)
+        formatted = formatted[0:1] + self._indent(formatted[1:], self.space("Q"))
 
         if expr.end_pos[0] != body.end_pos[0]:
             formatted.append(")")
@@ -541,7 +556,7 @@ class Formatter:
             if last.end_pos[0] != next.pos[0]:
                 formatted.extend(lines)
             else:
-                formatted[-1] += " "
+                formatted[-1] += self.space("R", " ")
                 formatted[-1] += lines[0]
                 formatted.extend(lines[1:])
             last = next
@@ -570,13 +585,13 @@ class Formatter:
                 formatted.extend(lines)
             else:
                 if i > 0:
-                    formatted[-1] += " "
+                    formatted[-1] += self.space("S", " ")
                 formatted[-1] += lines[0]
                 formatted.extend(lines[1:])
             last = child
 
         # indent any continuation lines, but we leave the closing paren dedented
-        formatted = formatted[0:1] + self._indent(formatted[1:], self.opts.indent)
+        formatted = formatted[0:1] + self._indent(formatted[1:], self.space("T"))
 
         if last.end_pos[0] != function.end_pos[0]:
             formatted.append(")")

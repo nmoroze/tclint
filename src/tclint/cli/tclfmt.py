@@ -29,7 +29,12 @@ EXIT_INPUT_ERROR = 4
 
 
 def format(
-    script: str, config: Config, plugins: PluginManager, debug=False, partial=False
+    script: str,
+    config: Config,
+    plugins: PluginManager,
+    debug=False,
+    debug_whitespace=False,
+    partial=False,
 ) -> str:
     _plugins = [config.commands] if config.commands is not None else []
     parser = Parser(debug=debug, commands=plugins.get_commands(_plugins))
@@ -49,6 +54,7 @@ def format(
             max_blank_lines=config.style_max_blank_lines,
             indent_namespace_eval=config.style_indent_namespace_eval,
             emacs=config.style_emacs,
+            debug_whitespace=debug_whitespace,
         )
     )
     if partial:
@@ -100,6 +106,12 @@ def main():
             "display debug output. Provide additional times to increase the verbosity"
             " of output (e.g. -dd)"
         ),
+    )
+    parser.add_argument(
+        "--debug-whitespace",
+        action="store_true",
+        default=False,
+        help="display whitespace in debug mode.",
     )
     parser.add_argument(
         "-c",
@@ -163,6 +175,7 @@ def main():
                 config,
                 plugin_manager,
                 debug=(args.debug > 1),
+                debug_whitespace=args.debug_whitespace,
                 partial=args.partial,
             )
             if args.in_place and path:
@@ -179,7 +192,13 @@ def main():
                 print(formatted, end="")
 
             if args.debug > 0:
-                check(out_prefix, script, formatted)
+                if args.debug_whitespace:
+                    print(
+                        "Warning: --debug-whitespace enabled, disabling original vs."
+                        " formatted syntax tree check"
+                    )
+                else:
+                    check(out_prefix, script, formatted)
         except TclSyntaxError as e:
             line, col = e.start
             print(f"{out_prefix}:{line}:{col}: syntax error: {e}", file=sys.stderr)
