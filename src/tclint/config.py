@@ -278,6 +278,7 @@ def _validate_config(config: dict, root: pathlib.Path):
             Optional("max-blank-lines"): _validate_style_max_blank_lines,
             Optional("indent-namespace-eval"): _validate_style_indent_namespace_eval,
             Optional("spaces-in-braces"): _validate_style_spaces_in_braces,
+            Optional("emacs"): _validate_style_emacs,
         },
     })
 
