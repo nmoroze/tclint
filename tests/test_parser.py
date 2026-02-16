@@ -516,6 +516,44 @@ def test_eval():
     )
 
 
+def test_eval_braced_positions():
+    # Regression test for https://github.com/nmoroze/tclint/issues/151
+    # Parser reported incorrect positions after eval with a braced argument.
+    script = "eval { {*}[lindex $args 0] }"
+
+    tree = parse(script)
+    assert tree == Script(
+        Command(
+            BareWord("eval"),
+            Script(
+                Command(
+                    ArgExpansion(
+                        CommandSub(
+                            Command(BareWord("lindex"), VarSub("args"), BareWord("0"))
+                        )
+                    ),
+                )
+            ),
+        )
+    )
+
+    eval_command = tree.children[0]
+    inner_script = eval_command.args[0]
+    command = inner_script.children[0]
+    arg_expansion = command.children[0]
+    command_sub = arg_expansion.children[0]
+
+    # The Command inside the braced eval argument should start at col 8
+    # (col 6 is '{', col 7 is ' ', col 8 is '{*}')
+    assert command.pos == (1, 8)
+    # ArgExpansion ({*}) starts at col 8
+    assert arg_expansion.pos == (1, 8)
+    # CommandSub ([lindex ...]) starts at col 11
+    assert command_sub.pos == (1, 11)
+    # BareWord("lindex") starts at col 12
+    assert command_sub.children[0].children[0].pos == (1, 12)
+
+
 def test_dict_for():
     script = r"""dict for {key value} mydict {
         puts "$key $value"
