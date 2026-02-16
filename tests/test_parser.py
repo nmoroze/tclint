@@ -484,6 +484,22 @@ def test_eval_positions():
     assert command.children[2].pos == (2, 2)
 
 
+def test_eval_braced_positions():
+    script = "eval { {*}[lindex $args 0] }"
+
+    tree = parse(script)
+    eval_command = tree.children[0]
+    inner_script = eval_command.args[0]
+    command = inner_script.children[0]
+    assert command.pos == (1, 8)
+    arg_expansion = command.children[0]
+    assert arg_expansion.pos == (1, 8)
+    command_sub = arg_expansion.children[0]
+    assert command_sub.pos == (1, 11)
+    lindex = command_sub.children[0].children[0]
+    assert lindex.pos == (1, 12)
+
+
 def test_eval_braced_multi_arg():
     script = "eval puts {a b c}"
 
