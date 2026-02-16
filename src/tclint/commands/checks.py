@@ -124,7 +124,7 @@ def eval(args: list[Node], parser: Parser, command: str) -> list[Node]:
 
         prev_arg_end_pos = arg.end_pos
 
-    script = parser.parse(eval_script, pos=(args[0].pos))
+    script = parser.parse(eval_script, pos=(args[0].contents_pos))
     script.end_pos = args[-1].end_pos
 
     return [script]
