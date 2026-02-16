@@ -16,6 +16,7 @@ def _test(
     max_blank_lines=2,
     indent_namespace_eval=True,
     emacs=False,
+    debug_whitespace=False,
 ):
     parser = Parser()
     format = Formatter(
@@ -27,6 +28,7 @@ def _test(
             max_blank_lines=max_blank_lines,
             indent_namespace_eval=indent_namespace_eval,
             emacs=emacs,
+            debug_whitespace=debug_whitespace,
         )
     )
     out = format.format_top(script, parser)
@@ -731,6 +733,7 @@ def test_partial():
             max_blank_lines=2,
             indent_namespace_eval=True,
             emacs=False,
+            debug_whitespace=False,
         )
     )
 
@@ -770,6 +773,7 @@ puts "three"
             max_blank_lines=2,
             indent_namespace_eval=True,
             emacs=False,
+            debug_whitespace=False,
         )
     )
 
@@ -803,6 +807,7 @@ def test_partial_mixed():
             max_blank_lines=2,
             indent_namespace_eval=True,
             emacs=False,
+            debug_whitespace=False,
         )
     )
 
@@ -840,6 +845,7 @@ puts "foo"
             max_blank_lines=2,
             indent_namespace_eval=True,
             emacs=False,
+            debug_whitespace=False,
         )
     )
 
