@@ -34,6 +34,7 @@ def test_example_config():
     assert config.style_line_length == 80
     assert config.style_indent_namespace_eval is False
     assert config.style_spaces_in_braces == SpacesInBraces.ALWAYS
+    assert config.style_emacs is True
 
 
 def test_invalid_rule():
