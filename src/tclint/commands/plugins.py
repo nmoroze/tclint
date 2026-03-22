@@ -104,6 +104,14 @@ class PluginManager:
         if path in self._loaded_py:
             return self._loaded_py[path]
 
+        spec = self._load_from_py(path)
+        self._loaded_py[path] = spec
+        return spec
+
+    def _load_from_py(self, path: pathlib.Path) -> Optional[dict]:
+        mod = None
+        name = path.stem
+
         # By default, reject paths to dynamic plugins. This restriction is designed to
         # make it explicit when tclint is executing external code.
         if not self._trust_uninstalled:
@@ -112,14 +120,6 @@ class PluginManager:
                 " this path, re-run with --trust-plugins to load the plugin"
             )
             return None
-
-        spec = self._load_from_py(path)
-        self._loaded_py[path] = spec
-        return spec
-
-    def _load_from_py(self, path: pathlib.Path) -> Optional[dict]:
-        mod = None
-        name = path.stem
 
         try:
             spec = spec_from_file_location(name, path)
