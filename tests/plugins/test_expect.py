@@ -9,9 +9,20 @@ def test_load():
     assert PluginManager().load("expect") is not None
 
 
-@pytest.mark.parametrize("command", ["close", "close -i $spawn_id"])
+@pytest.mark.parametrize("command", ["close", "close -i $spawn_id", "close $channelId"])
 def test_parse_valid(command):
     plugins = PluginManager()
     parser = Parser(commands=plugins.get_commands(["expect"]))
     parser.parse(command)
     assert len(parser.violations) == 0, f"unexpected violation: {parser.violations[0]}"
+
+
+@pytest.mark.parametrize(
+    "command", ["close -i $spawn_id $channelId", "close -i", "close foo bar baz"]
+)
+def test_parse_invalid(command):
+    plugins = PluginManager()
+    parser = Parser(commands=plugins.get_commands(["expect"]))
+    parser.parse(command)
+    assert len(parser.violations) > 0
+    print(", ".join(map(str, parser.violations)))
