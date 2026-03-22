@@ -8,6 +8,7 @@ This page lists all lint violations that may be reported by `tclint`.
 - [`redefined-builtin`](#redefined-builtin)
 - [`unbraced-expr`](#unbraced-expr)
 - [`redundant-expr`](#redundant-expr)
+- [`unopened-quote`](#unopened-quote)
 
 ## `line-length`
 
@@ -94,3 +95,27 @@ if {$foo % 2 == 0} {
 
 These command substitutions are redundant, which inhibits readability and may negatively
 impact performance.
+
+## `unopened-quote`
+
+Raised when an unescaped double quote character `"` appears as a literal character
+within a word, rather than as a quoting delimiter. This usually indicates one of the
+following bugs:
+
+- A missing space before a quoted string:
+  ```tcl
+  # BAD
+  puts -nonewline"Hello world!"
+  ```
+
+- A missing opening quote:
+  ```tcl
+  # BAD
+  puts Hello world!"
+  ```
+
+### Rationale
+
+In Tcl, `"` is only recognized as a quoting delimiter at the start of a word. When it
+appears mid-word, it is silently treated as a literal character, which is rarely the
+author's intent and can result in unexpected behavior.

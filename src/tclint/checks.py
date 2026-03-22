@@ -218,11 +218,33 @@ class RedundantExprChecker(Visitor):
             self._check_operand(arg)
 
 
+class UnopenedQuoteChecker(Visitor):
+    # Matches a literal " not preceded by backslash (escaped quotes are intentional)
+    BARE_QUOTE_RE = re.compile(r'(?<!\\)"')
+
+    def check(self, _, tree, __) -> list[Violation]:
+        self._violations: list[Violation] = []
+        tree.accept(self, recurse=True)
+        return self._violations
+
+    def visit_bare_word(self, word):
+        if self.BARE_QUOTE_RE.search(word.value):
+            self._violations.append(
+                Violation(
+                    Rule.UNOPENED_QUOTE,
+                    'found " without opening quote',
+                    word.pos,
+                    word.end_pos,
+                )
+            )
+
+
 def get_checkers(plugin_manager: PluginManager):
     checkers = (
         RedefinedBuiltinChecker(plugin_manager),
         UnbracedExprChecker(),
         RedundantExprChecker(),
+        UnopenedQuoteChecker(),
         LineLengthChecker(),
         TrailingWhitespaceChecker(),
     )

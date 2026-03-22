@@ -15,6 +15,7 @@ class Rule(Enum):
     REDEFINED_BUILTIN = "redefined-builtin"
     UNBRACED_EXPR = "unbraced-expr"
     REDUNDANT_EXPR = "redundant-expr"
+    UNOPENED_QUOTE = "unopened-quote"
 
     def __str__(self):
         return self.value

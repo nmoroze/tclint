@@ -1,0 +1,4 @@
+data/unopened-quote.tcl:2:15: found " without opening quote [unopened-quote]
+data/unopened-quote.tcl:2:46: found " without opening quote [unopened-quote]
+data/unopened-quote.tcl:4:23: found " without opening quote [unopened-quote]
+data/unopened-quote.tcl:6:6: found " without opening quote [unopened-quote]
