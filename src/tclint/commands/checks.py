@@ -156,74 +156,18 @@ def check_arg_spec(
         return dispatch_subcommands(command, args, parser, arg_spec["subcommands"])
 
     switches = arg_spec["switches"]
-    args_allowed = set(switches)
+    mapped, positional_args = map_switches(args, switches, command)
+
     args_required = {switch for switch in switches if switches[switch]["required"]}
+    missing_required = args_required.difference(mapped)
 
-    # indices into args
-    positional_args: list[int] = []
-    arg_i = 0
-
-    if not switches:
-        positional_args = list(range(len(args)))
-        arg_i = len(args)
-
-    while arg_i < len(args):
-        arg = args[arg_i]
-        arg_i += 1
-
-        # To facilitate better error messages, we expect that switches are always
-        # specified as BareWords that start with "-" or ">". This lets us throw an
-        # error when a switch-like thing doesn't match any supported arguments,
-        # rather than counting it towards the positional arguments (which usually
-        # ends up in a vague "too many arguments" error). To make tclint interpret a
-        # switch-like word as a positional argument, users should wrap it in "", and
-        # any switches should be BareWords.
-        contents = arg.contents
-        if not (isinstance(arg, BareWord) and contents and contents[0] in {"-", ">"}):
-            positional_args.append(arg_i - 1)
-            continue
-
-        if contents in args_allowed:
-            if switches[contents]["value"]:
-                arg_i += 1
-                if arg_i > len(args):
-                    raise CommandArgError(
-                        f"invalid arguments for {command}: expected value after"
-                        f" {contents}"
-                    )
-            if not switches[contents]["repeated"]:
-                args_allowed.remove(contents)
-            if contents in args_required:
-                args_required.remove(contents)
-        elif contents in switches:
-            raise CommandArgError(f"duplicate argument for {command}: {contents}")
-        else:
-            prefix_matches = []
-            for switch in switches:
-                if switch.startswith(contents):
-                    prefix_matches.append(switch)
-
-            if len(prefix_matches) == 1:
-                raise CommandArgError(
-                    f"shortened argument for {command}: expand {contents} to"
-                    f" {prefix_matches[0]}"
-                )
-
-            if len(prefix_matches) > 1:
-                raise CommandArgError(
-                    f"ambiguous argument for {command}: {contents} could be any of"
-                    f" {', '.join(prefix_matches)}"
-                )
-
-            raise CommandArgError(f"unrecognized argument for {command}: {contents}")
-
-    if len(args_required) > 1:
+    if len(missing_required) > 1:
         raise CommandArgError(
-            f"missing required arguments for {command}: {', '.join(args_required)}"
+            f"missing required arguments for {command}: {', '.join(missing_required)}"
         )
-    elif len(args_required) == 1:
+    elif len(missing_required) == 1:
         raise CommandArgError(
-            f"missing required argument for {command}: {args_required.pop()}"
+            f"missing required argument for {command}: {missing_required.pop()}"
         )
 
     positionals = [args[i] for i in positional_args]
@@ -263,6 +207,83 @@ def dispatch_subcommands(
         msg = f"no subcommand provided for {command}"
 
     raise CommandArgError(f"{msg}, expected one of {', '.join(spec.keys())}")
+
+
+def map_switches(
+    args: list[Node], switches: dict, command_name: str
+) -> tuple[set[str], list[int]]:
+    """Separates switch arguments from positional arguments in a command's argument
+    list.
+
+    `switches` represents the "switches" entry of the spec for the given command. The
+    return value is a tuple of (mapped_switches, positional_indices). mapped_switches is
+    a set of switch names that were found in args. positional_indices is a list of
+    indices into args for arguments that are not switches.
+
+    If the switches found do not map correctly to the spec, this function raises
+    CommandArgError.
+
+    The `command_name` argument is used to generate descriptive error messages.
+    """
+    mapped: set[str] = set()
+
+    if not switches:
+        return mapped, list(range(len(args)))
+
+    positional_args = []
+
+    arg_i = 0
+    while arg_i < len(args):
+        arg = args[arg_i]
+        arg_i += 1
+
+        # To facilitate better error messages, we expect that switches are always
+        # specified as BareWords that start with "-" or ">". This lets us throw an
+        # error when a switch-like thing doesn't match any supported arguments,
+        # rather than counting it towards the positional arguments (which usually
+        # ends up in a vague "too many arguments" error). To make tclint interpret a
+        # switch-like word as a positional argument, users should wrap it in "", and
+        # any switches should be BareWords.
+        contents = arg.contents
+        if not (isinstance(arg, BareWord) and contents and contents[0] in {"-", ">"}):
+            positional_args.append(arg_i - 1)
+            continue
+
+        if contents in switches:
+            if contents in mapped and not switches[contents]["repeated"]:
+                raise CommandArgError(
+                    f"duplicate argument for {command_name}: {contents}"
+                )
+            if switches[contents]["value"]:
+                arg_i += 1
+                if arg_i > len(args):
+                    raise CommandArgError(
+                        f"invalid arguments for {command_name}: expected value after"
+                        f" {contents}"
+                    )
+            mapped.add(contents)
+            continue
+
+        prefix_matches = []
+        for switch in switches:
+            if switch.startswith(contents):
+                prefix_matches.append(switch)
+
+        if len(prefix_matches) == 1:
+            raise CommandArgError(
+                f"shortened argument for {command_name}: expand {contents} to"
+                f" {prefix_matches[0]}"
+            )
+
+        if len(prefix_matches) > 1:
+            raise CommandArgError(
+                f"ambiguous argument for {command_name}: {contents} could be any of"
+                f" {', '.join(prefix_matches)}"
+            )
+
+        raise CommandArgError(f"unrecognized argument for {command_name}: {contents}")
+
+    return mapped, positional_args
 
 
 def map_positionals(
