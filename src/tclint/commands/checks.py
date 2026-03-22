@@ -183,7 +183,6 @@ def check_arg_spec(
             positional_args.append(arg_i - 1)
             continue
 
-        # TODO check required arguments
         if contents in args_allowed:
             if switches[contents]["value"]:
                 arg_i += 1
@@ -196,7 +195,7 @@ def check_arg_spec(
                 args_allowed.remove(contents)
             if contents in args_required:
                 args_required.remove(contents)
-        elif contents in arg_spec:
+        elif contents in switches:
             raise CommandArgError(f"duplicate argument for {command}: {contents}")
         else:
             prefix_matches = []

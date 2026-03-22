@@ -28,8 +28,9 @@ def test_repeated_switch_not_allowed():
             "-abc": {"required": False, "value": None, "repeated": False},
         },
     }
-    with pytest.raises(CommandArgError):
+    with pytest.raises(CommandArgError) as exc_info:
         check_arg_spec("command", args, None, spec)
+    assert str(exc_info.value).startswith("duplicate argument")
 
 
 def test_positional_count_too_many():
