@@ -14,8 +14,8 @@ ignore = ["unbraced-expr"]
 # extensions of files to lint when searching directories. defaults to tcl, sdc,
 # xdc, and upf.
 extensions = ["tcl"]
-# path to command spec defining tool-specific commands and arguments.
-commands = "~/.tclint/openroad.json"
+# path(s) to command specs defining tool-specific commands and arguments.
+commands = ["~/.tclint/openroad.json"]
 
 # with the exception of line-length, the [style] settings affect tclfmt rather than tclint.
 

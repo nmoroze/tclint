@@ -36,8 +36,7 @@ def format(
     debug_whitespace=False,
     partial=False,
 ) -> str:
-    _plugins = [config.commands] if config.commands is not None else []
-    parser = Parser(debug=debug, commands=plugins.get_commands(_plugins))
+    parser = Parser(debug=debug, commands=plugins.get_commands(config.commands))
 
     formatter = Formatter(
         FormatterOpts(

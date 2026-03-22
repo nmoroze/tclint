@@ -63,7 +63,7 @@ def test_redefined_builtin_plugin(tmp_path):
     with open(tmp_path, "w") as f:
         f.write(json.dumps({"name": "test", "commands": {"foo": None}}))
 
-    violations = lint(script, Config(commands=tmp_path), Path())
+    violations = lint(script, Config(commands=[tmp_path]), Path())
     assert len(violations) == 1
     print(violations[0])
     assert violations[0].id == Rule("redefined-builtin")
@@ -86,7 +86,7 @@ def test_command_plugin(tmp_path):
                 },
             })
         )
-    config = Config(commands=tmp_path)
+    config = Config(commands=[tmp_path])
 
     valid_script = "foo myarg"
     violations = lint(valid_script, config, Path())

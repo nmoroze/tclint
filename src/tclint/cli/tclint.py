@@ -52,8 +52,7 @@ def lint(
     path: Optional[pathlib.Path],
     debug=0,
 ) -> list[Violation]:
-    _plugins = [config.commands] if config.commands is not None else []
-    parser = Parser(debug=(debug > 0), commands=plugins.get_commands(_plugins))
+    parser = Parser(debug=(debug > 0), commands=plugins.get_commands(config.commands))
 
     violations = []
     tree = parser.parse(script)

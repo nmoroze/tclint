@@ -44,7 +44,7 @@ class Config:
 
     exclude: list[ExcludePattern] = dataclasses.field(default_factory=list)
     ignore: list[Rule] = dataclasses.field(default_factory=list)
-    commands: OptionalType[pathlib.Path] = dataclasses.field(default=None)
+    commands: list[str | pathlib.Path] = dataclasses.field(default_factory=list)
     extensions: list[str] = dataclasses.field(
         default_factory=lambda: ["tcl", "sdc", "xdc", "upf"]
     )
@@ -212,7 +212,15 @@ _validate_ignore = And(
 
 
 def _validate_commands(root):
-    return And(Coerce(pathlib.Path), _add_root(root))
+    add_root = _add_root(root)
+
+    def _process(command: str):
+        path = add_root(pathlib.Path(command))
+        if path.exists():
+            return path
+        return command
+
+    return And(_str2list, [_process])
 
 
 _validate_extensions = _str2list

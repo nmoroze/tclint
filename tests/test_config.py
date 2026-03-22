@@ -28,7 +28,12 @@ def test_example_config():
     ]
     assert config.ignore == [Rule("unbraced-expr")]
     assert config.extensions == ["tcl"]
-    assert config.commands == pathlib.Path("~/.tclint/openroad.json").expanduser()
+
+    # Depending on whether this file happens to exist on the test runner's computer,
+    # this may be the string that appears in the config, or a Path with the user
+    # resolved.
+    assert len(config.commands) == 1
+    assert str(config.commands[0]).endswith(".tclint/openroad.json")
 
     assert config.style_indent == 2
     assert config.style_line_length == 80
@@ -83,7 +88,8 @@ def test_tclint_config_args():
     ]
     assert args.extend_exclude == [ExcludePattern("extend_to_file", cwd)]
     assert args.extensions == ["sdc", "exp"]
-    assert args.commands == pathlib.Path(cwd / "commands.json")
+    assert len(args.commands) == 1
+    assert str(args.commands[0]).endswith("commands.json")
     assert args.style_line_length == 79
 
 
@@ -117,7 +123,8 @@ def test_tclfmt_config_args():
     ]
     assert args.extend_exclude == [ExcludePattern("extend_to_file", cwd)]
     assert args.extensions == ["sdc", "exp"]
-    assert args.commands == pathlib.Path(cwd / "commands.json")
+    assert len(args.commands) == 1
+    assert args.commands[0].endswith("commands.json")
     assert args.style_indent == 5
     assert args.style_max_blank_lines == 4
     assert args.style_indent_namespace_eval is True
@@ -185,7 +192,10 @@ commands = "commands.json"
     with open(config_path, "w") as f:
         f.write(config)
 
-    config = Config.from_path(config_path, pathlib.Path("root"))
-    assert config.exclude == [ExcludePattern("/foo.tcl", pathlib.Path("root"))]
-    assert config.commands == pathlib.Path("root/commands.json")
+    with open(tmp_path / "commands.json", "w") as f:
+        f.write(r"{}")
+
+    config = Config.from_path(config_path, tmp_path)
+    assert config.exclude == [ExcludePattern("/foo.tcl", tmp_path)]
+    assert config.commands == [tmp_path / "commands.json"]
     assert config.ignore == []
