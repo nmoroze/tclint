@@ -17,8 +17,11 @@ def _test(
     indent_namespace_eval=True,
     emacs=False,
     debug_whitespace=False,
+    parser=None,
 ):
-    parser = Parser()
+    if parser is None:
+        parser = Parser()
+
     format = Formatter(
         FormatterOpts(
             indent=indent,
@@ -886,3 +889,32 @@ set options \
          e]
 """.strip()
     _test(script, script, indent="    ", emacs=True)
+
+
+def test_parse_script_preserves_braces():
+    """When a plugin uses parse_script() on a BareWord argument, the formatter should
+    not add braces. When used on a BracedWord argument, braces should be preserved.
+
+    Regression test for https://github.com/nmoroze/tclint/issues/160.
+    """
+
+    def _myrequire(args, parser):
+        return [parser.parse_script(arg) for arg in args]
+
+    parser = Parser(commands={"myrequire": _myrequire})
+
+    script = r"""
+myrequire foo
+myrequire { foo }
+""".strip()
+
+    _test(script, script, parser=parser)
+
+
+def test_eval_preserves_braces():
+    script = r"""
+eval foo
+eval { foo }
+""".strip()
+
+    _test(script, script)

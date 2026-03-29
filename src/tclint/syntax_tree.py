@@ -253,7 +253,7 @@ class Node:
 class Script(Node):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # hack for spaces-in-braces check
+        # Used by formatter.
         self.braced = False
 
     def accept(self, visitor, recurse=False):
