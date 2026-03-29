@@ -307,6 +307,10 @@ class Formatter:
 
     def format_script(self, script: Script, should_indent=True) -> list[str]:
         lines = self.format_script_contents(script)
+        if not script.braced:
+            # Script came from a non-braced word argument (e.g. plugin called
+            # parse_script on a BareWord). Don't wrap in braces.
+            return lines
         if script.pos[0] == script.end_pos[0]:
             space_before = -1
             space_after = -1

@@ -83,6 +83,9 @@ def check_count(command, min=None, max=None):
 
 
 def eval(args: list[Node], parser: Parser, command: str) -> list[Node]:
+    if len(args) == 1:
+        return [parser.parse_script(args[0])]
+
     if len(args) > 1 and any(isinstance(arg, (QuotedWord, BracedWord)) for arg in args):
         # Slightly odd restriction, but our syntax tree doesn't have a great way
         # to handle this case. We require each command argument to correspond to
