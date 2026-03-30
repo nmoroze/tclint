@@ -877,18 +877,26 @@ switch a {
 
 
 def test_hanging_indent():
-    script = r"""
+    scripts = []
+
+    scripts.append(r"""
 set options [list a \
                  b c \
                  d \
                  e]
+    """)
+
+    scripts.append(r"""
 set options \
     [list a \
          b c \
          d \
          e]
-""".strip()
-    _test(script, script, indent="    ", emacs=True)
+    """)
+
+    for script in scripts:
+        script = script.strip()
+        _test(script, script, indent="    ", emacs=True)
 
 
 def test_parse_script_preserves_braces():
