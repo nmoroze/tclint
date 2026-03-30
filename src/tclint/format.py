@@ -69,13 +69,15 @@ class Formatter:
         assert len(debug_char) == 1
         if space is None:
             space = self.opts.indent
+        elif isinstance(space, int):
+            space = space * " "
         if self.opts.debug_whitespace:
             # Enable this to return a string of debug_char.
             return len(space) * debug_char
         return space
 
     def get_spaces_in_braces(self, space: tuple[int, int]):
-        spaces_in_braces = self.space("A", " ") if self.opts.spaces_in_braces else ""
+        spaces_in_braces = self.space("A", 1) if self.opts.spaces_in_braces else ""
         if not self.opts.balanced_spaces_in_braces:
             # No balancing.
             return spaces_in_braces
@@ -88,7 +90,7 @@ class Formatter:
         if space[0] != -1 and space[1] == -1:
             # we've got empty braces.  Keep "{}" and "{ }" as is, but normalize
             # more than one space to a single space.
-            return min(space[0], 1) * self.space("B", " ")
+            return min(space[0], 1) * self.space("B", 1)
 
         # Normalize more than one space to a single space.
         before = min(space[0], 1)
@@ -101,7 +103,7 @@ class Formatter:
         # Check that we have a balanced expression.
         assert before == after
         # Keep either "{1}" or "{ 1 }".
-        return before * self.space("C", " ")
+        return before * self.space("C", 1)
 
     def _brace(self, lines: list[str], space: tuple[int, int]) -> list[str]:
         """Format content between braces.
@@ -331,7 +333,7 @@ class Formatter:
             and isinstance(script.children[0], Comment)
             and script.pos[0] == script.children[0].pos[0]
         ):
-            open_brace += self.space("D", " ") + lines[0]
+            open_brace += self.space("D", 1) + lines[0]
             lines = lines[1:]
 
         if should_indent:
@@ -357,14 +359,14 @@ class Formatter:
                 child_lines = self.format(child)
 
             if last_line == child.pos[0]:
-                formatted[-1] += self.space("F", " ")
+                formatted[-1] += self.space("F", 1)
                 if self.opts.emacs and child_lines[0][-1] == "\\":
-                    base_indent = (len(formatted[-1])) * self.space("G", " ")
+                    base_indent = (len(formatted[-1])) * self.space("G", 1)
                 else:
                     base_indent = ""
                 formatted[-1] += child_lines[0]
             else:
-                formatted[-1] += self.space("H", " ") + "\\"
+                formatted[-1] += self.space("H", 1) + "\\"
                 formatted.append(self.space("I") + child_lines[0])
                 hanging_indent = True
 
@@ -393,7 +395,7 @@ class Formatter:
         else:
             formatted.append("[" + contents[0])
             if self.opts.emacs:
-                indent = self.space("L", " ")
+                indent = self.space("L", 1)
             else:
                 indent = ""
             formatted.extend(self._indent(contents[1:], indent))
@@ -464,7 +466,7 @@ class Formatter:
         for child in list_node.children:
             if last_line is not None:
                 if last_line == child.pos[0]:
-                    contents[-1] += self.space("M", " ")
+                    contents[-1] += self.space("M", 1)
                 else:
                     newlines = child.pos[0] - last_line
                     newlines = min(newlines, 3)
@@ -560,7 +562,7 @@ class Formatter:
             if last.end_pos[0] != next.pos[0]:
                 formatted.extend(lines)
             else:
-                formatted[-1] += self.space("R", " ")
+                formatted[-1] += self.space("R", 1)
                 formatted[-1] += lines[0]
                 formatted.extend(lines[1:])
             last = next
@@ -589,7 +591,7 @@ class Formatter:
                 formatted.extend(lines)
             else:
                 if i > 0:
-                    formatted[-1] += self.space("S", " ")
+                    formatted[-1] += self.space("S", 1)
                 formatted[-1] += lines[0]
                 formatted.extend(lines[1:])
             last = child
