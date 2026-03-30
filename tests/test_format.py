@@ -901,6 +901,29 @@ set var1 [set var2 \
               "bar"]
     """)
 
+    scripts.append(r"""
+if {1
+    + 1} {
+    return
+}
+    """)
+
+    scripts.append(r"""
+if {1
+    + 1
+} {
+    return
+}
+    """)
+
+    scripts.append(r"""
+if {
+    1
+    + 1} {
+    return
+}
+    """)
+
     for script in scripts:
         script = script.strip()
         _test(script, script, indent="    ", emacs=True)
