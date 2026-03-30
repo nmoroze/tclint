@@ -894,6 +894,13 @@ set options \
          e]
     """)
 
+    scripts.append(r"""
+set var1 [set var2 \
+              "foo"
+          set var3 \
+              "bar"]
+    """)
+
     for script in scripts:
         script = script.strip()
         _test(script, script, indent="    ", emacs=True)

@@ -389,9 +389,15 @@ class Formatter:
         formatted = []
         contents = self.format_script_contents(command_sub)
         if len(command_sub.children) > 1 and len(contents) > 1:
-            formatted.append("[")
-            formatted.extend(self._indent(contents, self.space("K")))
-            formatted.append("]")
+            if self.opts.emacs and command_sub.pos[0] == command_sub.children[0].pos[0]:
+                formatted = contents
+                formatted[0] = "[" + formatted[0]
+                formatted[-1] = formatted[-1] + "]"
+                formatted[1:] = self._indent(formatted[1:], self.space("U", 1))
+            else:
+                formatted.append("[")
+                formatted.extend(self._indent(contents, self.space("K")))
+                formatted.append("]")
         else:
             formatted.append("[" + contents[0])
             if self.opts.emacs:
