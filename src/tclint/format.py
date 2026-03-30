@@ -360,10 +360,22 @@ class Formatter:
 
             if last_line == child.pos[0]:
                 formatted[-1] += self.space("F", 1)
-                if self.opts.emacs and child_lines[0][-1] == "\\":
-                    base_indent = (len(formatted[-1])) * self.space("G", 1)
-                else:
-                    base_indent = ""
+                base_indent = ""
+                if self.opts.emacs:
+                    if child_lines[0][-1] == "\\":
+                        base_indent = (len(formatted[-1])) * self.space("G", 1)
+                    elif (isinstance(child, BracedExpression)) and child_lines[
+                        -1
+                    ] == "}":
+                        child_lines[1:-1] = self._indent(
+                            child_lines[1:-1], self.space("V", len(formatted[-1]))
+                        )
+                    elif (isinstance(child, BracedExpression)) and child_lines[-1][
+                        -1
+                    ] == "}":
+                        child_lines[1:] = self._indent(
+                            child_lines[1:], self.space("W", len(formatted[-1]))
+                        )
                 formatted[-1] += child_lines[0]
             else:
                 formatted[-1] += self.space("H", 1) + "\\"
@@ -527,6 +539,29 @@ class Formatter:
             space_before = expr.children[0].pos[1] - expr.pos[1] - 1
             space_after = expr.end_pos[1] - expr.children[-1].end_pos[1] - 1
             return self._brace(formatted, (space_before, space_after))
+
+        if self.opts.emacs:
+            pre = []
+            post = []
+            indent_first = 0
+            indent_last = len(formatted)
+            if expr.pos[0] == expr.children[0].pos[0]:
+                formatted[0] = "{" + formatted[0]
+                indent_first = 1
+            else:
+                pre = ["{"]
+            if expr.end_pos[0] == expr.children[-1].end_pos[0]:
+                formatted[-1] = formatted[-1] + "}"
+            else:
+                post = ["}"]
+            formatted = (
+                pre
+                + formatted[0:indent_first]
+                + self._indent(formatted[indent_first:indent_last], self.space("X", 1))
+                + formatted[indent_last:]
+                + post
+            )
+            return formatted
 
         return ["{"] + self._indent(formatted, self.space("P")) + ["}"]
 
