@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional
 
+from tclint.lexer import TclSyntaxError
 from tclint.syntax_tree import ArgExpansion, BareWord, BracedWord, Node, QuotedWord
 
 # This lets us use Parser in type annotations without introducing a cyclic dependency.
@@ -159,7 +160,7 @@ def check_arg_spec(
         return dispatch_subcommands(command, args, parser, arg_spec["subcommands"])
 
     switches = arg_spec["switches"]
-    mapped, positional_args = map_switches(args, switches, command)
+    mapped, positional_args = map_switches(args, switches, command, parser)
 
     args_required = {switch for switch in switches if switches[switch]["required"]}
     missing_required = args_required.difference(mapped)
@@ -177,10 +178,37 @@ def check_arg_spec(
     mapping = map_positionals(positionals, arg_spec["positionals"], command)
     args = list(args)
     for arg_i, map_to_spec in zip(positional_args, mapping):
-        if _positional_has_type("script", arg_spec, map_to_spec):
-            args[arg_i] = parser.parse_script(args[arg_i])
-        elif _positional_has_type("expression", arg_spec, map_to_spec):
-            args[arg_i] = parser.parse_expression(args[arg_i])
+        arg = args[arg_i]
+
+        if isinstance(arg, ArgExpansion):
+            for spec_i in map_to_spec:
+                positional_spec = arg_spec["positionals"][spec_i]
+                value_type = positional_spec["value"]["type"]
+                if value_type == "script":
+                    args[arg_i] = parser.parse_script(arg)
+                    break
+                if value_type == "expression":
+                    args[arg_i] = parser.parse_expression(arg)
+                    break
+            continue
+
+        if len(map_to_spec) != 1:
+            continue
+
+        positional_spec = arg_spec["positionals"][map_to_spec[0]]
+        value_spec = positional_spec["value"]
+        value_type = value_spec["type"]
+        if value_type == "script":
+            args[arg_i] = parser.parse_script(arg)
+        elif value_type == "expression":
+            args[arg_i] = parser.parse_expression(arg)
+        else:
+            _validate_value(
+                arg,
+                value_spec,
+                parser,
+                f"{command} {positional_spec['name']}",
+            )
 
     return args
 
@@ -213,7 +241,7 @@ def dispatch_subcommands(
 
 
 def map_switches(
-    args: list[Node], switches: dict, command_name: str
+    args: list[Node], switches: dict, command_name: str, parser: Parser
 ) -> tuple[set[str], list[int]]:
     """Separates switch arguments from positional arguments in a command's argument
     list.
@@ -253,17 +281,26 @@ def map_switches(
             continue
 
         if contents in switches:
-            if contents in mapped and not switches[contents]["repeated"]:
+            switch_spec = switches[contents]
+
+            if contents in mapped and not switch_spec["repeated"]:
                 raise CommandArgError(
                     f"duplicate argument for {command_name}: {contents}"
                 )
-            if switches[contents]["value"]:
+            if _switch_requires_value(switch_spec):
                 arg_i += 1
                 if arg_i > len(args):
+                    expected = _switch_value_description(switch_spec)
                     raise CommandArgError(
-                        f"invalid arguments for {command_name}: expected value after"
-                        f" {contents}"
+                        f"invalid arguments for {command_name}: expected {expected}"
+                        f" after {contents}"
                     )
+                _validate_value(
+                    args[arg_i - 1],
+                    switch_spec["value"],
+                    parser,
+                    f"{command_name} {contents}",
+                )
             mapped.add(contents)
             continue
 
@@ -287,6 +324,73 @@ def map_switches(
         raise CommandArgError(f"unrecognized argument for {command_name}: {contents}")
 
     return mapped, positional_args
+
+
+def _switch_requires_value(switch_spec: dict) -> bool:
+    return switch_spec["value"] is not None
+
+
+def _switch_value_description(switch_spec: dict) -> str:
+    value_spec = switch_spec["value"]
+    if value_spec is None:
+        return "value"
+
+    metavar = switch_spec.get("metavar")
+    if metavar is not None:
+        return metavar
+
+    return f"{value_spec['type']} value"
+
+
+def _validate_value(
+    arg: Node, value_spec: dict | None, parser: Optional[Parser], context: str
+) -> None:
+    if value_spec is None:
+        return
+
+    contents = arg.contents
+    if contents is None:
+        return
+
+    value_type = value_spec["type"]
+    if value_type in {"any", "string", "variadic", "script", "expression"}:
+        return
+
+    if value_type == "bool":
+        if contents.lower() in {"0", "1", "true", "false", "yes", "no", "on", "off"}:
+            return
+        raise CommandArgError(
+            f"invalid value for {context}: got {contents}, expected {value_type}"
+        )
+
+    if value_type == "int":
+        try:
+            int(contents, 0)
+            return
+        except ValueError as error:
+            raise CommandArgError(
+                f"invalid value for {context}: got {contents}, expected {value_type}"
+            ) from error
+
+    if value_type == "float":
+        try:
+            float(contents)
+            return
+        except ValueError as error:
+            raise CommandArgError(
+                f"invalid value for {context}: got {contents}, expected {value_type}"
+            ) from error
+
+    if value_type == "list":
+        if parser is None:
+            return
+        try:
+            parser.parse_list(arg)
+            return
+        except (CommandArgError, TclSyntaxError) as error:
+            raise CommandArgError(
+                f"invalid value for {context}: got {contents}, expected {value_type}"
+            ) from error
 
 
 def map_positionals(

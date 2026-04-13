@@ -57,7 +57,8 @@ class PluginManager:
             # Apply defaults and validate the spec.
             spec = schema.schema(spec)
         except voluptuous.Invalid as e:
-            print(f"Warning: invalid command spec {path}: {e}")
+            message = schema.format_validation_error(spec, e)
+            print(f"Warning: invalid command spec {path}: {message}")
             return None
 
         return spec["commands"]
@@ -91,7 +92,8 @@ class PluginManager:
             # Apply defaults and validate the spec.
             spec = schema.commands_schema(spec)
         except voluptuous.Invalid as e:
-            print(f"Warning: invalid plugin {name}: {e}")
+            message = schema.format_validation_error(spec, e)
+            print(f"Warning: invalid plugin {name}: {message}")
             return None
 
         return spec
