@@ -38,7 +38,7 @@ def close(args, parser):
         },
     }
 
-    mapped, positionals = map_switches(args, expect_switches, "close", parser)
+    mapped, positionals = map_switches(args, expect_switches, "close")
     if len(mapped) > 0:
         if len(positionals) > 0:
             raise CommandArgError(

@@ -108,6 +108,67 @@ def test_required_switch():
         print(excinfo.value)
 
 
+def test_missing_switch_value_hint_uses_type():
+    spec = {
+        "positionals": [],
+        "switches": {
+            "-foo": {
+                "required": False,
+                "value": {"type": "int"},
+                "repeated": False,
+            },
+        },
+    }
+
+    with pytest.raises(CommandArgError) as excinfo:
+        check_arg_spec("command", [BareWord("-foo")], None, spec)
+
+    assert (
+        str(excinfo.value)
+        == "invalid arguments for command: expected int value after -foo"
+    )
+
+
+def test_invalid_int_switch_value():
+    spec = {
+        "positionals": [],
+        "switches": {
+            "-foo": {
+                "required": False,
+                "value": {"type": "int"},
+                "repeated": False,
+            },
+        },
+    }
+
+    with pytest.raises(CommandArgError) as excinfo:
+        check_arg_spec("command", [BareWord("-foo"), BareWord("abc")], None, spec)
+
+    assert str(excinfo.value) == "invalid value for command -foo: got abc, expected int"
+
+
+def test_missing_switch_value_hint_uses_metavar():
+    spec = {
+        "positionals": [],
+        "switches": {
+            "-foo": {
+                "required": False,
+                "value": {"type": "any"},
+                "repeated": False,
+                "metavar": "channelId",
+            },
+        },
+    }
+
+    with pytest.raises(CommandArgError) as excinfo:
+        check_arg_spec("command", [BareWord("-foo")], None, spec)
+
+    assert (
+        str(excinfo.value)
+        == "invalid arguments for command: expected channelId after -foo"
+    )
+
+
 @pytest.mark.parametrize(
     "args,valid",
     [
@@ -229,3 +290,36 @@ def test_script():
             ast.Command(ast.BareWord("puts"), ast.QuotedWord(ast.BareWord("hello")))
         ),
     ]
+
+
+def test_int_type():
+    args = [BareWord("-myswitch"), BareWord("42"), BareWord("17")]
+    spec = {
+        "positionals": [
+            {"name": "arg", "value": {"type": "int"}, "required": True},
+        ],
+        "switches": {
+            "-myswitch": {
+                "required": True,
+                "value": {"type": "int"},
+                "repeated": False,
+            },
+        },
+    }
+
+    assert check_arg_spec("command", args, None, spec) == args
+
+
+def test_invalid_int_positional_value():
+    args = [BareWord("abc")]
+    spec = {
+        "positionals": [
+            {"name": "arg", "value": {"type": "int"}, "required": True},
+        ],
+        "switches": {},
+    }
+
+    with pytest.raises(CommandArgError) as excinfo:
+        check_arg_spec("command", args, None, spec)
+
+    assert str(excinfo.value) == "invalid value for command arg: got abc, expected int"

@@ -33,6 +33,28 @@ def test_valid_command_spec():
     schema(command_spec)
 
 
+def test_valid_int_type():
+    command_spec = {
+        "name": "test_plugin",
+        "commands": {
+            "command1": {
+                "positionals": [
+                    {"name": "arg1", "required": True, "value": {"type": "int"}},
+                ],
+                "switches": {
+                    "-switch1": {
+                        "required": False,
+                        "value": {"type": "int"},
+                        "repeated": False,
+                    },
+                },
+            }
+        },
+    }
+
+    schema(command_spec)
+
+
 def test_missing_required_field():
     invalid_command_spec = {
         "name": "test_plugin",
@@ -70,6 +92,27 @@ def test_invalid_datatype():
     with pytest.raises(Invalid) as excinfo:
         schema(invalid_minmax_spec)
     print("test_invalid_minmax_values:", excinfo.value)
+
+
+def test_invalid_scalar_type():
+    command_spec = {
+        "name": "test_plugin",
+        "commands": {
+            "command1": {
+                "switches": {
+                    "-switch1": {
+                        "required": False,
+                        "value": {"type": "string"},
+                        "repeated": False,
+                    },
+                },
+            }
+        },
+    }
+
+    with pytest.raises(Invalid) as excinfo:
+        schema(command_spec)
+    print("test_invalid_scalar_type:", excinfo.value)
 
 
 def test_extra_property():
