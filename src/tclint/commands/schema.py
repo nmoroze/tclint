@@ -2,6 +2,15 @@ from collections.abc import Callable
 
 from voluptuous import Optional, Or, Schema, Self
 
+_switch_value = Or({"type": "any"}, {"type": "int"}, None)
+_positional_value = Or(
+    {"type": "any"},
+    {"type": "int"},
+    {"type": "variadic"},
+    {"type": "script"},
+    {"type": "expression"},
+)
+
 # Need to define this as a Schema with required=True to ensure that this requirement
 # persists through the Or in the main schema definition.
 _command_args = Schema(
@@ -10,19 +19,14 @@ _command_args = Schema(
             {
                 "name": str,
                 "required": bool,
-                "value": Or(
-                    {"type": "any"},
-                    {"type": "variadic"},
-                    {"type": "script"},
-                    {"type": "expression"},
-                ),
+                "value": _positional_value,
             }
         ],
         Optional("switches", default={}): {
             Optional(str): {
                 "required": bool,
                 "repeated": bool,
-                "value": Or({"type": "any"}, None),
+                "value": _switch_value,
                 Optional("metavar"): str,
             }
         },
