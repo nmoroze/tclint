@@ -186,3 +186,14 @@ def test_proc_no_args():
     violations = lint(script, Config(), Path())
     assert len(violations) == 1
     assert violations[0].id == Rule("command-args")
+    assert (
+        violations[0].message == "missing required arguments for proc: name, args, body"
+    )
+
+
+def test_puts_no_args_message():
+    script = "puts"
+    violations = lint(script, Config(), Path())
+    assert len(violations) == 1
+    assert violations[0].id == Rule("command-args")
+    assert violations[0].message == "missing required argument for puts: string"

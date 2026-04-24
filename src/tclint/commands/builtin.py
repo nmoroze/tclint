@@ -573,7 +573,16 @@ def _package_ifneeded(args, parser):
 
 
 def _proc(args, parser):
-    if len(args) != 3:
+    required_args = ["name", "args", "body"]
+    if len(args) < len(required_args):
+        missing_args = ", ".join(required_args[len(args) :])
+        raise CommandArgError(
+            "missing required"
+            f" argument{'s' if len(args) < len(required_args) - 1 else ''} for proc:"
+            f" {missing_args}"
+        )
+
+    if len(args) > len(required_args):
         raise CommandArgError(f"wrong # of args to proc: got {len(args)}, expected 3")
 
     # Parse args as list, then iterate over each item to parse arg specifier lists and

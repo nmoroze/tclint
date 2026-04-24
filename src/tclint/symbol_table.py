@@ -13,6 +13,9 @@ class SymbolTable:
     def add_proc_definition(self, command: Command) -> None:
         """Add definition of procedure"""
         # command holds the "proc" keyword, so the proc name is 1st argument
+        if len(command.args) == 0:
+            return
+
         proc_name_node = command.args[0]
         proc_name = proc_name_node.contents
         if not proc_name:
