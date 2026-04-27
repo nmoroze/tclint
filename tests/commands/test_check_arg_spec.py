@@ -250,11 +250,11 @@ def test_subcommand_suggestion():
     }
 
     with pytest.raises(CommandArgError) as excinfo:
-        check_arg_spec("dict", [BareWord("apend")], None, spec)
+        check_arg_spec("dict", [BareWord("appendd")], None, spec)
 
     assert (
         str(excinfo.value)
-        == "invalid subcommand for dict: got apend, expected one of append, remove;"
+        == "invalid subcommand for dict: got appendd, expected one of append, remove;"
         " did you mean append?"
     )
 
