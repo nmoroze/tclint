@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from difflib import get_close_matches
 from typing import TYPE_CHECKING, Optional
 
 from tclint.syntax_tree import ArgExpansion, BareWord, BracedWord, Node, QuotedWord
@@ -16,6 +17,33 @@ class CommandArgError(Exception):
     """Exception raised by command handlers to indicate invalid arguments."""
 
     pass
+
+
+def get_suggestion(value: str | None, candidates: Iterable[str]) -> Optional[str]:
+    if value is None:
+        return None
+
+    unique_candidates = sorted({candidate for candidate in candidates if candidate})
+    if value in unique_candidates:
+        unique_candidates.remove(value)
+
+    if not unique_candidates:
+        return None
+
+    cutoff = 0.85 if len(value) <= 3 else 0.75
+    matches = get_close_matches(value, unique_candidates, n=1, cutoff=cutoff)
+    if not matches:
+        return None
+
+    return matches[0]
+
+
+def _did_you_mean_suffix(value: str | None, candidates: Iterable[str]) -> str:
+    suggestion = get_suggestion(value, candidates)
+    if suggestion is None:
+        return ""
+
+    return f"; did you mean {suggestion}?"
 
 
 def arg_count(args: list[Node], parser: Parser) -> tuple[int, bool]:
@@ -213,12 +241,18 @@ def dispatch_subcommands(
     if "" in spec:
         return check_command(command, args, parser, spec[""])
 
+    valid_subcommands = [name for name in spec.keys() if name != ""]
+
     if subcommand is not None:
         msg = f"invalid subcommand for {command}: got {subcommand}"
+        suggestion = _did_you_mean_suffix(subcommand, valid_subcommands)
     else:
         msg = f"no subcommand provided for {command}"
+        suggestion = ""
 
-    raise CommandArgError(f"{msg}, expected one of {', '.join(spec.keys())}")
+    raise CommandArgError(
+        f"{msg}, expected one of {', '.join(valid_subcommands)}{suggestion}"
+    )
 
 
 def map_switches(
@@ -299,7 +333,10 @@ def map_switches(
                 f" {', '.join(prefix_matches)}"
             )
 
-        raise CommandArgError(f"unrecognized argument for {command_name}: {contents}")
+        raise CommandArgError(
+            f"unrecognized argument for {command_name}: {contents}"
+            f"{_did_you_mean_suffix(contents, switches.keys())}"
+        )
 
     return mapped, positional_args
 

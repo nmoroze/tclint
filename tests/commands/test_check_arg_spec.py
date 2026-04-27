@@ -147,6 +147,27 @@ def test_invalid_int_switch_value():
     assert str(excinfo.value) == "invalid value for command -foo: got abc, expected int"
 
 
+def test_unknown_switch_suggestion():
+    spec = {
+        "positionals": [],
+        "switches": {
+            "-verbose": {
+                "required": False,
+                "value": None,
+                "repeated": False,
+            },
+        },
+    }
+
+    with pytest.raises(CommandArgError) as excinfo:
+        check_arg_spec("command", [BareWord("-verboes")], None, spec)
+
+    assert (
+        str(excinfo.value)
+        == "unrecognized argument for command: -verboes; did you mean -verbose?"
+    )
+
+
 def test_missing_switch_value_hint_uses_metavar():
     spec = {
         "positionals": [],
@@ -218,6 +239,24 @@ def test_subcommands(args, valid):
 
     if excinfo is not None:
         print(excinfo.value)
+
+
+def test_subcommand_suggestion():
+    spec = {
+        "subcommands": {
+            "append": None,
+            "remove": None,
+        }
+    }
+
+    with pytest.raises(CommandArgError) as excinfo:
+        check_arg_spec("dict", [BareWord("appendd")], None, spec)
+
+    assert (
+        str(excinfo.value)
+        == "invalid subcommand for dict: got appendd, expected one of append, remove;"
+        " did you mean append?"
+    )
 
 
 def test_arg_replacement_subcommands():
