@@ -23,6 +23,10 @@ from tclint.syntax_tree import BareWord, Command, QuotedWord, Script
         ("after cancel", False),
         ('zlib decompress "hello"', True),
         ("string cat", True),
+        ("dict getnull", False),
+        ("dict getnull $d", True),
+        ("dict getnull $d key", True),
+        ("dict getnull $d a b c", True),
     ],
 )
 def test_validation(command, valid):

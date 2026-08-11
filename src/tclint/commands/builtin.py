@@ -954,6 +954,7 @@ commands = commands_schema({
             "filter": _dict_filter,
             "for": _dict_map_for("dict for"),
             "get": check_count("dict get", 1, None),
+            "getnull": check_count("dict getnull", 1, None),
             "incr": check_count("dict incr", 2, 3),
             "info": check_count("dict info", 1, 1),
             "keys": check_count("dict keys", 1, 2),
