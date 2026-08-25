@@ -42,7 +42,10 @@ class CommentVisitor(Visitor):
             rest = split[-1]
             s = rest.split("--", 1)[0]
             s = s.replace(" ", "")
-            rule_strs = s.split(",")
+            # Drop empty entries so that a directive carrying only a description
+            # ("tclint-disable -- why") or a trailing comma still falls through
+            # to the all-rules default below, instead of looking up rule "".
+            rule_strs = [rule_str for rule_str in s.split(",") if rule_str]
 
         rules: list[Rule] = []
         if not rule_strs:

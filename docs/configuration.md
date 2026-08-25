@@ -93,6 +93,20 @@ The following lists supported keywords. These keywords were inspired by [ESLint]
 - `tclint-enable <rules>`
   - Any specified violations which have previously been disabled by `tclint-disable` will be re-enabled.
 
+### Descriptions
+
+Like ESLint's [configuration comment descriptions][eslint-descriptions], any text after `--` is
+treated as a note for human readers and is not parsed as a rule name. This works with or without a
+rule list.
+
+```tcl
+# tclint-disable unbraced-expr -- $foo is validated by the caller
+expr $foo
+# tclint-enable unbraced-expr
+
+expr { [expr $foo] } ;# tclint-disable-line -- generated code, see gen.tcl
+```
+
 ### Example
 
 ```tcl
@@ -131,3 +145,4 @@ indent = 2
 Configuration in a `pyproject.toml` is lowest priority, and only checked if neither default config path exists. The file will be ignored if it contains TOML syntax errors.
 
 [eslint-comments]: https://eslint.org/docs/latest/use/configure/rules#using-configuration-comments-1
+[eslint-descriptions]: https://eslint.org/docs/latest/use/configure/rules#configuration-comment-descriptions
