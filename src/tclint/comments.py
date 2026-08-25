@@ -41,11 +41,16 @@ class CommentVisitor(Visitor):
         if len(split) > 1:
             rest = split[-1]
             s = rest.split("--", 1)[0]
-            s = s.replace(" ", "")
-            # Drop empty entries so that a directive carrying only a description
-            # ("tclint-disable -- why") or a trailing comma still falls through
-            # to the all-rules default below, instead of looking up rule "".
-            rule_strs = [rule_str for rule_str in s.split(",") if rule_str]
+            # Split on the comma delimiter first and strip each entry, rather
+            # than stripping every space up front. Stripping first joins
+            # space-separated tokens into one name the user never wrote
+            # ("unbraced-expr extra-junk" -> "unbraced-exprextra-junk"), which
+            # then appears verbatim in the unknown-rule warning below.
+            # Empty entries are dropped so a directive carrying only a
+            # description ("tclint-disable -- why") or a trailing comma still
+            # falls through to the all-rules default.
+            rule_strs = [rule_str.strip() for rule_str in s.split(",")]
+            rule_strs = [rule_str for rule_str in rule_strs if rule_str]
 
         rules: list[Rule] = []
         if not rule_strs:
@@ -56,10 +61,10 @@ class CommentVisitor(Visitor):
                 try:
                     rules.append(Rule(rule_str))
                 except ValueError:
-                    self._warning(
-                        f"unknown rule '{rule_str}' provided to '{command}'",
-                        comment.pos,
-                    )
+                    message = f"unknown rule '{rule_str}' provided to '{command}'"
+                    if any(char.isspace() for char in rule_str):
+                        message += "; rules must be comma-separated"
+                    self._warning(message, comment.pos)
 
         if command == "tclint-disable":
             for rule in rules:
