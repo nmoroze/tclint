@@ -101,6 +101,47 @@ def test_read_stdin():
     assert stderr == b""
 
 
+def _run_stdin(source: str):
+    p = subprocess.Popen(
+        ["tclint", "-"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stdout, stderr = p.communicate(input=source.encode("utf-8"))
+    return stdout.decode("utf-8"), stderr.decode("utf-8")
+
+
+def test_unknown_rule_keeps_the_token_the_user_wrote():
+    """A space-separated list is invalid, but the warning must quote it verbatim.
+
+    Stripping spaces before splitting on the comma joined the tokens into a
+    name that appears nowhere in the source.
+    """
+    stdout, _ = _run_stdin("# tclint-disable unbraced-expr extra-junk\nexpr $foo\n")
+
+    assert "unknown rule 'unbraced-expr extra-junk'" in stdout
+    assert "rules must be comma-separated" in stdout
+    assert "unbraced-exprextra-junk" not in stdout
+
+
+def test_unknown_rule_without_whitespace_omits_the_comma_hint():
+    """The hint is only useful when a missing comma is the likely cause."""
+    stdout, _ = _run_stdin("# tclint-disable definitely-not-a-rule\nexpr $foo\n")
+
+    assert "unknown rule 'definitely-not-a-rule'" in stdout
+    assert "comma-separated" not in stdout
+
+
+def test_spaces_around_comma_delimiter_still_parse():
+    """Padding around the delimiter must keep working."""
+    stdout, _ = _run_stdin(
+        "# tclint-disable unbraced-expr , redundant-expr\nexpr { [expr $foo] }\n"
+    )
+
+    assert stdout == ""
+
+
 def test_block_dynamic_plugin_config(tmp_path):
     plugin = """
 print("plugin ran")
